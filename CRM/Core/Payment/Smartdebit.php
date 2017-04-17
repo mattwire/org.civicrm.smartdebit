@@ -289,8 +289,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    * @access public
    *
    */
-  static function validatePayment($fields, $files, $self)
-  {
+  static function validatePayment($fields, $files, $self) {
     $validateParams = $fields;
 
     /* First thing to do is check if the DD has already been submitted */

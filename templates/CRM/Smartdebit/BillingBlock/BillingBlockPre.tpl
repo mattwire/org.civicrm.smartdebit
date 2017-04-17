@@ -1,4 +1,3 @@
-<!-- MV: Custom changes from older version,  -->
 {if $paymentProcessor.payment_type & 2}
     <div><span style="float: right;margin: 25px;"><img src="{crmResURL ext=uk.co.vedaconsulting.payment.ukdirectdebit file=images/direct_debit_small.png}" alt="Direct Debit Logo" border="0"></span></div>
     <div style="clear: both;"></div>
@@ -18,4 +17,24 @@
             If you do not wish to proceed any further please <a href="/">click here</a> to end.</p>
         <p>The details of your Direct Debit Instruction will be sent to you within 3 working days or no later than 10 working days before the first collection.</p>{/ts}
 {/if}
-<!-- MV: end custom changes    -->
+
+<div class="crm-section {$form.ddi_reference.name}-section">
+    <div class="label">{$form.ddi_reference.label}</div>
+    <div class="content">{$form.ddi_reference.html}</div>
+    <div class="clear"></div>
+</div>
+<div class="crm-section {$form.preferred_collection_day.name}-section">
+    <div class="label">{$form.preferred_collection_day.label}</div>
+    <div class="content">{$form.preferred_collection_day.html}</div>
+    <div class="clear"></div>
+</div>
+<div class="crm-section {$form.confirmation_method.name}-section">
+    <div class="label">{$form.confirmation_method.label}</div>
+    <div class="content">{$form.confirmation_method.html}</div>
+    <div class="clear"></div>
+</div>
+<div class="crm-section {$form.payer_confirmation.name}-section">
+    <div class="label">{$form.payer_confirmation.label}</div>
+    <div class="content">{$form.payer_confirmation.html}</div>
+    <div class="clear"></div>
+</div>

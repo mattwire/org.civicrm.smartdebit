@@ -1,4 +1,3 @@
-<!-- MV:custom Js, append old version custom changes into civi46 -->
 {literal}
     <style type="text/css">
         #multiple_block > input {
