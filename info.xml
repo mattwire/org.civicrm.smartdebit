@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<extension key="uk.co.vedaconsulting.smartdebit" type="module">
+  <file>smartdebit</file>
+  <name>Smart Debit Payment Processor</name>
+  <description>Smart Debit (Direct Debit) Payment Processor</description>
+  <license>AGPL-3.0</license>
+  <maintainer>
+    <author>Matthew Wire</author>
+    <email>mjw@mjwconsult.co.uk</email>
+  </maintainer>
+  <urls>
+    <url desc="Main Extension Page">http://FIXME</url>
+    <url desc="Documentation">http://FIXME</url>
+    <url desc="Support">http://FIXME</url>
+    <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
+  </urls>
+  <releaseDate>2017-04-17</releaseDate>
+  <version>1.0</version>
+  <develStage>alpha</develStage>
+  <compatibility>
+    <ver>4.7</ver>
+  </compatibility>
+  <comments>Based on the vedaconsulting ukdirectdebit, smartdebit and smartdebit_reconciliation modules.
+  Re-written for CiviCRM 4.7</comments>
+  <civix>
+    <namespace>CRM/Smartdebit</namespace>
+  </civix>
+</extension>
