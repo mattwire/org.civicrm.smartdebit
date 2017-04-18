@@ -593,7 +593,7 @@ class CRM_Smartdebit_Sync
         if (isset($response['error'])) {
           $msg = $response['error'];
         }
-        $msg .= '<br />An error occurred.';
+        $msg .= 'Invalid reference number: ' . $referenceNumber;
         CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
         CRM_Core_Error::debug_log_message('Smart Debit: getSmartdebitPayments Error: ' . $msg);
         return false;

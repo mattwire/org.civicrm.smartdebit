@@ -3,16 +3,30 @@
 /**
  * Class CRM_Smartdebit_Form_ReconciliationFixSelect
  *
- * Path: civicrm/smartdebit/reconciliation/fixmissingcivi
+ * Path: civicrm/smartdebit/reconciliation/fix/select
  */
 class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
   CONST c_current_membership_status = "Current"; // MV, to set current membership as default 
 
   public function preProcess() {
+    if ($this->_flagSubmitted) return;
     parent::preProcess();
   }
 
   public function buildQuickForm() {
+    if ($this->_flagSubmitted) return;
+
+    // Don't try and load form if no reference number is specified!
+    $reference_number = CRM_Utils_Request::retrieve('reference_number', 'String');
+    if (empty($reference_number)) {
+      CRM_Core_Session::setStatus('You must specify a reference number to reconcile a transaction!', 'Smart Debit', 'error');
+      $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/list', 'reset=1');
+      CRM_Core_Session::singleton()->pushUserContext($url);
+      return;
+    }
+
+    $cid = CRM_Utils_Array::value('cid', $_GET);
+
     $this->addElement( 'select'
       , 'membership_record'
       , ts('Membership')
@@ -32,6 +46,11 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
     ));
     $this->addElement('hidden', 'cid', 'cid');
     $this->addElement('text', 'reference_number', 'Smart Debit Reference', array('size' => 50, 'maxlength' => 255));
+    $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/list', 'reset=1');
+    $buttons[] = array(
+      'type' => 'back',
+      'js' => array('onclick' => "location.href='{$url}'; return false;"),
+      'name' => ts('Back'));
     $buttons[] = array(
       'type' => 'next',
       'name' => ts('Continue'));
@@ -57,7 +76,6 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
     $el->freeze();
 
     $this->assign( 'memStatusCurrent', self::c_current_membership_status ); //MV, to set the current membership as default, when ajax loading
-    $cid = CRM_Utils_Array::value('cid', $_GET);
     $this->assign('cid', $cid);
     $this->addFormRule(array('CRM_Smartdebit_Form_ReconciliationFixSelect', 'formRule'), $this);
 
@@ -86,9 +104,14 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
    * @return None
    */
   public function setDefaultValues() {
+    if ($this->_flagSubmitted) return;
+
     $defaults = array();
     $defaults['reference_number'] = CRM_Utils_Array::value('reference_number', $_GET);
     $defaults['cid']              = CRM_Utils_Array::value('cid', $_GET);
+    $defaults['mid']              = CRM_Utils_Array::value('mid', $_GET);
+    $defaults['cr_id']              = CRM_Utils_Array::value('cr_id', $_GET);
+
     return $defaults;
   }
 
@@ -99,8 +122,8 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
     $reference_number = $submitValues['reference_number'];
     $cr_id = $submitValues['contribution_recur_record'];
     $params = sprintf('cid=%d&mid=%d&cr_id=%d&reference_number=%s', $cid, $mid, $cr_id, $reference_number);
-    $url = CRM_Utils_System::url('civicrm/smartdebit/reconciliation/fix-contact-rec-confirm',$params);
-    CRM_Utils_System::redirect($url);
+    $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/fix/confirm', $params);
+    CRM_Core_Session::singleton()->pushUserContext($url);
     parent::postProcess();
   }
 }

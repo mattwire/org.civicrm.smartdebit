@@ -31,15 +31,22 @@
         </tr>
     </table>
 <h3>{ts}Mis-Matched Contacts ({$totalRows} found for current filter){/ts}</h3>
+{if $fixMeContact}
+<div class="help">
+<span><i class="crm-i fa-info-circle" aria-hidden="true"></i>
+For "Payer Reference" errors you need to login to the Smart Debit control panel and update the Payer Reference manually.
+</span>
+</div>
+{/if}
 <div style="min-height:400px;">
     <table  class="selector row-highlight">
         <tr style="background-color: #CDE8FE;">
             <td><b>{ts}Transaction ID{/ts}</td>
             <td><b>{ts}Contact (SD Contact ID){/ts}</td>
             <td><b>{ts}Differences{/ts}</td>
-            <td><b>{ts}Frequency{/ts}</td>
-            <td><b>{ts}Total{/ts}</td>
-            <td><b>{ts}Status{/ts}</td>
+            <td><b>{ts}Frequency (CiviCRM/SD){/ts}</td>
+            <td><b>{ts}Total (CiviCRM/SD){/ts}</td>
+            <td><b>{ts}Status (CiviCRM/SD){/ts}</td>
             <td></td>
         </tr>
       {foreach from=$listArray item=row}
@@ -58,14 +65,14 @@
               </td>
               <td>
                 {if $row.contact_id gt 0}
-                    <a href="{$contactViewURL}">{$row.contact_name}</a>
+                    <a href="{$contactViewURL}">{$row.contact_name}</a> ({$row.sd_contact_id})
                 {else}
                   {$row.contact_name} ({$row.sd_contact_id})
                 {/if}
               </td>
               <td>{$row.differences}</td>
             {if $row.contribution_recur_id }
-                <td>{$row.frequency}/{$row.sd_frequency}</td>
+                <td>{$row.frequency_interval} {$row.frequency_unit}/{$row.sd_frequency_factor} {$row.sd_frequency_type}</td>
                 <td>{$row.amount}/{$row.sd_amount}</td>
                 <td>{$row.contribution_status_id}/{$row.sd_contribution_status_id}</td>
             {else}
@@ -74,8 +81,13 @@
                 <td>{$row.sd_contribution_status_id}</td>
             {/if}
               <td>
+                {if $row.transaction_id}
+                    {assign var=rTransactionId value=$row.transaction_id}
+                    {capture assign=transactionViewURL}{crmURL p='civicrm/smartdebit/payerdetails' q="action=view&reference_number=$rTransactionId&context=reconciliation"}{/capture}
+                    <a href="{$transactionViewURL}" class="action-item crm-hover-button" title="Transaction Details">Details</a>
+                {/if}
                 {if $row.fix_me_url}
-                    <a href="{$row.fix_me_url}" target="_new">Fix Me</a>
+                    <a href="{$row.fix_me_url}" target="_new" class="action-item crm-hover-button" title="Fix Transaction">Fix Me</a>
                 {/if}
               </td>
           </tr>

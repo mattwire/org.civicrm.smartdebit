@@ -4,6 +4,8 @@
  * This class provides the functionality to delete a group of
  * contacts. This class provides functionality for the actual
  * addition of contacts to groups.
+ *
+ * Path: civicrm/smartdebit/reconciliation/list
  */
 class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
   /* Smart Debit parameters
@@ -32,6 +34,8 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
    * @return void
    */
   public function buildQuickForm() {
+    if ($this->_flagSubmitted) return;
+
     // See if a sync is requested
     $sync = CRM_Utils_Array::value('sync', $_GET, '');
     if ($sync) {
@@ -44,8 +48,8 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
       catch (Exception $e) {
         CRM_Core_Session::setStatus($e->getMessage(), 'Smart Debit');
       }
-      $url = CRM_Utils_System::url('civicrm/smartdebit/reconciliation/list', 'reset=1');
-      CRM_Utils_System::redirect($url);
+      $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/list', 'reset=1');
+      CRM_Core_Session::singleton()->pushUserContext($url);
       return;
     }
 
@@ -56,7 +60,7 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     if ($count == 0) {
       // Have not done a sync.  Display state and add button to perform sync
       $queryParams = 'sync=1&reset=1';
-      $redirectUrlContinue  = CRM_Utils_System::url('civicrm/smartdebit/reconciliation/list', $queryParams);
+      $redirectUrlContinue  = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/list', $queryParams);
       $buttons[] = array(
         'type' => 'next',
         'js' => array('onclick' => "location.href='{$redirectUrlContinue}'; return false;"),
@@ -77,6 +81,7 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     $hasContact = CRM_Utils_Array::value('hasContact', $_GET);
 
     $listArray = array();
+    $fixMeContact = FALSE;
     $totalRows = NULL;
 
     // The following differences are highlighted
@@ -127,41 +132,28 @@ AND   opva.label = 'Direct Debit' ";
         // 1. Transaction Id in Smart Debit and Civi for the same contact
 
         $transactionRecordFound = true;
-        $different = false;
-        $differences = '';
-        $separator = '';
-        $separatorCharacter = ' | ';
+        $difference['amount'] = $difference['frequency'] = $difference['status'] = $difference['contact'] = FALSE;
 
         if ($checkAmount) {
           // Check that amount in CiviCRM matches amount in Smart Debit
           if ($dao->regular_amount != $dao->amount) {
-            $different = true;
-            $differences .= 'Amount';
-            $separator = $separatorCharacter;
+            $difference['amount'] = TRUE;
           }
         }
 
         if ($checkFrequency) {
           // Check that frequency in CiviCRM matches frequency in Smart Debit
           if ($dao->frequency_type == 'W' && ($dao->frequency_unit != 'day' || $dao->frequency_interval % 7 != 0) ) {
-            $different = true;
-            $differences .= 'Frequency';
-            $separator = $separatorCharacter;
+            $difference['frequency'] = TRUE;
           }
           elseif ($dao->frequency_type == 'M' && $dao->frequency_unit != 'month' ) {
-            $different = true;
-            $differences .= 'Frequency';
-            $separator = $separatorCharacter;
+            $difference['frequency'] = TRUE;
           }
           elseif ($dao->frequency_type == 'Q' && ($dao->frequency_unit != 'month' && $dao->frequency_interval % 3 != 0)) {
-            $different = true;
-            $differences .= 'Frequency';
-            $separator = $separatorCharacter;
+            $difference['frequency'] = TRUE;
           }
           elseif ($dao->frequency_type == 'Y' && $dao->frequency_unit != 'year' ) {
-            $different = true;
-            $differences .= 'Frequency';
-            $separator = $separatorCharacter;
+            $difference['frequency'] = TRUE;
           }
         }
 
@@ -176,32 +168,50 @@ AND   opva.label = 'Direct Debit' ";
         // First case check if Smart Debit is new or live then CiviCRM is in progress
         if ($checkStatus) {
           if (($dao->current_state == 10 || $dao->current_state == 1) && ($dao->contribution_status_id != 5)) {
-            $different = true;
-            $differences .= $separator. 'Status';
-            $separator = $separatorCharacter;
+            $difference['status'] = TRUE;
           }
           // Recurring record active in Civi, but smart debit record is not active
           if (!($dao->current_state == 10 || $dao->current_state == 1) && ($dao->contribution_status_id == 5)) {
-            $different = true;
-            $differences .= $separator. 'Status';
-            $separator = $separatorCharacter;
+            $difference['status'] = TRUE;
           }
         }
 
         // 2. Transaction Id in Smart Debit and Civi for different contacts
         if ($checkPayerReference) {
           if ($dao->payerReference != $dao->contact_id) {
-            $different = true;
-            $differences .= $separator. 'Payer Reference';
-            $separator = $separatorCharacter;
+            $difference['contact'] = TRUE;
           }
         }
 
         // If different then
-        if ($different) {
+        if ($difference['amount'] || $difference['frequency'] || $difference['status'] || $difference['contact']) {
           $financialType = '';
           if ($dao->financial_type_id) {
             $financialType = CRM_Core_DAO::getFieldValue('CRM_Financial_DAO_FinancialType', $dao->financial_type_id, 'name', 'id');
+          }
+
+          $differences = '';
+          // Generate differences text string for display
+          foreach ($difference as $key => $value) {
+            if ($value) {
+              if (!empty($differences)) {
+                $differences .= ' | ';
+              }
+              switch ($key) {
+                case 'amount':
+                  $differences .= 'Amount';
+                  break;
+                case 'frequency':
+                  $differences .= 'Frequency';
+                  break;
+                case 'status':
+                  $differences .= 'Status';
+                  break;
+                case 'contact':
+                  $differences .= 'Payer Reference(Contact Id)';
+                  break;
+              }
+            }
           }
 
           $listArray[$dao->smart_debit_id]['recordFound']           = $transactionRecordFound;
@@ -213,16 +223,25 @@ AND   opva.label = 'Direct Debit' ";
           $listArray[$dao->smart_debit_id]['payment_instrument']    = $dao->payment_instrument;
           $listArray[$dao->smart_debit_id]['start_date']            = $dao->start_date;
           $listArray[$dao->smart_debit_id]['sd_start_date']         = $dao->smart_debit_start_date;
-          $listArray[$dao->smart_debit_id]['frequency']             = $dao->frequency_unit;
-          $listArray[$dao->smart_debit_id]['sd_frequency']          = $dao->frequency_type;
+          $listArray[$dao->smart_debit_id]['frequency_unit']        = $dao->frequency_unit;
+          $listArray[$dao->smart_debit_id]['sd_frequency_type']     = $dao->frequency_type;
+          $listArray[$dao->smart_debit_id]['frequency_interval']    = $dao->frequency_interval;
+          $listArray[$dao->smart_debit_id]['sd_frequency_factor']     = $dao->frequency_factor;
           $listArray[$dao->smart_debit_id]['amount']                = $dao->amount;
           $listArray[$dao->smart_debit_id]['sd_amount']             = $dao->regular_amount;
           $listArray[$dao->smart_debit_id]['contribution_status_id']    = $dao->contribution_status_id;
           $listArray[$dao->smart_debit_id]['sd_contribution_status_id'] = self::formatSDStatus($dao->current_state);
           $listArray[$dao->smart_debit_id]['transaction_id']        = $dao->trxn_id;
           $listArray[$dao->smart_debit_id]['differences']           = $differences;
-          $fixmeurl = CRM_Utils_System::url('civicrm/smartdebit/reconciliation/fixmissingcivi', "cid=".$dao->contact_id."&reference_number=".$dao->reference_number,  TRUE, NULL, FALSE, TRUE, TRUE);
-          $listArray[$dao->smart_debit_id]['fix_me_url']						= $fixmeurl;
+          $fixmeurl = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/fix/select', "cid=".$dao->contact_id."&reference_number=".$dao->reference_number,  TRUE, NULL, FALSE, TRUE, TRUE);
+          if ($difference['amount'] || $difference['frequency'] || $difference['status']) {
+            // Can't fix contact Id
+            $listArray[$dao->smart_debit_id]['fix_me_url'] = $fixmeurl;
+          }
+          if ($difference['contact']) {
+            // Assign to form so we can use it
+            $fixMeContact = TRUE;
+          }
         }
       }
     }
@@ -272,13 +291,13 @@ AND ctrc.id IS NULL";
           $differences .= ' But Contact Found Using Smart Debit payerReference ' . $dao->payerReference;
           $missingContactID = $dao->contact_id;
           $missingContactName = $dao->display_name;
-          $fixmeUrl = CRM_Utils_System::url('civicrm/smartdebit/reconciliation/fixmissingcivi', "cid=" . $dao->contact_id . "&reference_number=" . $dao->reference_number, TRUE, NULL, FALSE, TRUE, TRUE);
+          $fixmeUrl = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/fix/select', "cid=" . $dao->contact_id . "&reference_number=" . $dao->reference_number, TRUE, NULL, FALSE, TRUE, TRUE);
         }
         elseif (empty($dao->contact_id)) {
           // Set values for records with no valid contact ID in CiviCRM
           $missingContactID = 0;
           $missingContactName = $dao->first_name.' '.$dao->last_name;
-          $fixmeUrl = CRM_Utils_System::url('civicrm/smartdebit/reconciliation/fixmissingcivi', "reference_number=".$dao->reference_number,  TRUE, NULL, FALSE, TRUE, TRUE);
+          $fixmeUrl = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/fix/select', "reference_number=".$dao->reference_number,  TRUE, NULL, FALSE, TRUE, TRUE);
         }
         // Add the record
         $listArray[$dao->smart_debit_id]['fix_me_url'] = $fixmeUrl;
@@ -347,6 +366,7 @@ AND   csd.id IS NULL LIMIT 100";
 
     $this->assign('totalRows', $totalRows);
     $this->assign('listArray', $listArray);
+    $this->assign('fixMeContact', $fixMeContact);
     CRM_Utils_System::setTitle('Smart Debit Reconciliation');
   }
 
@@ -371,15 +391,14 @@ AND   csd.id IS NULL LIMIT 100";
    *
    * In All cases the recurring details are taken from Smart Debit so its crucial this is correct first
    *
-   * FIXME: This function is not used anywhere
    * @param $params
    */
-  static function repair_missing_from_civicrm_record($params) {
+  static function reconcileRecordWithCiviCRM($params) {
     foreach (array(
                'contact_id',
                'payer_reference') as $required) {
 
-      if (!isset($params[$required]) || empty($params[$required])) {
+      if (empty($params[$required])) {
         throw new InvalidArgumentException("Missing params[$required]");
       }
     }
@@ -388,165 +407,57 @@ AND   csd.id IS NULL LIMIT 100";
     $smartDebitResponse = CRM_Smartdebit_Sync::getSmartdebitPayerContactDetails($params['payer_reference']);
 
     foreach ($smartDebitResponse as $key => $smartDebitRecord) {
-      // Setup params for the relevant rec
-      list($params['recur_frequency_unit'], $params['recur_frequency_interval']) =
-        CRM_Smartdebit_Base::translateSmartdebitFrequencytoCiviCRM($smartDebitRecord['frequency_type'], $smartDebitRecord['frequency_factor']);
-      $params['amount'] = self::getCleanSmartdebitAmount($smartDebitRecord['regular_amount']);
-      $params['recur_start_date'] = $smartDebitRecord['start_date'].' 00:00:00';
-      $params['recur_next_payment_date'] = $smartDebitRecord['start_date'].' 00:00:00';
-      $params['payment_processor_id'] = CRM_Core_Payment_Smartdebit::getSmartdebitPaymentProcessorID();
-      $params['payment_instrument_id'] = CRM_Smartdebit_Base::getDefaultPaymentInstrumentID();
-      $params['trxn_id'] = $params['payer_reference'];
-      $params['current_state'] = $smartDebitRecord['current_state'];
-      list($y, $m, $d) = explode('-', $smartDebitRecord['start_date']);
-      $params['cycle_day'] = $d;
+      // Setup params for the relevant record
+      $recurParams['contact_id'] = $params['contact_id'];
+      $recurParams['contribution_recur_id'] = (!empty($params['contribution_recur_id']) ? $params['contribution_recur_id'] : NULL);
+      $recurParams['frequency_type'] = $smartDebitRecord['frequency_type'];
+      $recurParams['frequency_factor'] = $smartDebitRecord['frequency_factor'];
+      $recurParams['amount'] = self::getCleanSmartdebitAmount($smartDebitRecord['regular_amount']);
+      $recurParams['start_date'] = $smartDebitRecord['start_date'].' 00:00:00';
+      $recurParams['next_sched_contribution'] = $smartDebitRecord['start_date'].' 00:00:00';
+      $recurParams['trxn_id'] = $params['payer_reference'];
+      $recurParams['processor_id'] = $params['payer_reference'];
 
-      // First Check if a recurring record has beeen selected
-      if ((!isset($params['contribution_recur_id']) || empty($params['contribution_recur_id']))) {
-        // Create the Recurring
-        self::create_recur($params);
-      } else {
-        // Repair the Recurring
-        self::repair_recur($params);
+      // Set state of recurring contribution (10=live,1=New at SmartDebit)
+      if ($smartDebitRecord['current_state'] == 10 || $smartDebitRecord['current_state'] == 1) {
+        $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
+      }
+      else {
+        $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Cancelled');
       }
 
-      /* First Check if the membership has beeen selected */
-      if ((isset($params['membership_id']) && !empty($params['membership_id']))) {
-        // Link it to the Recurring Record
-        self::link_membership_to_recur($params);
+      $recurId = 0;
+      $membershipId = 0;
+
+      // Create / Update recurring contribution
+      try {
+        $result = CRM_Smartdebit_Base::createRecurContribution($recurParams);
+        $recurId = $result['id'];
       }
-    }
-  }
-
-  /**
-   * This is used when the fix process is used on the reconciliation
-   * It should ensure the recur details match those of the smart debit record
-   *
-   * FIXME: Not tested/used
-   * @param $params
-   */
-  static function repair_recur(&$params) {
-    foreach (array(
-               'contribution_recur_id',
-               'contact_id',
-               'recur_frequency_interval',
-               'amount',
-               'recur_start_date',
-               'recur_next_payment_date',
-               'recur_frequency_unit',
-               'payment_processor_id',
-               'payment_instrument_id',
-               'trxn_id',
-               'cycle_day') as $required) {
-
-      if (!isset($params[$required]) || empty($params[$required])) {
-        throw new InvalidArgumentException("Missing params[$required]");
+      catch (Exception $e) {
+        $recurId = -1;
+        CRM_Core_Session::setStatus("Error creating recurring contribution for contact (".$params['contact_id'].") " . $e->getMessage(), 'Smart Debit');
       }
-    }
 
-    $contribution_status_id = 5; // In Progress
-    if (!($params['current_state'] == 10 || $params['current_state'] == 1)) {
-      $contribution_status_id = 3;
-    }
-    // Create contribution recur record
-    $recurParams = array(
-      'version' => 3,
-      'contribution_recur_id' => $params['contribution_recur_id'],
-      'id' => $params['contribution_recur_id'],
-      'contact_id' => $params['contact_id'],
-      'frequency_interval' => $params['recur_frequency_interval'],
-      'amount' => $params['amount'], /* TODO Need to find the amount to charge */
-      'contribution_status_id' => $contribution_status_id,
-      'start_date' => $params['recur_start_date'],
-      'next_sched_contribution' => $params['recur_next_payment_date'],
-      'auto_renew' => '1',
-      'currency' => 'GBP',
-      'frequency_unit' => $params['recur_frequency_unit'],
-      'payment_processor_id' => $params['payment_processor_id'],
-      'payment_instrument_id' => $params['payment_instrument_id'],
-      'contribution_type_id' => '2', /* TODO Get the contribution type ID for recurring memberships */
-      'trxn_id' => $params['trxn_id'],
-      'create_date' => $params['recur_start_date'],
-      'cycle_day' => $params['cycle_day'],
-    );
-    $recurResult = civicrm_api("ContributionRecur","create", $recurParams);
-
-    // Populate the membership id on repair recur
-    $params['contribution_recur_id'] = $recurResult['id'];
-
-    if( $params['contribution_recur_id'] && $params['membership_id']) {
-      $columnExists = CRM_Core_DAO::checkFieldExists('civicrm_contribution_recur', 'membership_id');
-      if($columnExists) {
-        $query = "
-                UPDATE civicrm_contribution_recur
-                SET membership_id = %1
-                WHERE id = %2 ";
-
-        $query_params = array( 1 => array( $params['membership_id'], 'Int' ), 2 => array($params['contribution_recur_id'], 'Int') );
-        $dao = CRM_Core_DAO::executeQuery($query, $query_params);
+      // Link Membership to recurring contribution
+      if (!empty($params['membership_id'])) {
+        try {
+          $result = self::linkMembershipToRecurContribution($params);
+          $membershipId = $result['id'];
+        }
+        catch (Exception $e) {
+          $membershipId = -1;
+          CRM_Core_Session::setStatus("Error linking membership (".$params['membership_id'].") to recurring contribution (".$params['contribution_recur_id'].") " . $e->getMessage(), 'Smart Debit');
+        }
       }
-    }
-  }
 
-  /**
-   * This is used when we need to create a new recurring record
-   * @param $params
-   *
-   * FIXME: not tested/used
-   */
-  static function create_recur(&$params) {
-    foreach (array(
-               'contact_id',
-               'recur_frequency_interval',
-               'amount',
-               'recur_start_date',
-               'recur_next_payment_date',
-               'recur_frequency_unit',
-               'payment_processor_id',
-               'payment_instrument_id',
-               'trxn_id',
-               'cycle_day') as $required) {
-
-      if (!isset($params[$required]) || empty($params[$required])) {
-        throw new InvalidArgumentException("Missing params[$required]");
+      // Return true if we succeeded, false otherwise
+      // Set return value
+      if ($recurId >= 0 && $membershipId >= 0) {
+        return TRUE;
       }
-    }
-    $contribution_status_id = 5; // In Progress
-    if (!($params['current_state'] == 10 || $params['current_state'] == 1)) {
-      $contribution_status_id = 3;
-    }
-    // Create contribution recur record
-    $recurParams = array(
-      'version' => 3,
-      'contact_id' => $params['contact_id'],
-      'frequency_interval' => $params['recur_frequency_interval'],
-      'amount' => $params['amount'], /* TODO Need to find the amount to charge */
-      'contribution_status_id' => $contribution_status_id,
-      'start_date' => $params['recur_start_date'],
-      'next_sched_contribution' => $params['recur_next_payment_date'],
-      'auto_renew' => '1',
-      'currency' => 'GBP',
-      'frequency_unit' => $params['recur_frequency_unit'],
-      'payment_processor_id' => $params['payment_processor_id'],
-      'payment_instrument_id' => $params['payment_instrument_id'],
-      'trxn_id' => $params['trxn_id'],
-      'create_date' => $params['recur_start_date'],
-      'cycle_day' => $params['cycle_day'],
-    );
-    $recurResult = civicrm_api("ContributionRecur","create", $recurParams);
-
-    $params['contribution_recur_id'] = $recurResult['id'];
-    // // Populate the membership id on create recur
-    if( $params['contribution_recur_id'] && $params['membership_id'] ) {
-      $columnExists = CRM_Core_DAO::checkFieldExists('civicrm_contribution_recur', 'membership_id');
-      if($columnExists) {
-        $query = "
-                UPDATE civicrm_contribution_recur
-                SET membership_id = %1
-                WHERE id = %2 ";
-
-        $query_params = array( 1 => array( $params['membership_id'], 'Int' ), 2 => array($params['contribution_recur_id'], 'Int') );
-        $dao = CRM_Core_DAO::executeQuery($query, $query_params);
+      else {
+        return FALSE;
       }
     }
   }
@@ -555,9 +466,8 @@ AND   csd.id IS NULL LIMIT 100";
    * This is used when we need to create a linked mem
    * @param $params
    *
-   * FIXME: Not tested/used
    */
-  static function link_membership_to_recur(&$params) {
+  static function linkMembershipToRecurContribution($params) {
     foreach (array(
                'contact_id',
                'membership_id',
@@ -568,18 +478,19 @@ AND   csd.id IS NULL LIMIT 100";
       }
     }
 
-    // Update the source table to say we're done
-    $selectDDSql     =  " UPDATE civicrm_membership ";
-    $selectDDSql     .= " SET contribution_recur_id = %3 ";
-    $selectDDSql     .= " WHERE id = %1 ";
-    $selectDDSql     .= " AND contact_id = %2 ";
-    $selectDDParams  = array( 1 => array( $params['membership_id'] , 'Integer' )
-    , 2 => array( $params['contact_id'] , 'Integer' )
-    , 3 => array( $params['contribution_recur_id'] , 'Integer' )
-    );
-    $daoMembershipType = CRM_Core_DAO::executeQuery( $selectDDSql, $selectDDParams );
+    return civicrm_api3('Membership', 'create', array(
+      'sequential' => 1,
+      'id' => $params['membership_id'],
+      'contact_id' => $params['contact_id'],
+      'contribution_recur_id' => $params['contribution_recur_id'],
+    ));
   }
 
+  /**
+   * Retrieve SmartDebit payer contact details and populate table veda_smartdebit_refresh for further analysis
+   *
+   * @return bool|int
+   */
   static function insertSmartdebitToTable() {
     // if the civicrm_sd table exists, then empty it
     $emptySql = "TRUNCATE TABLE `veda_smartdebit_refresh`";

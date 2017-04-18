@@ -358,49 +358,16 @@ function smartdebit_civicrm_getSetting($name) {
 }
 
 /**
+ * Implementation of hook_civicrm_pageRun
+ * This adds Smart Debit details to "View Recurring Contribution"
+ *
  * @param $page
  *
- * TODO: first If From SD reconciliation - check it works
  */
 function smartdebit_civicrm_pageRun(&$page)
 {
   $pageName = $page->getVar('_name');
-  // To avoid standalone new contribution fail
-  if ($pageName == 'CRM_Contribute_Page_Tab' && $page->getVar('_contactId')) {
-    $paymentProcessorType = CRM_Core_PseudoConstant::paymentProcessorType(false, null, 'name');
-    if (!CRM_Utils_Array::key('Smart_Debit', $paymentProcessorType)) {
-      return;
-    }
-    $query = "
-      SELECT cr.id, cr.trxn_id FROM civicrm_contribution_recur cr
-      INNER JOIN civicrm_payment_processor cpp ON cpp.id = cr.payment_processor_id
-      INNER JOIN civicrm_payment_processor_type cppt ON cppt.id = cpp.payment_processor_type_id
-      LEFT JOIN civicrm_option_value opva ON (cr.payment_instrument_id = opva.value)
-      LEFT JOIN civicrm_option_group opgr ON (opgr.id = opva.option_group_id) 
-      WHERE cppt.name = %1 AND cr.contact_id = %2 AND opgr.name = %3 AND opva.label = %4";
-
-    $queryParams = array(
-      1 => array('Smart_Debit', 'String'),
-      2 => array($page->getVar('_contactId'), 'Int'),
-      3 => array('payment_instrument', 'String'),
-      4 => array('Direct Debit', 'String'),
-    );
-
-    $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
-    $contributionRecurDetails = array();
-    while ($dao->fetch()) {
-      if ($dao->trxn_id) {
-        $smartDebitResponse = CRM_Smartdebit_Sync::getSmartDebitPayerContactDetails($dao->trxn_id);
-        foreach ($smartDebitResponse[0] as $key => $value) {
-          $contributionRecurDetails[$dao->id][$key] = $value;
-        }
-      }
-    }
-    $contributionRecurDetails = json_encode($contributionRecurDetails);
-    $page->assign('contributionRecurDetails', $contributionRecurDetails);
-    $page->assign('smartdebit', TRUE);
-  }
-  elseif ($pageName == 'CRM_Contribute_Page_ContributionRecur') {
+  if ($pageName == 'CRM_Contribute_Page_ContributionRecur') {
     // On the view recurring contribution page we add some info from smart debit if we have it
     $session = CRM_Core_Session::singleton();
     $userID = $session->get('userID');
@@ -578,30 +545,44 @@ function smartdebit_civicrm_validateForm($name, &$fields, &$files, &$form, &$err
 }
 
 /**
- * Add links to membership list on contacts tab
+ * Implements hook_civicrm_links
+ * Add links to membership list on contacts tab to view/setup direct debit
+ *
  * @param $op
  * @param $objectName
  * @param $objectId
  * @param $links
  * @param $mask
  * @param $values
- *
- * TODO: Check this is correct
  */
 function smartdebit_civicrm_links( $op, $objectName, $objectId, &$links, &$mask, &$values ) {
   if ($objectName == 'Membership') {
     $cid = $values['cid'];
-    $id = $values['id'];
-    $name   = ts('Setup Direct Debit');
-    $title  = ts('Setup Direct Debit');
-    $url    = 'civicrm/smartdebit/new';
-    $qs	    = "action=add&reset=1&cid=$cid&id=$id";
-    $recurID = CRM_Core_DAO::singleValueQuery('SELECT contribution_recur_id FROM civicrm_membership WHERE id = %1', array(1=>array($id, 'Int')));
-    if($recurID) {
+    $id = $objectId;
+    $recurId = NULL;
+    try {
+      // Get recurring contribution Id for membership
+      $membership = civicrm_api3('Membership', 'getsingle', array(
+        'id' => $id,
+      ));
+      if (isset($membership['contribution_recur_id'])) {
+        $recurId = $membership['contribution_recur_id'];
+      };
+    }
+    catch (Exception $e) {
+      // Do nothing, $recurId won't be set
+    }
+    if(!empty($recurId)) {
       $name   = ts('View Direct Debit');
       $title  = ts('View Direct Debit');
       $url    = 'civicrm/contact/view/contributionrecur';
-      $qs   	= "reset=1&id=$recurID&cid=$cid";
+      $qs   	= "reset=1&id=$recurId&cid=$cid";
+    }
+    else {
+      $name   = ts('Setup Direct Debit');
+      $title  = ts('Setup Direct Debit');
+      $url    = 'civicrm/smartdebit/new';
+      $qs	    = "action=add&reset=1&cid=$cid&id=$id";
     }
     $links[] = array(
       'name' => $name,
@@ -767,29 +748,4 @@ function smartdebit_civicrm_postProcess( $formName, &$form ) {
       }
     }
   }
-}
-
-/**
- * Send a post request with cURL
- *
- * @param $url
- * TODO: Delete this if not used anywhere?
- */
-function call_CiviCRM_IPN($url){
-  // Set a one-minute timeout for this script
-  set_time_limit(60);
-
-  $options = array(
-    CURLOPT_RETURNTRANSFER => true, // return web page
-    CURLOPT_HEADER => false, // don't return headers
-    CURLOPT_SSL_VERIFYHOST => false,
-    CURLOPT_SSL_VERIFYPEER => false,
-  );
-
-  $session = curl_init( $url );
-  curl_setopt_array( $session, $options );
-
-  // $output contains the output string
-  $output = curl_exec($session);
-  $header = curl_getinfo($session);
 }

@@ -4,11 +4,13 @@
  * Class CRM_Smartdebit_Form_ReconciliationFixConfirm
  *
  * This page is used to confirm and submit the fix for the contact record
- * Path: civicrm/smartdebit/reconciliation/fix-contact-rec-confirm
+ * Path: civicrm/smartdebit/reconciliation/fix/confirm
  */
 class CRM_Smartdebit_Form_ReconciliationFixConfirm extends CRM_Core_Form {
 
   public function buildQuickForm() {
+    if ($this->_flagSubmitted) return;
+
     // Get parameters
     $cid = CRM_Utils_Array::value('cid', $_GET);
     $mid = CRM_Utils_Array::value('mid', $_GET);
@@ -38,13 +40,18 @@ class CRM_Smartdebit_Form_ReconciliationFixConfirm extends CRM_Core_Form {
       $this->assign('aContributionRecur', $cRecur);
     }
 
-    $this->addButtons( array(
-        array(
-          'type'      => 'upload',
-          'name'      => ts('Confirm'),
-        ),
-      )
-    );
+    // Back URL
+    $params = sprintf('cid=%d&mid=%d&cr_id=%d&reference_number=%s', $cid, $mid, $cr_id, $reference_number);
+    $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/fix/select', $params, FALSE, NULL, FALSE);
+
+    $buttons[] = array(
+      'type' => 'back',
+      'js' => array('onclick' => "location.href='{$url}'; return false;"),
+      'name' => ts('Back'));
+    $buttons[] = array(
+      'type'      => 'submit',
+      'name'      => ts('Confirm'));
+    $this->addButtons($buttons);
 
     CRM_Utils_System::setTitle('Confirm changes to Contact');
     parent::buildQuickForm();
@@ -58,6 +65,8 @@ class CRM_Smartdebit_Form_ReconciliationFixConfirm extends CRM_Core_Form {
    * @return None
    */
   public function setDefaultValues() {
+    if ($this->_flagSubmitted) return;
+
     $defaults = array();
     $defaults['reference_number'] = CRM_Utils_Array::value('reference_number', $_GET);
     $defaults['cid']              = CRM_Utils_Array::value('cid', $_GET);
@@ -66,16 +75,19 @@ class CRM_Smartdebit_Form_ReconciliationFixConfirm extends CRM_Core_Form {
     return $defaults;
   }
 
-  public function postProcess() {
+  public function postProcess()
+  {
     $submitValues = $this->_submitValues;
-    $cid = $submitValues['cid'];
-    $mid = $submitValues['mid'];
-    $reference_number = $submitValues['reference_number'];
-    $cr_id = $submitValues['cr_id'];
-    $params = sprintf('cid=%d&mid=%d&cr_id=%d&reference_number=%s', $cid, $mid, $cr_id, $reference_number);
-    // FIXME: This path doesn't exist... need to redirect and create a recurring contribution
-    $url = CRM_Utils_System::url('civicrm/smartdebit/reconciliation/fix-contact-rec',$params);
+    $params['contact_id'] = $submitValues['cid'];
+    $params['payer_reference'] = $submitValues['reference_number'];
+    $params['contribution_recur_id'] = $submitValues['cr_id'];
+    $params['membership_id'] = $submitValues['mid'];
+    $recurResult = CRM_Smartdebit_Form_ReconciliationList::reconcileRecordWithCiviCRM($params);
+
+    if ($recurResult) {
+      CRM_Core_Session::setStatus('Successfully fixed record for ' . $params['payer_reference'] . ' (Contact ID: ' . $params['contact_id'] . ')');
+    }
+    $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/list');
     CRM_Utils_System::redirect($url);
-    parent::postProcess();
   }
 }

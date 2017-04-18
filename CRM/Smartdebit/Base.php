@@ -657,12 +657,19 @@ EOF;
     else {
       $recurParams['modified_date'] = CRM_Utils_Date::processDate($recurParams['modified_date']);
     }
-    // Default to today for modified date
+    // Default to today for start date
     if (empty($recurParams['start_date'])) {
       $recurParams['start_date'] = date('YmdHis');
     }
     else {
       $recurParams['start_date'] = CRM_Utils_Date::processDate($recurParams['start_date']);
+    }
+    // Default to today for next_sched_contribution date
+    if (empty($recurParams['next_sched_contribution'])) {
+      $recurParams['next_sched_contribution'] = date('YmdHis');
+    }
+    else {
+      $recurParams['next_sched_contribution'] = CRM_Utils_Date::processDate($recurParams['next_sched_contribution']);
     }
     // Cycle day defaults to day of start date
     if (empty($recurParams['cycle_day'])) {
@@ -708,11 +715,12 @@ EOF;
     }
 
     // Build recur params
-    $recurParams = array(
+    $params = array(
       'contact_id' =>  $recurParams['contact_id'],
       'create_date' => $recurParams['create_date'],
       'modified_date' => $recurParams['modified_date'],
       'start_date' => $recurParams['start_date'],
+      'next_sched_contribution' => $recurParams['next_sched_contribution'],
       'amount' => $recurParams['amount'],
       'frequency_unit' => $recurParams['frequency_unit'],
       'frequency_interval' => $recurParams['frequency_interval'],
@@ -727,10 +735,15 @@ EOF;
       'payment_instrument_id' => $recurParams['payment_instrument_id'],
       'invoice_id' => $recurParams['invoice_id'],
     );
-    // Create the recurring contribution
 
-    $result = civicrm_api3('ContributionRecur', 'create', $recurParams);
-    return array_merge($result, $recurParams);
+    if (!empty($recurParams['id'])) {
+      // We're updating an existing recurring contribution
+      $params['id'] = $recurParams['id'];
+    }
+
+    // Create the recurring contribution
+    $result = civicrm_api3('ContributionRecur', 'create', $params);
+    return $result;
   }
 
   /**

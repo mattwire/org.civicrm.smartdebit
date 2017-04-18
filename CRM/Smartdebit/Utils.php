@@ -2,6 +2,9 @@
 
 class CRM_Smartdebit_Utils {
 
+  public static $url = 'civicrm/smartdebit';
+  public static $reconcileUrl = 'civicrm/smartdebit/reconciliation';
+
   /**
    * Get all memberships for a contact (or membership specified by membershipID)
    * @param $contactId
@@ -66,11 +69,12 @@ class CRM_Smartdebit_Utils {
     $contributionParams = array(
       'version'               => 3,
       'sequential'            => 1,
-      'contribution_recur_id' => $cRecurID
+      'contribution_recur_id' => $cRecurID,
+      'options' => array('sort' => "receive_date DESC"),
     );
     $contributionRecords = civicrm_api('Contribution', 'get', $contributionParams);
     if (!empty($contributionRecords['is_error']) && $contributionRecords['count'] > 0) {
-      // FIXME: This will always return the first contribution, but there could be more than one
+      // This will always return the most recent contribution
       return $contributionRecords['values'][0];
     }
   }
