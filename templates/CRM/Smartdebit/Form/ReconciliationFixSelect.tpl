@@ -172,23 +172,29 @@
       cj( "#membership_record" ).change(function() {
           var val = cj('#membership_record option:selected').text();
           var getTemplateContentUrl = {/literal}"{crmURL p='civicrm/ajax/rest' h=0 q='className=CRM_Smartdebit_Page_AJAX&fnName=getNotLinkedRecurringByContactID&json=1'}"{literal}
-          cj.ajax({
-              url : getTemplateContentUrl,
-              type: "POST",
-              data: {selectedContact: cid},
-              async: false,
-              datatype:"json",
-              success: function(data, status){
-                  var options = cj.parseJSON(data);
-                  if (val == 'Donation') {
-                      var opRecur = options.cRecurNotLinked;
-                      populateRecur(opRecur);
-                  } else {
-                      var opRecur = options.cRecur;
-                      populateRecur(opRecur);
+          var data = cj( '#contact_name' ).select2('data');
+          var cid = null;
+          ( data !== null) ? cid = data.id : cid = null;
+          cj('input[name=cid]').val(cid);
+          if (cid !== null) {
+              cj.ajax({
+                  url: getTemplateContentUrl,
+                  type: "POST",
+                  data: {selectedContact: cid},
+                  async: false,
+                  datatype: "json",
+                  success: function (data, status) {
+                      var options = cj.parseJSON(data);
+                      if (val == 'Donation') {
+                          var opRecur = options.cRecurNotLinked;
+                          populateRecur(opRecur);
+                      } else {
+                          var opRecur = options.cRecur;
+                          populateRecur(opRecur);
+                      }
                   }
-              }
-          });
+              });
+          }
       });
       function populateRecur(opRecur) {
           cj('#contribution_recur_record').find('option').remove();
