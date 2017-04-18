@@ -88,5 +88,11 @@
     <page_type>0</page_type>
     <component>Contact</component>
   </item>
+  <item>
+    <path>civicrm/smartdebit/payerdetails</path>
+    <page_callback>CRM_Smartdebit_Form_Payerdetails</page_callback>
+    <title>Payerdetails</title>
+    <access_arguments>access CiviCRM</access_arguments>
+  </item>
 </menu>
 

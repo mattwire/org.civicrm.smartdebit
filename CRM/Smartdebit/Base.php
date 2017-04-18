@@ -747,105 +747,105 @@ EOF;
   }
 
   /**
-   * Create a new recurring contribution for the direct debit instruction we set up.
-   * @param $recurParams
+   * Create/update a contribution for the direct debit.
+   * @param $params
    * @return object
    */
-  static function createContribution($recurParams) {
+  static function createContribution($params) {
     // Mandatory Parameters
     // Amount
-    if (empty($recurParams['total_amount'])) {
+    if (empty($params['total_amount'])) {
       CRM_Core_Error::debug_log_message('Smartdebit createRecurContribution: ERROR must specify amount!');
       return FALSE;
     }
     else {
       // Make sure it's properly formatted (ie remove symbols etc)
-      $recurParams['total_amount'] = preg_replace("/([^0-9\\.])/i", "", $recurParams['total_amount']);
+      $params['total_amount'] = preg_replace("/([^0-9\\.])/i", "", $params['total_amount']);
     }
-    if (empty($recurParams['contact_id'])) {
+    if (empty($params['contact_id'])) {
       CRM_Core_Error::debug_log_message('Smartdebit createRecurContribution: ERROR must specify contact_id!');
       return FALSE;
     }
 
     // Optional parameters
     // Set default processor_id
-    if (empty($recurParams['payment_processor_id'])) {
-      $recurParams['payment_processor_id'] = CRM_Core_Payment_Smartdebit::getSmartdebitPaymentProcessorID();
+    if (empty($params['payment_processor_id'])) {
+      $params['payment_processor_id'] = CRM_Core_Payment_Smartdebit::getSmartdebitPaymentProcessorID();
     }
     // Set status
-    if (empty($recurParams['contribution_status_id'])) {
+    if (empty($params['contribution_status_id'])) {
       // Default to "In Progress" as we assume setup was successful at this point
-      $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
+      $params['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
     }
     // Default to today for modified date
-    if (empty($recurParams['receive_date'])) {
-      $recurParams['receive_date'] = date('YmdHis');
+    if (empty($params['receive_date'])) {
+      $params['receive_date'] = date('YmdHis');
     }
     else {
-      $recurParams['receive_date'] = CRM_Utils_Date::processDate($recurParams['receive_date']);
+      $params['receive_date'] = CRM_Utils_Date::processDate($params['receive_date']);
     }
     // processor id (match trxn_id)
-    if (empty($recurParams['processor_id'])) {
-      if (!empty($recurParams['reference_number'])) {
-        $recurParams['processor_id'] = $recurParams['reference_number'];
+    if (empty($params['processor_id'])) {
+      if (!empty($params['reference_number'])) {
+        $params['processor_id'] = $params['reference_number'];
       }
-      elseif (!empty($recurParams['trxn_id'])) {
-        $recurParams['processor_id'] = $recurParams['trxn_id'];
+      elseif (!empty($params['trxn_id'])) {
+        $params['processor_id'] = $params['trxn_id'];
       }
       else {
-        $recurParams['processor_id'] = '';
+        $params['processor_id'] = '';
       }
     }
     // trxn_id (match processor id)
-    if (empty($recurParams['trxn_id'])) {
-      if (!empty($recurParams['processor_id'])) {
-        $recurParams['trxn_id'] = $recurParams['processor_id'];
+    if (empty($params['trxn_id'])) {
+      if (!empty($params['processor_id'])) {
+        $params['trxn_id'] = $params['processor_id'];
       }
       else {
-        $recurParams['trxn_id'] = '';
+        $params['trxn_id'] = '';
       }
     }
     // Default value for payment_instrument id (payment method, eg. "Direct Debit")
-    if (empty($recurParams['payment_instrument_id'])){
-      $recurParams['payment_instrument_id'] = CRM_Smartdebit_Base::getDefaultPaymentInstrumentID();
+    if (empty($params['payment_instrument_id'])){
+      $params['payment_instrument_id'] = CRM_Smartdebit_Base::getDefaultPaymentInstrumentID();
     }
     // Default value for financial_type_id (eg. "Member dues")
-    if (empty($recurParams['financial_type_id'])){
-      $recurParams['financial_type_id'] = CRM_Smartdebit_Base::getDefaultFinancialTypeID();
+    if (empty($params['financial_type_id'])){
+      $params['financial_type_id'] = CRM_Smartdebit_Base::getDefaultFinancialTypeID();
     }
     // Default currency
-    if (empty($recurParams['currency'])) {
+    if (empty($params['currency'])) {
       $config = CRM_Core_Config::singleton();
-      $recurParams['currency'] = $config->defaultCurrency;
+      $params['currency'] = $config->defaultCurrency;
     }
     // Invoice ID
-    if (empty($recurParams['invoice_id'])) {
-      $recurParams['invoice_id'] = md5(uniqid(rand(), TRUE ));
+    if (empty($params['invoice_id'])) {
+      $params['invoice_id'] = md5(uniqid(rand(), TRUE ));
     }
 
     // Build recur params
     $contributionParams = array(
-      'contact_id' =>  $recurParams['contact_id'],
-      'receive_date' => $recurParams['receive_date'],
-      'total_amount' => $recurParams['total_amount'],
-      'payment_processor_id' => $recurParams['payment_processor_id'],
-      'contribution_status_id'=> $recurParams['contribution_status_id'],
-      'trxn_id'	=> $recurParams['trxn_id'],
-      'financial_type_id'	=> $recurParams['financial_type_id'],
-      'currency' => $recurParams['currency'],
-      'processor_id' => $recurParams['processor_id'],
-      'payment_instrument_id' => $recurParams['payment_instrument_id'],
-      'invoice_id' => $recurParams['invoice_id'],
+      'contact_id' =>  $params['contact_id'],
+      'receive_date' => $params['receive_date'],
+      'total_amount' => $params['total_amount'],
+      'payment_processor_id' => $params['payment_processor_id'],
+      'contribution_status_id'=> $params['contribution_status_id'],
+      'trxn_id'	=> $params['trxn_id'],
+      'financial_type_id'	=> $params['financial_type_id'],
+      'currency' => $params['currency'],
+      'processor_id' => $params['processor_id'],
+      'payment_instrument_id' => $params['payment_instrument_id'],
+      'invoice_id' => $params['invoice_id'],
     );
-    if (!empty($recurParams['contribution_id'])) {
-      $contributionParams['contribution_id'] = $recurParams['contribution_id'];
+    if (!empty($params['contribution_id'])) {
+      $contributionParams['contribution_id'] = $params['contribution_id'];
     }
-    if (!empty($recurParams['contribution_recur_id'])) {
-      $contributionParams['contribution_recur_id'] = $recurParams['contribution_recur_id'];
+    if (!empty($params['contribution_recur_id'])) {
+      $contributionParams['contribution_recur_id'] = $params['contribution_recur_id'];
     }
 
     // Create/Update the contribution
     $result = civicrm_api3('Contribution', 'create', $contributionParams);
-    return array_merge($result, $contributionParams);
+    return $result;
   }
 }

@@ -259,6 +259,7 @@ class CRM_Smartdebit_Sync
 
     // Import each transaction from smart debit
     foreach ($smartDebitPayerContacts as $key => $sdContact) {
+      // TODO: Update this
       // Get recurring contribution details from CiviCRM
       $sql = "
         SELECT ctrc.id contribution_recur_id ,ctrc.contact_id , cont.display_name ,ctrc.start_date , ctrc.amount, ctrc.trxn_id , ctrc.frequency_unit, ctrc.frequency_interval, ctrc.payment_instrument_id, ctrc.financial_type_id

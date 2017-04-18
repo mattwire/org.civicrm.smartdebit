@@ -256,7 +256,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       'variable_ddi[address_1]' => self::replaceCommaWithSpace($fields['billing_street_address-5']),
       'variable_ddi[town]' => self::replaceCommaWithSpace($fields['billing_city-5']),
       'variable_ddi[postcode]' => $fields['billing_postal_code-5'],
-      'variable_ddi[country]' => $fields['billing_country_id-5'], //*** $params['billing_country-5']
+      'variable_ddi[country]' => $fields['billing_country_id-5'],
       'variable_ddi[account_name]' => $fields['account_holder'],
       'variable_ddi[sort_code]' => $fields['bank_identification_number'],
       'variable_ddi[account_number]' => $fields['bank_account_number'],
@@ -565,39 +565,6 @@ EOF;
   }
 
   /**
-   * Process incoming notification.
-   */
-  public static function handlePaymentNotification()
-  {
-    if (empty($_GET)) {
-      $rpInvoiceArray = explode('&', $_POST['rp_invoice_id']);
-      foreach ($rpInvoiceArray as $rpInvoiceValue) {
-        $rpValueArray = explode('=', $rpInvoiceValue);
-        if ($rpValueArray[0] == 'm') {
-          $value = $rpValueArray[1];
-        }
-      }
-      $SmartDebitIPN = new CRM_Core_Payment_SmartDebitIPN();
-    } else {
-      $value = CRM_Utils_Array::value('module', $_GET);
-      $SmartDebitIPN = new CRM_Core_Payment_SmartDebitIPN();
-    }
-
-    switch (strtolower($value)) {
-      case 'contribute':
-        $SmartDebitIPN->main('contribute');
-        break;
-      case 'event':
-        $SmartDebitIPN->main('event');
-        break;
-      default     :
-        CRM_Core_Error::debug_log_message("Could not get module name from request url");
-        echo "Could not get module name from request url<p>";
-        break;
-    }
-  }
-
-  /**
    * Change the subscription amount using the Smart Debit API
    * @param string $message
    * @param array $params
@@ -781,41 +748,6 @@ EOF;
     }
     $errorMsg .= 'Please correct the errors and try again';
     return $errorMsg;
-  }
-
-  /**
-   * Format and submit IPN
-   * @param $txn_type
-   * @param $trxn_id
-   * @param $contactID
-   * @param $contributionID
-   * @param $amount
-   * @param $invoice_id
-   * @param $recurID
-   * @param $financial_type_id
-   */
-  static function callIPN($txn_type, $trxn_id, $contactID, $contributionID, $amount, $invoice_id, $recurID,
-                          $financial_type_id=null, $membershipID=null, $firstCollection=null, $collectionDay=null) {
-    $query = "processor_name=Smart_Debit&module=contribute"
-             . "&contactID=".urlencode($contactID)."&contributionID=".urlencode($contributionID)
-             . "&mc_gross=".urlencode($amount)."&invoice=".urlencode($invoice_id)
-             . "&payment_status=Completed"
-             . "&txn_type=".urlencode($txn_type)."&contributionRecurID=".urlencode($recurID)
-             . "&txn_id=".urlencode($trxn_id);
-    if (!empty($financial_type_id)) {
-      $query .= "&financial_type_id=".urlencode($financial_type_id);
-    }
-    if (!empty($membershipID)) {
-      $query .= "&membershipID=".urlencode($membershipID);
-    }
-    if (!empty($firstCollection)) {
-      $query .= "&first_collection_date=".urlencode($firstCollection);
-    }
-    if (!empty($collectionDay)) {
-      $query .= "&collection_day=".urlencode($collectionDay);
-    }
-    $url = CRM_Utils_System::url('civicrm/payment/ipn', $query, TRUE, NULL, FALSE, TRUE);
-    call_CiviCRM_IPN($url);
   }
 
   /**

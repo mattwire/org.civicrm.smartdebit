@@ -19,7 +19,10 @@ class CRM_Smartdebit_Form_Main extends CRM_Core_Form
         self::setDirectDebitFields($form);
       }
 
-      //if ($offline) self::setBillingDetailsFields($form);
+      if ($offline) {
+        self::setBillingDetailsFields($form);
+      }
+
       foreach ( $form->_paymentFields as $name => $field ) {
         if ( isset($field['cc_field'] ) &&
           $field['cc_field']
@@ -51,6 +54,8 @@ class CRM_Smartdebit_Form_Main extends CRM_Core_Form
       }
     }
 
+    $defaults = array();
+
     if (!$offline) {
       if ( $form->_paymentProcessor['billing_mode'] & CRM_Core_Payment::BILLING_MODE_BUTTON ) {
         $form->_expressButtonName = $form->getButtonName( $form->buttonType(), 'express' );
@@ -73,7 +78,7 @@ class CRM_Smartdebit_Form_Main extends CRM_Core_Form
         return;
       }
     }
-      $form->setDefaults($defaults);
+    $form->setDefaults($defaults);
   }
 
   /** create all fields needed for direct debit transaction
@@ -235,6 +240,7 @@ class CRM_Smartdebit_Form_Main extends CRM_Core_Form
       'is_required' => TRUE,
     );
 
+    // FIXME: This should be chainselect but it won't work offline for some reason
     $form->_paymentFields["billing_state_province_id-{$bltID}"] = array(
       'htmlType' => 'select',
       'title' => ts('State/Province'),
@@ -263,8 +269,7 @@ class CRM_Smartdebit_Form_Main extends CRM_Core_Form
       'cc_field' => TRUE,
       'attributes' => array(
           '' => ts('- select -'),
-        ) +
-        CRM_Core_PseudoConstant::country(),
+        ) + CRM_Core_PseudoConstant::country(),
       'is_required' => TRUE,
     );
   }

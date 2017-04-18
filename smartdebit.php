@@ -596,7 +596,8 @@ function smartdebit_civicrm_links( $op, $objectName, $objectId, &$links, &$mask,
 /**
  * Create message templates
  *
- * TODO: Check this works
+ * TODO: Check this works - it's called during install
+ * TODO: Need to document this too
  */
 function smartdebit_message_template() {
   $msg_title   = 'direct_debit_confirmation';
@@ -698,15 +699,19 @@ function renew_membership_by_one_period($membershipID) {
 function smartdebit_civicrm_postProcess( $formName, &$form ) {
   // Check the form being submitted is a contribution form
   if ( is_a( $form, 'CRM_Contribute_Form_Contribution_Confirm' ) ) {
+    // FIXME: Does this work for online direct debit payment?
     $paymentType = urlencode($form->_paymentProcessor['payment_type']);
     $isRecur = urlencode($form->_values['is_recur']);
     $paymentProcessorType = urlencode($form->_paymentProcessor['payment_processor_type']);
 
     // Now only do this if the payment processor type is Direct Debit as other payment processors may do this another way
     if (($paymentType == CRM_Core_Payment::PAYMENT_TYPE_DIRECT_DEBIT) && ($paymentProcessorType == 'Smart_Debit')) {
-      if (empty($form->_contactID) || empty($form->_id) || empty ($form->_contributionID))
+      if (empty($form->_contactID) || empty($form->_id) || empty ($form->_contributionID) || empty ($form->_params['membershipID']))
         return;
-      $contributionInfo = civicrm_api3('Contribution', 'get', array(
+
+      CRM_Smartdebit_Form_Newdd::setupMembershipDirectDebit($form->_params['membershipID'], $form->_contactID);
+
+      /*$contributionInfo = civicrm_api3('Contribution', 'get', array(
         'sequential' => 1,
         'return' => array("id", "contribution_recur_id", "receive_date"),
         'contact_id' => $form->_contactID,
@@ -728,24 +733,21 @@ function smartdebit_civicrm_postProcess( $formName, &$form ) {
         $trxn_id = urlencode($form->_params['ddi_reference']);
         $collection_day = urlencode($form->_params['preferred_collection_day']);
 
-        CRM_Core_Payment_Smartdebit::callIPN("recurring_payment", $trxn_id, $contactID, $contributionID, $amount, $invoiceID, $contributionRecurID,
-          null, $membershipID, $start_date, $collection_day);
+        //CRM_Core_Payment_Smartdebit::callIPN("recurring_payment", $trxn_id, $contactID, $contributionID, $amount, $invoiceID, $contributionRecurID,
+        //  null, $membershipID, $start_date, $collection_day);
 
         renew_membership_by_one_period($membershipID);
         return;
       }
       else {
-        /* PS 23/05/2013
-         * Not Recurring, only need to move the receive_date of the contribution
-         */
+        // PS 23/05/2013 Not Recurring, only need to move the receive_date of the contribution
         $contrib_result = civicrm_api("Contribution"
           , "create"
           , array('version' => '3'
           , 'id' => $contributionID
           , 'receive_date' => $start_date
           )
-        );
-      }
+        );*/
     }
   }
 }
