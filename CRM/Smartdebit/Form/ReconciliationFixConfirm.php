@@ -50,19 +50,6 @@ class CRM_Smartdebit_Form_ReconciliationFixConfirm extends CRM_Core_Form {
     parent::buildQuickForm();
   }
 
-  public function postProcess() {
-    $submitValues = $this->_submitValues;
-    $cid = $submitValues['cid'];
-    $mid = $submitValues['mid'];
-    $reference_number = $submitValues['reference_number'];
-    $cr_id = $submitValues['cr_id'];
-    $params = sprintf('cid=%d&mid=%d&cr_id=%d&reference_number=%s', $cid, $mid, $cr_id, $reference_number);
-    // FIXME: This path doesn't exist... need to redirect and create a recurring contribution
-    $url = CRM_Utils_System::url('civicrm/smartdebit/reconciliation/fix-contact-rec',$params);
-    CRM_Utils_System::redirect($url);
-    parent::postProcess();
-  }
-
   /**
    * This function sets the default values for the form.
    *
@@ -79,24 +66,16 @@ class CRM_Smartdebit_Form_ReconciliationFixConfirm extends CRM_Core_Form {
     return $defaults;
   }
 
-  /**
-   * Get the fields/elements defined in this form.
-   *
-   * @return array (string)
-   */
-  public function getRenderableElementNames() {
-    // The _elements list includes some items which should not be
-    // auto-rendered in the loop -- such as "qfKey" and "buttons".  These
-    // items don't have labels.  We'll identify renderable by filtering on
-    // the 'label'.
-    $elementNames = array();
-    foreach ($this->_elements as $element) {
-      /** @var HTML_QuickForm_Element $element */
-      $label = $element->getLabel();
-      if (!empty($label)) {
-        $elementNames[] = $element->getName();
-      }
-    }
-    return $elementNames;
+  public function postProcess() {
+    $submitValues = $this->_submitValues;
+    $cid = $submitValues['cid'];
+    $mid = $submitValues['mid'];
+    $reference_number = $submitValues['reference_number'];
+    $cr_id = $submitValues['cr_id'];
+    $params = sprintf('cid=%d&mid=%d&cr_id=%d&reference_number=%s', $cid, $mid, $cr_id, $reference_number);
+    // FIXME: This path doesn't exist... need to redirect and create a recurring contribution
+    $url = CRM_Utils_System::url('civicrm/smartdebit/reconciliation/fix-contact-rec',$params);
+    CRM_Utils_System::redirect($url);
+    parent::postProcess();
   }
 }

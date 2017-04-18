@@ -529,7 +529,6 @@ AND   csd.id IS NULL LIMIT 100";
       'frequency_unit' => $params['recur_frequency_unit'],
       'payment_processor_id' => $params['payment_processor_id'],
       'payment_instrument_id' => $params['payment_instrument_id'],
-      'contribution_type_id' => '2', /* TODO Get the contribution type ID for recurring memberships */
       'trxn_id' => $params['trxn_id'],
       'create_date' => $params['recur_start_date'],
       'cycle_day' => $params['cycle_day'],
