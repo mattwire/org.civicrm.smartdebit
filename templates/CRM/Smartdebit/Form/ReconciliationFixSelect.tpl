@@ -96,9 +96,9 @@
   var contactUrl = {/literal}"{crmURL p='civicrm/ajax/rest' q='className=CRM_Contact_Page_AJAX&fnName=getContactList&json=1&context=navigation' h=0 }"{literal};
   var getTemplateContentUrl = {/literal}"{crmURL p='civicrm/ajax/rest' h=0 q='className=CRM_Smartdebit_Page_AJAX&fnName=getMembershipByContactID&json=1'}"{literal}
   var $form = cj("form.{/literal}{$form.formClass}{literal}");
+  var cid = null;
   cj("#contact_name", $form).change(function() {
       var data = cj( '#contact_name' ).select2('data');
-      var cid = null;
       ( data !== null) ? cid = data.id : cid = null;
       cj('input[name=cid]').val(cid);
       if (cid !== null) {
