@@ -594,31 +594,32 @@ function smartdebit_civicrm_links( $op, $objectName, $objectId, &$links, &$mask,
 }
 
 /**
- * Create message templates
+ * Create Direct Debit Message Templates
+ * Body of template is empty as this should be customised by the admin during setup.
  *
- * TODO: Check this works - it's called during install
- * TODO: Need to document this too
+ * FIXME: Should we add a default body template?
  */
 function smartdebit_message_template() {
-  $msg_title   = 'direct_debit_confirmation';
-  $msg_subject = 'Thank you for your direct debit sign-up';
+  $msgTitle = 'Direct Debit Confirmation Email';
+  $msgSubject = 'Thank you for your Direct Debit sign-up';
+  $msgHTML = ' ';
+  $msgText = ' ';
 
-  $text = ' ';
-  $html = ' ';
+  $msgTemplate = civicrm_api3('MessageTemplate', 'get', array(
+    'sequential' => 1,
+    'msg_title' => $msgTitle,
+  ));
 
-  $template_sql  = " INSERT INTO civicrm_msg_template SET ";
-  $template_sql .= " msg_title   = %0, ";
-  $template_sql .= " msg_subject = %1, ";
-  $template_sql .= " msg_text    = %2, ";
-  $template_sql .= " msg_html    = %3 ";
-
-  $template_params = array(array($msg_title,   'String'),
-    array($msg_subject, 'String'),
-    array($text,        'String'),
-    array($html,        'String'),
-  );
-
-  CRM_Core_DAO::executeQuery($template_sql, $template_params);
+  if (empty($msgTemplate['count'])) {
+    // Only create a message template if we don't already have one
+    $msgTemplate = civicrm_api3('MessageTemplate', 'create', array(
+      'sequential' => 1,
+      'msg_title' => $msgTitle,
+      'msg_subject' => $msgSubject,
+      'msg_html' => $msgHTML,
+      'msg_text' => $msgText,
+    ));
+  }
 }
 
 /**

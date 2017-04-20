@@ -1,7 +1,7 @@
 <div class="crm-block crm-form-block crm-campaignmonitor-sync-form-block">
 {if $smarty.get.state eq 'done'}
     <div class="help">
-      {ts}Sync completed with result counts as:{/ts}<br/> 
+      <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}Sync completed with result counts as:{/ts}<br/></span>
       <table class="form-layout-compressed bold">
       <tr><td>{ts}Added Contributions to CiviCRM{/ts}:</td><td>{$stats.Added}</td></tr>
       <tr><td>{ts}New Direct Debit{/ts}:</td><td>{$stats.New}</td></tr>

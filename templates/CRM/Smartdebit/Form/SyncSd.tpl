@@ -4,6 +4,7 @@
         <p>{ts}Showing available dates from <strong>{$dateOfCollectionStart}</strong> to <strong>{$dateOfCollectionEnd}</strong>{/ts}</p>
     </div>
     <div class="help">
+      <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}Terms:{/ts}</span>
         <ul>
             <li>AUDDIS: Automated Direct Debit Instruction Service (payment reports)</li>
             <li>ARUDD: Automated Return of Unpaid Direct Debit (failure reports)</li>

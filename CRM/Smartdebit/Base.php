@@ -86,6 +86,8 @@ class CRM_Smartdebit_Base
    * Main purpose is to tidy the contribution
    * And to setup the relevant Direct Debit Mandate Information
    *
+   * // FIXME: Not used anywhere - check we are creating activities etc. as required.
+   *
    * @param $objects
    */
   static function completeDirectDebitSetup( $objects )  {
@@ -280,6 +282,8 @@ EOF;
 
   /**
    * Create a Direct Debit Sign Up Activity for contact
+   *
+   * // FIXME: Check that user receives an email sign up?
    * @param $params
    * @return mixed
    */
@@ -319,7 +323,6 @@ EOF;
     return $activityID;
   }
 
-  // FIXME: This function is not used anywhere? Remove?
   /**
    * Send email receipt for direct debit signup.
    * @param $type
@@ -327,6 +330,8 @@ EOF;
    * @param $pageID
    * @param $recur
    * @param bool $autoRenewMembership
+   *
+   * // FIXME: We don't use this function, are we sending an email confirmation of recurring contribution? In which case we can delete this
    */
   function directDebitSignUpNofify( $type, $contactID, $pageID, $recur, $autoRenewMembership = FALSE ) {
     $value = array();

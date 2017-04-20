@@ -1,14 +1,21 @@
 {if $totalMandates eq 0}
   <h3>No Smart Debit records found!</h3>
-    <div class="crm-submit-buttons">
-      {include file="CRM/common/formButtons.tpl" location="top"}
-    </div>
+  <div class="crm-submit-buttons">
+    {include file="CRM/common/formButtons.tpl" location="top"}
+  </div>
 {else}
+  <div class="help">
+    <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> Total Mandates synced from Smart Debit: {$totalMandates}</span><br/>
+    <span><i class="crm-i fa-question-circle" aria-hidden="true"></i>  If you need to refresh mandates from Smart Debit: <a href="{crmURL p='civicrm/smartdebit/reconciliation/list' q='sync=1' h=0}">Click Here</a></span>
+  </div>
+{/if}
+{if $totalMandates gt 0}
+<h3>Filters</h3>
     <table>
         <tr>
             <td>
                 <div class="help">
-                    Select a filter from the list below to view mismatches.
+                    <span><i class="crm-i fa-question-circle" aria-hidden="true"></i> Select a filter from the list below to view mismatches.</span>
                 </div>
                 <div style="crm-form">
                     <h4>Show All Mandates Missing from CiviCRM:</h4>

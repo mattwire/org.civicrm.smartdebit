@@ -64,7 +64,7 @@
 
 {else}
       <h3>{ts}Please confirm that you wish to synchronise all matched transactions from SmartDebit into CiviCRM?{/ts}</h3>
-      <div class="help">If you press confirm all matched transactions will be imported into CiviCRM</div>
+    <div class="help"><span><i class="crm-i fa-info-circle" aria-hidden="true"></i> If you press confirm all matched transactions will be imported into CiviCRM</span></div>
       <div class="crm-block crm-form-block crm-campaignmonitor-sync-form-block">
         <div class="crm-submit-buttons">
           {include file="CRM/common/formButtons.tpl"}

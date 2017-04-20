@@ -4,10 +4,10 @@
     <p>{ts}CiviCRM will attempt to retrieve AUDDIS and ARUDD records for a 1 month period ending with the date you specify here.{/ts}</p>
   </div>
     <div class="help">
-        {ts}This should not normally be necessary as the collection reports are retrieved daily by the SmartDebit scheduled job.
+        <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}This should not normally be necessary as the collection reports are retrieved daily by the SmartDebit scheduled job.
         If you specify a date here the collection report data will be cleared and one month of data re-synced from SmartDebit.
         If you don't specify a date the cached data will not be modified.{/ts}<br/>
-        <strong>{ts}If you are importing latest payments (up to a month old) you should not enter a date here.{/ts}</strong>
+      <strong>{ts}If you are importing latest payments (up to a month old) you should not enter a date here.{/ts}</strong></span>
     </div>
   <div class="crm-block crm-form-block crm-campaignmonitor-sync-form-block">
     <div class="crm-submit-buttons">

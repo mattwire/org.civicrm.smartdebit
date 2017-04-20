@@ -49,7 +49,7 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
         CRM_Core_Session::setStatus($e->getMessage(), 'Smart Debit');
       }
       $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/list', 'reset=1');
-      CRM_Core_Session::singleton()->pushUserContext($url);
+      CRM_Utils_System::redirect($url);
       return;
     }
 
