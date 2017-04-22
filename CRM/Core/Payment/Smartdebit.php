@@ -89,7 +89,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     $form->addFormRule(array('CRM_Core_Payment_Smartdebit', 'validatePayment'), $form);
 
     CRM_Core_Region::instance('billing-block')->add(
-      array('template' => 'CRM/Smartdebit/BillingBlock/BillingBlockPost.tpl', 'weight' => -1));
+      array('template' => 'CRM/Core/Payment/Smartdebit/Smartdebit.tpl', 'weight' => -1));
 
     return;
   }
