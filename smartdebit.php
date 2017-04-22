@@ -407,44 +407,31 @@ function smartdebit_civicrm_pageRun(&$page)
  */
 function smartdebit_civicrm_buildForm( $formName, &$form )
 {
-  // Contribution / Payment / Signup forms
-  if (($formName == 'CRM_Financial_Form_Payment')
-    || $formName == 'CRM_Contribute_Form_Contribution_Main'
-  ) {
-    // Main payment/contribution page form
-    CRM_Core_Region::instance('billing-block-pre')->add(array(
-      'template' => 'CRM/Smartdebit/BillingBlock/BillingBlockPre.tpl',
-    ));
-    CRM_Core_Region::instance('billing-block-post')->add(array(
-      'template' => 'CRM/Smartdebit/BillingBlock/BillingBlockPost.tpl',
-    ));
-  }
   //Smart Debit
   if (isset($form->_paymentProcessor['payment_processor_type']) && ($form->_paymentProcessor['payment_processor_type'] == 'Smart_Debit')) {
-    // Contribution Thankyou form
-    if ($formName == 'CRM_Contribute_Form_Contribution_ThankYou') {
+    if ($formName == 'CRM_Contribute_Form_Contribution_Confirm') {
+      // Confirm Contribution (check details and confirm)
+      // Show the direct debit agreement on the confirm page
+      CRM_Core_Region::instance('contribution-confirm-billing-block')->update('default', array(
+        'disabled' => TRUE,
+      ));
+
+      $form->assign('dd_account_holder', CRM_Utils_Array::value('account_holder', $form->_params));
+      $form->assign('dd_bank_account_number', CRM_Utils_Array::value('bank_account_number', $form->_params));
+      $form->assign('dd_bank_identification_number', CRM_Utils_Array::value('bank_identification_number', $form->_params));
+      $form->assign('dd_bank_name', CRM_Utils_Array::value('bank_name', $form->_params));
+      CRM_Core_Region::instance('contribution-confirm-billing-block')->add(array(
+        'template' => 'CRM/Contribute/Form/Contribution/DirectDebitAgreement.tpl',
+      ));
+    }
+    elseif ($formName == 'CRM_Contribute_Form_Contribution_ThankYou') {
+      // Contribution Thankyou form
       // Show the direct debit mandate on the thankyou page
       CRM_Core_Region::instance('contribution-thankyou-billing-block')->update('default', array(
         'disabled' => TRUE,
       ));
       CRM_Core_Region::instance('contribution-thankyou-billing-block')->add(array(
         'template' => 'CRM/Contribute/Form/Contribution/DirectDebitMandate.tpl',
-      ));
-    } // Confirm Contribution (check details and confirm)
-    elseif ($formName == 'CRM_Contribute_Form_Contribution_Confirm') {
-      // Show the direct debit agreement on the confirm page
-      CRM_Core_Region::instance('contribution-confirm-recur')->update('default', array(
-        'disabled' => TRUE,
-      ));
-      CRM_Core_Region::instance('contribution-confirm-recur')->add(array(
-        'template' => 'CRM/Contribute/Form/Contribution/DirectDebitRecur.tpl',
-      ));
-
-      CRM_Core_Region::instance('contribution-confirm-billing-block')->update('default', array(
-        'disabled' => TRUE,
-      ));
-      CRM_Core_Region::instance('contribution-confirm-billing-block')->add(array(
-        'template' => 'CRM/Contribute/Form/Contribution/DirectDebitAgreement.tpl',
       ));
     } elseif ($formName == 'CRM_Contribute_Form_UpdateSubscription') {
       // Accessed when you click edit on a recurring contribution
