@@ -21,7 +21,7 @@ return array(
       'url_api_default' => 'https://secure.ddprocessing.co.uk/',
       'url_recur_default' => 'https://secure.ddprocessing.co.uk/',
       'billing_mode' => 1, // 1=form
-      'payment_type' => 2, // 2= Direct debit
+      'payment_type' => 1, // 1=Credit Card
       'is_recur' => 1,
     ),
   ),
