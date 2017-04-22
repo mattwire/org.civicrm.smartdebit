@@ -65,17 +65,17 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     $error = array();
 
     if (empty($this->_paymentProcessor['user_name'])) {
-      $error[] = ts('The "Bill To ID" is not set in the Administer CiviCRM Payment Processor.');
+      $error[] = ts('The "username" is not set in the Smart Debit Payment Processor settings.');
     }
 
-    /* TO DO
-     * Add check to ensure password is also set
-     * Also the URL's for api site
-     */
+    if (empty($this->_paymentProcessor['password'])) {
+      $error[] = ts('The "password" is not set in the Smart Debit Payment Processor settings.');
+    }
 
     if (!empty($error)) {
       return implode('<p>', $error);
-    } else {
+    }
+    else {
       return NULL;
     }
   }
@@ -86,22 +86,142 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    */
   function buildForm(&$form)
   {
-    $offline = FALSE;
-    if (in_array($form->getVar('_name'), array(
-      'UpdateBilling',
-      'UpdateSubscription',
-    ))) {
-      $offline = TRUE;
-    }
+    $form->addFormRule(array('CRM_Core_Payment_Smartdebit', 'validatePayment'), $form);
 
-    $ddForm = new CRM_Smartdebit_Form_Main();
-    $ddForm->buildDirectDebitForm($form,FALSE,$offline);
-    // If we are updating billing address of smart debit mandate we don't need to validate, validation will happen in updateSubscriptionBillingInfo method
-    if ($form->getVar('_name') != 'UpdateBilling') {
-      $form->addFormRule(array('CRM_Core_Payment_Smartdebit', 'validatePayment'), $form);
-      return TRUE;
-    }
+    CRM_Core_Region::instance('billing-block')->add(
+      array('template' => 'CRM/Smartdebit/BillingBlock/BillingBlockPost.tpl', 'weight' => -1));
+
     return;
+  }
+
+  /**
+   * Override CRM_Core_Payment function
+   */
+  public function getPaymentTypeName() {
+    return 'direct_debit';
+  }
+
+  /**
+   * Override CRM_Core_Payment function
+   */
+  public function getPaymentTypeLabel() {
+    return 'Direct Debit';
+  }
+
+  /**
+   * Override CRM_Core_Payment function
+   */
+  public function getPaymentFormFields() {
+    return array(
+      'payer_confirmation',
+      'preferred_collection_day',
+      'confirmation_method',
+      'account_holder',
+      'bank_account_number',
+      'bank_identification_number',
+      'bank_name',
+      'ddi_reference',
+    );
+  }
+
+  /**
+   * Return an array of all the details about the fields potentially required for payment fields.
+   *
+   * Only those determined by getPaymentFormFields will actually be assigned to the form
+   *
+   * @return array
+   *   field metadata
+   */
+  public function getPaymentFormFieldsMetadata() {
+    // Get the collection days options
+    $collectionDaysArray = CRM_Smartdebit_Base::getCollectionDaysOptions();
+
+    return array(
+      'account_holder' => array(
+        'htmlType' => 'text',
+        'name' => 'account_holder',
+        'title' => ts('Account Holder'),
+        'cc_field' => TRUE,
+        'attributes' => array('size' => 20
+        , 'maxlength' => 18
+        , 'autocomplete' => 'on'
+        ),
+        'is_required' => TRUE
+      ),
+      //e.g. IBAN can have maxlength of 34 digits
+      'bank_account_number' => array(
+        'htmlType' => 'text',
+        'name' => 'bank_account_number',
+        'title' => ts('Bank Account Number'),
+        'cc_field' => TRUE,
+        'attributes' => array('size' => 20
+        , 'maxlength' => 34
+        , 'autocomplete' => 'off'
+        ),
+        'is_required' => TRUE
+      ),
+      //e.g. SWIFT-BIC can have maxlength of 11 digits
+      'bank_identification_number' => array(
+        'htmlType' => 'text',
+        'name' => 'bank_identification_number',
+        'title' => ts('Sort Code'),
+        'cc_field' => TRUE,
+        'attributes' => array('size' => 20
+        , 'maxlength' => 11
+        , 'autocomplete' => 'off'
+        ),
+        'is_required' => TRUE
+      ),
+      'bank_name' => array(
+        'htmlType' => 'text',
+        'name' => 'bank_name',
+        'title' => ts('Bank Name'),
+        'cc_field' => TRUE,
+        'attributes' => array('size' => 20
+        , 'maxlength' => 64
+        , 'autocomplete' => 'off'
+        ),
+        'is_required' => TRUE
+      ),
+      'preferred_collection_day' => array(
+        'htmlType' => 'select',
+        'name' => 'preferred_collection_day',
+        'title' => ts('Preferred Collection Day'),
+        'cc_field' => TRUE,
+        'attributes' => $collectionDaysArray, // eg. array('1' => '1st', '8' => '8th', '21' => '21st'),
+        'is_required' => TRUE
+      ),
+      'confirmation_method' => array(
+        'htmlType' => 'select',
+        'name' => 'confirmation_method',
+        'title' => ts('Confirm By'),
+        'cc_field' => TRUE,
+        'attributes' => array('EMAIL' => 'Email'
+        , 'POST' => 'Post'
+        ),
+        'is_required' => TRUE
+      ),
+      'payer_confirmation' => array(
+        'htmlType' => 'checkbox',
+        'name' => 'payer_confirmation',
+        'title' => ts('Please confirm that you are the account holder and only person required to authorise Direct Debits from this account'),
+        'cc_field' => TRUE,
+        'attributes' => '',
+        'is_required' => TRUE
+      ),
+      'ddi_reference' => array(
+        'htmlType' => 'hidden',
+        'name' => 'ddi_reference',
+        'title' => ts('DDI Reference'),
+        'cc_field' => TRUE,
+        'attributes' => array('size' => 20
+        , 'maxlength' => 64
+        , 'autocomplete' => 'off'
+        ),
+        'is_required' => FALSE,
+        'default' => 'hello'
+      )
+    );
   }
 
   /**
