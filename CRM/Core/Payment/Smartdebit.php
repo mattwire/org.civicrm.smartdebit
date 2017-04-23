@@ -530,6 +530,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     switch (strtoupper($response["Status"])) {
       case 'OK':
         $params['trxn_id'] = $response['reference_number'];
+        self::setRecurTransactionId($params);
         CRM_Smartdebit_Base::completeDirectDebitSetup($params);
         return $params;
       case 'REJECTED':
@@ -541,6 +542,21 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       default:
         $_SESSION['contribution_attempt'] = 'failed';
         return self::error($response, $params);
+    }
+  }
+
+  /**
+   * Add transaction Id to recurring contribution
+   * @param $params
+   */
+  static function setRecurTransactionId($params) {
+    // As the recur transaction is created before payment, we need to update it with our params after payment
+    if (!empty($params['contributionRecurID']) && !(empty($params['trxn_id']))) {
+      $result = civicrm_api3('ContributionRecur', 'create', array(
+        'sequential' => 1,
+        'id' => $params['contributionRecurID'],
+        'trxn_id' => $params['trxn_id'],
+      ));
     }
   }
 
