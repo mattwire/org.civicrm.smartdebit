@@ -137,9 +137,6 @@ function smartdebit_civicrm_install()
                    `contact` varchar(255) DEFAULT NULL,
                    `amount` decimal(20,2) DEFAULT NULL,
                    `frequency` varchar(255) DEFAULT NULL,
-                   `is_membership_renew` int(11) DEFAULT NULL,
-                   `membership_renew_from` varchar(255) DEFAULT NULL,
-                   `membership_renew_to` varchar(255) DEFAULT NULL,
                   PRIMARY KEY (`id`)
          ) ENGINE=InnoDB AUTO_INCREMENT=350 DEFAULT CHARSET=latin1";
     CRM_Core_DAO::executeQuery($createSql);
@@ -174,8 +171,6 @@ function smartdebit_civicrm_install()
     $alterQuery = "alter table veda_smartdebit_refresh add index reference_number_idx(reference_number)";
     CRM_Core_DAO::executeQuery($alterQuery);
   }
-
-  smartdebit_message_template();
 
   _smartdebit_civix_civicrm_install();
 }
@@ -570,35 +565,6 @@ function smartdebit_civicrm_links( $op, $objectName, $objectId, &$links, &$mask,
       'url' => $url,
       'qs' => $qs
     );
-  }
-}
-
-/**
- * Create Direct Debit Message Templates
- * Body of template is empty as this should be customised by the admin during setup.
- *
- * FIXME: Should we add a default body template?
- */
-function smartdebit_message_template() {
-  $msgTitle = 'Direct Debit Confirmation Email';
-  $msgSubject = 'Thank you for your Direct Debit sign-up';
-  $msgHTML = ' ';
-  $msgText = ' ';
-
-  $msgTemplate = civicrm_api3('MessageTemplate', 'get', array(
-    'sequential' => 1,
-    'msg_title' => $msgTitle,
-  ));
-
-  if (empty($msgTemplate['count'])) {
-    // Only create a message template if we don't already have one
-    $msgTemplate = civicrm_api3('MessageTemplate', 'create', array(
-      'sequential' => 1,
-      'msg_title' => $msgTitle,
-      'msg_subject' => $msgSubject,
-      'msg_html' => $msgHTML,
-      'msg_text' => $msgText,
-    ));
   }
 }
 
