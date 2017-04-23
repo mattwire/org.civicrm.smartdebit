@@ -9,12 +9,12 @@
     <email>mjw@mjwconsult.co.uk</email>
   </maintainer>
   <urls>
-    <url desc="Main Extension Page">http://FIXME</url>
-    <url desc="Documentation">http://FIXME</url>
-    <url desc="Support">http://FIXME</url>
+    <url desc="Main Extension Page">https://github.com/mattwire/uk.co.vedaconsulting.smartdebit</url>
+    <url desc="Documentation">https://github.com/mattwire/uk.co.vedaconsulting.smartdebit</url>
+    <url desc="Support">https://github.com/mattwire/uk.co.vedaconsulting.smartdebit</url>
     <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
   </urls>
-  <releaseDate>2017-04-17</releaseDate>
+  <releaseDate>2017-04-23</releaseDate>
   <version>1.0</version>
   <develStage>alpha</develStage>
   <compatibility>
