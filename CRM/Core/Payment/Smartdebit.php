@@ -86,12 +86,31 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    */
   function buildForm(&$form)
   {
-    $form->addFormRule(array('CRM_Core_Payment_Smartdebit', 'validatePayment'), $form);
+    if ($form->isSubmitted()) return;
 
+    // Set ddi_reference
+    $defaults = array();
+    $defaults['ddi_reference'] = CRM_Smartdebit_Base::getDDIReference();
+    $form->setDefaults($defaults);
+
+    // Add help and javascript
     CRM_Core_Region::instance('billing-block')->add(
       array('template' => 'CRM/Core/Payment/Smartdebit/Smartdebit.tpl', 'weight' => -1));
 
     return;
+  }
+
+  /**
+   * Override custom PI validation
+   *  to validate payment details with SmartDebit
+   *
+   * @param array $values
+   * @param array $errors
+   */
+  public function validatePaymentInstrument($values, &$errors) {
+    // first: call parent's implementation
+    parent::validatePaymentInstrument($values, $errors);
+    $this->validatePayment($values, $errors);
   }
 
   /**
@@ -212,14 +231,13 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       'ddi_reference' => array(
         'htmlType' => 'hidden',
         'name' => 'ddi_reference',
-        'title' => ts('DDI Reference'),
+        'title' => 'DDI Reference',
         'cc_field' => TRUE,
         'attributes' => array('size' => 20
         , 'maxlength' => 64
         , 'autocomplete' => 'off'
         ),
-        'is_required' => FALSE,
-        'default' => 'hello'
+        'is_required' => TRUE,
       )
     );
   }
@@ -337,7 +355,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    * @param null $self
    * @return array
    */
-  static function preparePostArray($fields, $self = NULL)
+  private function preparePostArray($fields)
   {
     $collectionDate = self::getCollectionStartDate($fields);
     $amount = 0;
@@ -354,8 +372,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       }
     }
 
-    if (isset($self->_paymentProcessor['signature'])) {
-      $serviceUserId = $self->_paymentProcessor['signature'];
+    if (isset($this->_paymentProcessor['signature'])) {
+      $serviceUserId = $this->_paymentProcessor['signature'];
     }
 
     if (isset($fields['contactID'])) {
@@ -409,16 +427,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    * @access public
    *
    */
-  static function validatePayment($fields, $files, $self) {
-    $validateParams = $fields;
-
-    /* First thing to do is check if the DD has already been submitted */
-    if (CRM_Smartdebit_Base::isDDSubmissionComplete($fields['ddi_reference'])) {
-      $response[] = "PreviouslySubmitted";
-      return self::invalid($response, $validateParams);
-    }
-
-    $smartDebitParams = self::preparePostArray($validateParams, $self);
+  public function validatePayment($fields, $errors) {
+    $smartDebitParams = self::preparePostArray($fields);
 
     // Construct post string
     $post = '';
@@ -427,11 +437,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     }
 
     // Get the API Username and Password
-    $username = $self->_paymentProcessor['user_name'];
-    $password = $self->_paymentProcessor['password'];
+    $username = $this->_paymentProcessor['user_name'];
+    $password = $this->_paymentProcessor['password'];
 
     // Send payment POST to the target URL
-    $url = $self->_paymentProcessor['url_api'];
+    $url = $this->_paymentProcessor['url_api'];
     $request_path = 'api/ddi/variable/validate';
 
     $response = CRM_Smartdebit_Base::requestPost($url, $post, $username, $password, $request_path);
@@ -473,19 +483,15 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         $direct_debit_response['town'] = $response['success'][2]["@attributes"]["town"];
         $direct_debit_response['county'] = $response['success'][2]["@attributes"]["county"];
         $direct_debit_response['postcode'] = $response['success'][2]["@attributes"]["postcode"];
-
         self::recordSmartDebitResponse($direct_debit_response);
-        return self::validate_succeed($response, $fields);
+        return TRUE;
       case 'REJECTED':
-        self::recordSmartDebitResponse($direct_debit_response);
         $_SESSION['contribution_attempt'] = 'failed';
         return self::rejected($response, $fields);
       case 'INVALID':
-        self::recordSmartDebitResponse($direct_debit_response);
         $_SESSION['contribution_attempt'] = 'failed';
         return self::invalid($response, $fields);
       default:
-        self::recordSmartDebitResponse($direct_debit_response);
         $_SESSION['contribution_attempt'] = 'failed';
         return self::error($response, $fields);
     }
@@ -502,8 +508,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    */
   function doDirectPayment(&$params)
   {
-    $validateParams = $params;
-    $smartDebitParams = self::preparePostArray($validateParams);
+    $smartDebitParams = self::preparePostArray($params);
     $serviceUserId = $this->_paymentProcessor['signature'];
 
     // Construct post string
@@ -520,12 +525,13 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     $request_path = 'api/ddi/variable/create';
 
     $response = CRM_Smartdebit_Base::requestPost($url, $post, $username, $password, $request_path);
-    $response['reference_number'] = $smartDebitParams['variable_ddi[reference_number]'];
 
     // Take action based upon the response status
     switch (strtoupper($response["Status"])) {
       case 'OK':
-        return self::succeed($response, $params);
+        $params['trxn_id'] = $response['reference_number'];
+        CRM_Smartdebit_Base::completeDirectDebitSetup($params);
+        return $params;
       case 'REJECTED':
         $_SESSION['contribution_attempt'] = 'failed';
         return self::rejected($response, $params);
@@ -589,29 +595,6 @@ EOF;
         array((string)$direct_debit_response['ddi_reference'], 'String')
       )
     );
-  }
-
-  /**
-   * SmartDebit payment has succeeded
-   * @param $response
-   * @return array
-   */
-  private static function validate_succeed($response, &$params)
-  {
-    // Clear any old error messages from stack
-    $response['trxn_id'] = $params['ddi_reference'];
-    return true;
-  }
-
-  /**
-   * SmartDebit payment has succeeded
-   * @param $response
-   * @return array
-   */
-  private static function succeed($response, &$params)
-  {
-    $response['trxn_id'] = $response['reference_number'];
-    return $response;
   }
 
   /**

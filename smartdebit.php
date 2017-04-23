@@ -407,6 +407,8 @@ function smartdebit_civicrm_pageRun(&$page)
  */
 function smartdebit_civicrm_buildForm( $formName, &$form )
 {
+  if ($form->isSubmitted()) return;
+
   //Smart Debit
   if (isset($form->_paymentProcessor['payment_processor_type']) && ($form->_paymentProcessor['payment_processor_type'] == 'Smart_Debit')) {
     if ($formName == 'CRM_Contribute_Form_Contribution_Confirm') {
@@ -415,11 +417,7 @@ function smartdebit_civicrm_buildForm( $formName, &$form )
       CRM_Core_Region::instance('contribution-confirm-billing-block')->update('default', array(
         'disabled' => TRUE,
       ));
-
-      $form->assign('dd_account_holder', CRM_Utils_Array::value('account_holder', $form->_params));
-      $form->assign('dd_bank_account_number', CRM_Utils_Array::value('bank_account_number', $form->_params));
-      $form->assign('dd_bank_identification_number', CRM_Utils_Array::value('bank_identification_number', $form->_params));
-      $form->assign('dd_bank_name', CRM_Utils_Array::value('bank_name', $form->_params));
+      $form->assign('dd_details', CRM_Smartdebit_Base::getDDFormDetails($form->_params));
       CRM_Core_Region::instance('contribution-confirm-billing-block')->add(array(
         'template' => 'CRM/Contribute/Form/Contribution/DirectDebitAgreement.tpl',
       ));
@@ -427,6 +425,7 @@ function smartdebit_civicrm_buildForm( $formName, &$form )
     elseif ($formName == 'CRM_Contribute_Form_Contribution_ThankYou') {
       // Contribution Thankyou form
       // Show the direct debit mandate on the thankyou page
+      $form->assign('dd_details', CRM_Smartdebit_Base::getDDFormDetails($form->_params));
       CRM_Core_Region::instance('contribution-thankyou-billing-block')->update('default', array(
         'disabled' => TRUE,
       ));
@@ -565,12 +564,6 @@ function smartdebit_civicrm_links( $op, $objectName, $objectId, &$links, &$mask,
       $url    = 'civicrm/contact/view/contributionrecur';
       $qs   	= "reset=1&id=$recurId&cid=$cid";
     }
-    else {
-      $name   = ts('Setup Direct Debit');
-      $title  = ts('Setup Direct Debit');
-      $url    = 'civicrm/smartdebit/new';
-      $qs	    = "action=add&reset=1&cid=$cid&id=$id";
-    }
     $links[] = array(
       'name' => $name,
       'title' => $title,
@@ -609,133 +602,3 @@ function smartdebit_message_template() {
   }
 }
 
-/**
- * Renew Membership by one period if the membership expires
- * before the contribution collection date starts
- * @author shobbs
- * @param $membershipID
- */
-function renew_membership_by_one_period($membershipID) {
-  // Get the membership info
-  $membership = civicrm_api("Membership"
-    ,"get"
-    , array ('version'       => '3'
-    ,'membership_id' => $membershipID
-    )
-  );
-
-  // Get the membership payment(s)
-  $membershipPayment = civicrm_api("MembershipPayment"
-    ,"get"
-    , array ('version'       => '3'
-    ,'membership_id' => $membershipID
-    )
-  );
-
-  $contributionID = $membershipPayment['values'][$membershipPayment['id']]['contribution_id'];
-
-  // Get the contribution
-  $contribution = civicrm_api("Contribution"
-    ,"get"
-    ,array ('version'         => '3'
-    ,'contribution_id' => $contributionID
-    )
-  );
-
-  $contributionReceiveDate = $contribution['values'][$contributionID]['receive_date'];
-  $contributionReceiveDateString = date("Ymd", strtotime($contributionReceiveDate));
-  // For a new membership, membership end date won't be defined.
-  if (empty($membership['values'][$membershipID]['end_date'])) {
-    $membershipEndDateString = $contributionReceiveDateString;
-  }
-  else {
-    $membershipEndDateString = date("Ymd", strtotime($membership['values'][$membershipID]['end_date']));
-  }
-
-  $contributionRecurID = $membership['values'][$membershipID]['contribution_recur_id'];
-
-  if ($contributionReceiveDateString >= $membershipEndDateString) {
-    $contributionRecurring = civicrm_api("ContributionRecur"
-      ,"get"
-      , array ('version' => '3'
-      ,'id'      => $contributionRecurID
-      )
-    );
-
-    $frequencyUnit = $contributionRecurring['values'][$contributionRecurID]['frequency_unit'];
-    $frequencyInterval = $contributionRecurring['values'][$contributionRecurID]['frequency_interval'];
-    if (!is_null($frequencyUnit) && !is_null($frequencyInterval)) {
-      $membershipEndDateString = date("Y-m-d",strtotime($membershipEndDateString) . " +$frequencyInterval $frequencyUnit");
-    }
-  }
-  $updatedMember = civicrm_api("Membership"
-    ,"create"
-    , array ('version'       => '3',
-      'id'            => $membershipID,
-      'end_date'      => $membershipEndDateString,
-    )
-  );
-}
-
-/*
- * This hook is used to perform the IPN code on the direct debit contribution
- * This should result in the membership showing as active, so this only really applies to membership base contribution forms
- *
- * @param $formName
- * @param $form
- */
-function smartdebit_civicrm_postProcess( $formName, &$form ) {
-  // Check the form being submitted is a contribution form
-  if ( is_a( $form, 'CRM_Contribute_Form_Contribution_Confirm' ) ) {
-    // FIXME: Does this work for online direct debit payment?
-    $paymentType = urlencode($form->_paymentProcessor['payment_type']);
-    $isRecur = urlencode($form->_values['is_recur']);
-    $paymentProcessorType = urlencode($form->_paymentProcessor['payment_processor_type']);
-
-    // Now only do this if the payment processor type is Direct Debit as other payment processors may do this another way
-    if (($paymentType == CRM_Core_Payment::PAYMENT_TYPE_DIRECT_DEBIT) && ($paymentProcessorType == 'Smart_Debit')) {
-      if (empty($form->_contactID) || empty($form->_id) || empty ($form->_contributionID) || empty ($form->_params['membershipID']))
-        return;
-
-      CRM_Smartdebit_Form_Newdd::setupMembershipDirectDebit($form->_params['membershipID'], $form->_contactID);
-
-      /*$contributionInfo = civicrm_api3('Contribution', 'get', array(
-        'sequential' => 1,
-        'return' => array("id", "contribution_recur_id", "receive_date"),
-        'contact_id' => $form->_contactID,
-        'id' => $form->_contributionID,
-        'contribution_page_id' => $form->_id,
-      ));
-
-      $contribution = $contributionInfo['values'][0];
-      $contributionID = $contribution['id'];
-      $contributionRecurID = $contribution['contribution_recur_id'];
-      $start_date = $contribution['receive_date'];
-
-      if ($isRecur == 1) {
-        $paymentProcessorType = urlencode($form->_paymentProcessor['payment_processor_type']);
-        $membershipID = urlencode($form->_params['membershipID']);
-        $contactID = urlencode($form->getVar('_contactID'));
-        $invoiceID = urlencode($form->_params['invoiceID']);
-        $amount = urlencode($form->_params['amount']);
-        $trxn_id = urlencode($form->_params['ddi_reference']);
-        $collection_day = urlencode($form->_params['preferred_collection_day']);
-
-        //CRM_Core_Payment_Smartdebit::callIPN("recurring_payment", $trxn_id, $contactID, $contributionID, $amount, $invoiceID, $contributionRecurID,
-        //  null, $membershipID, $start_date, $collection_day);
-
-        renew_membership_by_one_period($membershipID);
-        return;
-      }
-      else {
-        // PS 23/05/2013 Not Recurring, only need to move the receive_date of the contribution
-        $contrib_result = civicrm_api("Contribution"
-          , "create"
-          , array('version' => '3'
-          , 'id' => $contributionID
-          , 'receive_date' => $start_date
-          )
-        );*/
-    }
-  }
-}

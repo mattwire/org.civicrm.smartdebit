@@ -81,37 +81,69 @@ class CRM_Smartdebit_Base
     return $isComplete;
   }
 
+  static function getDDFormDetails($params) {
+    $ddDetails = array();
+    $ddDetails['account_holder'] = CRM_Utils_Array::value('account_holder', $params);
+    $ddDetails['bank_account_number'] = CRM_Utils_Array::value('bank_account_number', $params);
+    $ddDetails['bank_identification_number'] = CRM_Utils_Array::value('bank_identification_number', $params);
+    $ddDetails['bank_name'] = CRM_Utils_Array::value('bank_name', $params);
+
+    $ddDetails['sun'] = CRM_Smartdebit_Base::getSUN();
+
+    // Format as array of characters for display
+    $ddDetails['sunParts'] = str_split($ddDetails['sun']);
+    $ddDetails['binParts'] = str_split($ddDetails['bank_identification_number']);
+
+    if (!empty($params['ddi_reference'])) {
+      $sql = "
+SELECT * FROM civicrm_direct_debit
+WHERE ddi_reference = '{$params['ddi_reference']}'
+";
+      $dao = CRM_Core_DAO::executeQuery($sql);
+      while ($dao->fetch()) {
+        $ddDetails['created'] = $dao->created;
+        $ddDetails['bank_name'] = $dao->bank_name;
+        $ddDetails['branch'] = $dao->branch;
+        $ddDetails['address1'] = $dao->address1;
+        $ddDetails['address2'] = $dao->address2;
+        $ddDetails['address3'] = $dao->address3;
+        $ddDetails['address4'] = $dao->address4;
+        $ddDetails['town'] = $dao->town;
+        $ddDetails['county'] = $dao->county;
+        $ddDetails['postcode'] = $dao->postcode;
+        $ddDetails['first_collection_date'] = $dao->first_collection_date;
+        $ddDetails['preferred_collection_day'] = $dao->preferred_collection_day;
+        $ddDetails['confirmation_method'] = $dao->confirmation_method;
+        $ddDetails['ddi_reference'] = $dao->ddi_reference;
+      }
+    }
+
+    $ddDetails['company_address'] = CRM_Smartdebit_Base::getCompanyAddress();
+    $date = new DateTime();
+
+    $ddDetails['today'] = $date->format('Ymd');
+
+    return $ddDetails;
+  }
+
   /**
    * Called after contribution page has been completed
    * Main purpose is to tidy the contribution
    * And to setup the relevant Direct Debit Mandate Information
    *
-   * // FIXME: Not used anywhere - check we are creating activities etc. as required.
+   * // FIXME: Do we need to send email?
    *
    * @param $objects
    */
-  static function completeDirectDebitSetup( $objects )  {
-    $params['contactID'] = $objects['contact']->id;
-    $params['trxn_id'] = $objects['contributionRecur']->trxn_id;
-
-    // Get the preferred communication method
-    $sql = <<<EOF
-    SELECT confirmation_method
-    FROM   civicrm_direct_debit
-    WHERE  ddi_reference = %0
-EOF;
-
-    $params['confirmation_method'] = CRM_Core_DAO::singleValueQuery( $sql, array( array( $params['trxn_id'], 'String' ) ) );
-
+  static function completeDirectDebitSetup( $params )  {
     // Create an activity to indicate Direct Debit Sign up
     $activityID = CRM_Smartdebit_Base::createDDSignUpActivity($params);
 
     // Set the DD Record to be complete
-    $sql = <<<EOF
-            UPDATE civicrm_direct_debit
-            SET    complete_flag = 1
-            WHERE  ddi_reference = %0;
-EOF;
+    $sql = "
+UPDATE civicrm_direct_debit
+SET    complete_flag = 1
+WHERE  ddi_reference = %0";
 
     CRM_Core_DAO::executeQuery($sql, array(array((string)$params['trxn_id'], 'String'))
     );
@@ -283,7 +315,6 @@ EOF;
   /**
    * Create a Direct Debit Sign Up Activity for contact
    *
-   * // FIXME: Check that user receives an email sign up?
    * @param $params
    * @return mixed
    */
@@ -294,7 +325,7 @@ EOF;
         'source_contact_id'  => $params['contactID'],
         'target_contact_id'  => $params['contactID'],
         'activity_type_id'   => $activityTypeLetterID,
-        'subject'            => sprintf("Direct Debit Sign Up, Mandate ID : %s", $params['trxn_id'] ),
+        'subject'            => sprintf("Direct Debit Confirmation Letter, Mandate ID : %s", $params['trxn_id'] ),
         'activity_date_time' => date( 'YmdHis' ),
         'status_id'          => 1,
         'version'            => 3
@@ -401,20 +432,6 @@ EOF;
     }
   }
 
-  // FIXME: This function not used anywhere? Remove?
-  /**
-   * Get confirmation template
-   * @return mixed
-   */
-  static function getDDConfirmationTemplate() {
-    $default_template_name    = "direct_debit_confirmation";
-    $default_template_sql     = "SELECT * FROM civicrm_msg_template mt WHERE mt.msg_title = %1";
-    $default_template_params  = array( 1 => array( $default_template_name , 'String' ));
-    $default_template_dao     = CRM_Core_DAO::executeQuery( $default_template_sql, $default_template_params );
-    $default_template_dao->fetch();
-    return $default_template_dao->msg_html;
-  }
-
   private static function rand_str( $len )
   {
     // The alphabet the random string consists of
@@ -489,13 +506,6 @@ EOF;
   /**
    * Function will return the SUN number broken down into individual characters passed as an array
    */
-  static function getSUNParts() {
-    return str_split(self::getSUN());
-  }
-
-  /**
-   * Function will return the SUN number broken down into individual characters passed as an array
-   */
   static function getSUN() {
     return smartdebit_civicrm_getSetting('service_user_number');
   }
@@ -512,30 +522,6 @@ EOF;
    */
   static function getDefaultFinancialTypeID() {
     return smartdebit_civicrm_getSetting('financial_type');
-  }
-
-  static function getCountry( $country_id ) {
-    $country = null;
-    if ( !empty( $country_id ) ) {
-      $sql    = "SELECT name FROM civicrm_country WHERE id = %1";
-      $params = array( 1 => array( $country_id , 'Integer' ) );
-      $dao    = CRM_Core_DAO::executeQuery( $sql, $params );
-      $dao->fetch();
-      $country = $dao->name;
-    }
-    return $country;
-  }
-
-  static function getStateProvince( $state_province_id ) {
-    $stateProvince = null;
-    if ( !empty( $state_province_id ) ) {
-      $sql    = "SELECT name FROM civicrm_state_province WHERE id = %1";
-      $params = array( 1 => array( $state_province_id , 'Integer' ) );
-      $dao    = CRM_Core_DAO::executeQuery( $sql, $params );
-      $dao->fetch();
-      $stateProvince = $dao->name;
-    }
-    return $stateProvince;
   }
 
   /**
@@ -570,44 +556,9 @@ EOF;
   }
 
   /**
-   * Get array of valid frequency Units (for display in select etc)
-   * @return array
-   */
-  static function getSmartdebitFrequencyUnits() {
-    $frequencyUnits = array(
-      'W'  => 'Weekly',
-      'M'  => 'Monthly',
-      'Q'  => 'Quarterly',
-      'Y'  => 'Annually'
-    );
-    return $frequencyUnits;
-  }
-
-  /**
-   * * Get array of valid frequency Intervals (for display in select etc)
-   * @return array
-   */
-  static function getCiviCRMFrequencyIntervals() {
-    $frequencyIntervals = array(
-      1  => '1',
-      2  => '2',
-      3  => '3',
-      4  => '4',
-      5  => '5',
-      6  => '6',
-      7  => '7',
-      8  => '8',
-      9  => '9',
-      10 => '10',
-      11 => '11',
-      12 => '12'
-    );
-    return $frequencyIntervals;
-  }
-
-  /**
    * Create a new recurring contribution for the direct debit instruction we set up.
    * @param $recurParams
+   * // FIXME: Remove
    */
   static function createRecurContribution($recurParams) {
     // Mandatory Parameters
@@ -755,6 +706,7 @@ EOF;
    * Create/update a contribution for the direct debit.
    * @param $params
    * @return object
+   * // FIXME: Remove
    */
   static function createContribution($params) {
     // Mandatory Parameters
