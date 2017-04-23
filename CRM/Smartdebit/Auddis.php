@@ -9,13 +9,36 @@ class CRM_Smartdebit_Auddis
    * Direct Debit Indemnity Claim Advice (DDICA) reports.
    */
 
+  private $_auddisList = NULL;
+  private $_aruddList = NULL;
+  private $_aruddDatesList = NULL;
+  private $_auddisDatesList = NULL;
+
+  function getAuddisList() {
+    return $this->_auddisList;
+  }
+
+  function getAruddList() {
+    return $this->_aruddList;
+  }
+
+  function getAuddisDatesList() {
+    return $this->_auddisDatesList;
+  }
+
+  function getAruddDatesList()
+  {
+    return $this->_aruddDatesList;
+  }
+
+
   /**
    * Get List of AUDDIS files from Smartdebit for the past month.
    * If dateOfCollection is not specified it defaults to today.
    * @param null $dateOfCollection
    * @return bool|mixed
    */
-  static function getSmartdebitAuddisList($dateOfCollectionStart = null, $dateOfCollectionEnd = null)
+  function getSmartdebitAuddisList($dateOfCollectionStart = null, $dateOfCollectionEnd = null)
   {
     if (!isset($dateOfCollectionEnd)) {
       $dateOfCollectionEnd = date('Y-m-d', new DateTime()); // Today
@@ -36,7 +59,8 @@ class CRM_Smartdebit_Auddis
     // Take action based upon the response status
     switch (strtoupper($responseAuddis['Status'])) {
       case 'OK':
-        return $responseAuddis;
+        $this->_auddisList = $responseAuddis;
+        return true;
       default:
         return false;
     }
@@ -85,7 +109,7 @@ class CRM_Smartdebit_Auddis
    * @param null $dateOfCollection
    * @return bool|mixed
    */
-  static function getSmartdebitAruddList($dateOfCollectionStart = null, $dateOfCollectionEnd = null)
+  function getSmartdebitAruddList($dateOfCollectionStart = null, $dateOfCollectionEnd = null)
   {
     if (!isset($dateOfCollectionEnd)) {
       $dateOfCollectionEnd = date('Y-m-d', new DateTime()); // Today
@@ -110,7 +134,8 @@ class CRM_Smartdebit_Auddis
         if (isset($responseArudd['arudd'])) {
           $aruddArray = $responseArudd['arudd'];
         }
-        return $aruddArray;
+        $this->_aruddList = $aruddArray;
+        return true;
       default:
         return false;
     }
@@ -217,6 +242,176 @@ class CRM_Smartdebit_Auddis
       }
     }
     return FALSE;
+  }
+
+  /**
+   * Build a list of auddis dates for processing
+   * Call getAuddisDatesList for actual list
+   *
+   * @return bool True if successful, false otherwise
+   */
+  function getAuddisDates()
+  {
+    $auddisDates = array();
+
+    if (($this->_auddisList) && isset($this->_auddisList['Status']) && ($this->_auddisList['Status'] == 'OK')) {
+      // Get the auddis Dates from the Auddis Files
+      if (isset($this->_auddisList['@attributes']['results']) && ($this->_auddisList['@attributes']['results'] > 1)) {
+        // Multiple results returned
+        foreach ($this->_auddisList['auddis'] as $key => $auddis) {
+          if (isset($auddis['report_generation_date'])) {
+            $auddisDates[] = date('Y-m-d', strtotime($auddis['report_generation_date']));
+          }
+        }
+      } else {
+        // Only one result returned (not in an array)
+        if (isset($this->_auddisList['auddis']['report_generation_date'])) {
+          $auddisDates[] = date('Y-m-d', strtotime($this->_auddisList['auddis']['report_generation_date']));
+        }
+      }
+    }
+
+    // Get the already processed Auddis Dates
+    $processedAuddisDates = array();
+    if (!empty($auddisDates)) {
+      foreach ($auddisDates as $auddisDate) {
+        $details = CRM_Core_DAO::getFieldValue('CRM_Activity_DAO_Activity', 'SmartdebitAUDDIS' . $auddisDate, 'details', 'subject');
+        if ($details) {
+          $processedAuddisDates[] = $auddisDate;
+        }
+      }
+    }
+
+    // Show only the valid auddis dates in the multi select box
+    $auddisDates = array_diff($auddisDates, $processedAuddisDates);
+
+    // Keys/Values => dates (eg. ['2017-04-04'] => '2017-04-04'
+    if (!empty($auddisDates)) {
+      $auddisDates = array_combine($auddisDates, $auddisDates);
+      $this->_auddisDatesList = $auddisDates;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Build a list of arudd dates for processing
+   * Call getAruddDatesList for actual list
+   *
+   * @return bool True if successful, false otherwise
+   */
+  function getAruddDates() {
+    $aruddDates = array();
+
+    // Get the arudd Dates from the Arudd Files
+    if ($this->_aruddList) {
+      if (isset($this->_aruddList[0]['@attributes'])) {
+        // Multiple results returned
+        foreach ($this->_aruddList as $key => $arudd) {
+          if (isset($arudd['current_processing_date'])) {
+            $aruddDates[] = date('Y-m-d', strtotime($arudd['current_processing_date']));
+          }
+        }
+      } else {
+        // Only one result returned
+        if (isset($this->_aruddList['current_processing_date'])) {
+          $aruddDates[] = date('Y-m-d', strtotime($this->_aruddList['current_processing_date']));
+        }
+      }
+    }
+
+    // Get the already processed Arudd Dates
+    $processedAruddDates = array();
+    if (!empty($aruddDates)) {
+      foreach ($aruddDates as $aruddDate) {
+        $details = CRM_Core_DAO::getFieldValue('CRM_Activity_DAO_Activity', 'SmartdebitARUDD' . $aruddDate, 'details', 'subject');
+        if ($details) {
+          $processedAruddDates[] = $aruddDate;
+        }
+      }
+    }
+
+    // Show only the valid auddis dates in the multi select box
+    $aruddDates = array_diff($aruddDates, $processedAruddDates);
+    // Keys/Values => dates (eg. ['2017-04-04'] => '2017-04-04'
+    if (!empty($aruddDates)) {
+      $aruddDates = array_combine($aruddDates, $aruddDates);
+      $this->_aruddDatesList = $aruddDates;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Gets an array of Auddis IDs for processing
+   *
+   * @return array
+   */
+  function getAuddisIDsForProcessing($auddisDates = NULL) {
+    $auddisIDs = array();
+
+    if (!isset($auddisDates)) {
+      $auddisDates = $this->_auddisDatesList;
+    }
+    foreach ($auddisDates as $date) {
+      // Find auddis ID
+      if (isset($this->_auddisList['@attributes']['results']) && ($this->_auddisList['@attributes']['results'] > 1)) {
+        foreach ($this->_auddisList['auddis'] as $key => $auddis) {
+          if (isset($auddis['report_generation_date'])) {
+            if ($date == date('Y-m-d', strtotime($auddis['report_generation_date']))) {
+              $auddisIDs[] = $auddis['auddis_id'];
+              break;
+            }
+          }
+        }
+      } else {
+        // Handle single result
+        $auddis = $this->_auddisList['auddis'];
+        if (isset($auddis['report_generation_date'])) {
+          if ($date == date('Y-m-d', strtotime($auddis['report_generation_date']))) {
+            $auddisIDs[] = $auddis['auddis_id'];
+            break;
+          }
+        }
+      }
+    }
+    return $auddisIDs;
+  }
+
+  /**
+   * Gets an array of Arudd IDs for processing
+   * @return array
+   */
+  function getAruddIdsForProcessing($aruddDates = NULL) {
+    $aruddIDs = array();
+
+    if (!isset($aruddDates)) {
+      $aruddDates = $this->_aruddDatesList;
+    }
+    foreach ($aruddDates as $date) {
+      // Find arudd ID
+      if (isset($this->_aruddList[0]['@attributes'])) {
+        foreach ($this->_aruddList as $key => $arudd) {
+          if (isset($arudd['current_processing_date'])) {
+            if ($date == date('Y-m-d', strtotime($arudd['current_processing_date']))) {
+              $aruddIDs[] = $arudd['arudd_id'];
+              break;
+            }
+          }
+        }
+      }
+      else {
+        // Handle single result
+        $arudd = $this->_aruddList;
+        if (isset($arudd['current_processing_date'])) {
+          if ($date == date('Y-m-d', strtotime($arudd['current_processing_date']))) {
+            $aruddIDs[] = $arudd['arudd_id'];
+            break;
+          }
+        }
+      }
+    }
+    return $aruddIDs;
   }
 
   static function getSmartdebitCollectionReportForMonth($dateOfCollection) {
