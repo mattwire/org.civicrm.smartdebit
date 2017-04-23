@@ -487,18 +487,6 @@ WHERE  ddi_reference = %0";
     return smartdebit_civicrm_getSetting('activity_type_letter');
   }
 
-  static function getTelephoneNumber() {
-    return smartdebit_civicrm_getSetting('telephone_number');
-  }
-
-  static function getEmailAddress() {
-    return smartdebit_civicrm_getSetting('email_address');
-  }
-
-  static function getDomainName() {
-    return smartdebit_civicrm_getSetting('domain_name');
-  }
-
   static function getTransactionPrefix() {
     return smartdebit_civicrm_getSetting('transaction_prefix');
   }
@@ -558,7 +546,7 @@ WHERE  ddi_reference = %0";
   /**
    * Create a new recurring contribution for the direct debit instruction we set up.
    * @param $recurParams
-   * // FIXME: Remove
+   * // FIXME: No longer used, we can remove
    */
   static function createRecurContribution($recurParams) {
     // Mandatory Parameters
@@ -706,7 +694,7 @@ WHERE  ddi_reference = %0";
    * Create/update a contribution for the direct debit.
    * @param $params
    * @return object
-   * // FIXME: Remove
+   * // FIXME: No longer used, we can remove
    */
   static function createContribution($params) {
     // Mandatory Parameters
