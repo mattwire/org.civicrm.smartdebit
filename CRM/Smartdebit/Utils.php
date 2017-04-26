@@ -105,96 +105,120 @@ class CRM_Smartdebit_Utils {
     return $cRecur;
   }
 
-/**
- * Get recurring contribution record by recur ID
- * @param $cRecurID
- * @return array
- */
-static function getRecurringContributionRecord($cRecurID) {
-  $cRecurParams = array(
-    'version'     => 3,
-    'sequential'  => 1,
-    'id'          => $cRecurID
-  );
-  $aContributionRecur = civicrm_api('ContributionRecur', 'get', $cRecurParams);
-  if(!$aContributionRecur['is_error']){
-    $cRecur = $aContributionRecur['values'][0];
-  }
+  /**
+   * Get recurring contribution record by recur ID
+   * @param $cRecurID
+   * @return array
+   */
+  static function getRecurringContributionRecord($cRecurID) {
+    $cRecurParams = array(
+      'version'     => 3,
+      'sequential'  => 1,
+      'id'          => $cRecurID
+    );
+    $aContributionRecur = civicrm_api('ContributionRecur', 'get', $cRecurParams);
+    if(!$aContributionRecur['is_error']){
+      $cRecur = $aContributionRecur['values'][0];
+    }
 
-  // Get contribution Status label
-  $contributionStatusOptions = CRM_Contribute_BAO_Contribution::buildOptions('contribution_status_id', 'validate');
-  $contributionStatus = $contributionStatusOptions[$cRecur['contribution_status_id']];
+    // Get contribution Status label
+    $contributionStatusOptions = CRM_Contribute_BAO_Contribution::buildOptions('contribution_status_id', 'validate');
+    $contributionStatus = $contributionStatusOptions[$cRecur['contribution_status_id']];
 
-  //get payment processor name
-  if(!empty($cRecur['payment_processor_id'])){
-    $sql   = "SELECT name 
+    //get payment processor name
+    if(!empty($cRecur['payment_processor_id'])){
+      $sql   = "SELECT name 
                 FROM civicrm_payment_processor 
                 WHERE id = %1
                 ";
-    $param = array( 1 => array( $cRecur['payment_processor_id'], 'Integer') );
-    $dao   = CRM_Core_DAO::singleValueQuery($sql, $param);
+      $param = array( 1 => array( $cRecur['payment_processor_id'], 'Integer') );
+      $dao   = CRM_Core_DAO::singleValueQuery($sql, $param);
+    }
+
+    $contributionRecur = array();
+    if(!empty($cRecur)){
+      $contributionRecur = array(
+        'id'                => $cRecur['id'],
+        'status'            => $contributionStatus,
+        'amount'            => $cRecur['amount'],
+        'payment_processor' => $dao
+      );
+    }
+    return $contributionRecur;
   }
 
-  $contributionRecur = array();
-  if(!empty($cRecur)){
-    $contributionRecur = array(
-      'id'                => $cRecur['id'],
-      'status'            => $contributionStatus,
-      'amount'            => $cRecur['amount'],
-      'payment_processor' => $dao
+  /**
+   * Get contact details
+   *
+   * @param $cid
+   * @return mixed
+   */
+  static function getContactDetails($cid) {
+    $Params = array(
+      'version'     => 3,
+      'sequential'  => 1,
+      'id'          => $cid
     );
-  }
-  return $contributionRecur;
-}
-
-/**
- * Get contact details
- *
- * @param $cid
- * @return mixed
- */
-static function getContactDetails($cid) {
-  $Params = array(
-    'version'     => 3,
-    'sequential'  => 1,
-    'id'          => $cid
-  );
-  $aContact = civicrm_api('Contact', 'get', $Params);
-  if (empty($aContact['is_error'])) {
-    if ($aContact['count'] > 0) {
-      return $aContact['values'][0];
+    $aContact = civicrm_api('Contact', 'get', $Params);
+    if (empty($aContact['is_error'])) {
+      if ($aContact['count'] > 0) {
+        return $aContact['values'][0];
+      }
+      else {
+        return;
+      }
     }
     else {
-      return;
+      return $aContact['error_message'];
     }
   }
-  else {
-    return $aContact['error_message'];
-  }
-}
 
-/**
- * Get contact Address
- *
- * @param $cid
- */
-static function getContactAddress($cid) {
-  $Params = array(
-    'version'     => 3,
-    'sequential'  => 1,
-    'contact_id'  => $cid
-  );
-  $aAddress = civicrm_api('Address', 'get', $Params);
-  if (empty($aAddress['is_error'])) {
-    if ($aAddress['count'] > 0){
-      return $aAddress['values'][0];
+  /**
+   * Get contact Address
+   *
+   * @param $cid
+   */
+  static function getContactAddress($cid) {
+    $Params = array(
+      'version'     => 3,
+      'sequential'  => 1,
+      'contact_id'  => $cid
+    );
+    $aAddress = civicrm_api('Address', 'get', $Params);
+    if (empty($aAddress['is_error'])) {
+      if ($aAddress['count'] > 0){
+        return $aAddress['values'][0];
+      }
+      else {
+        return;
+      }
     }
     else {
-      return;
+      return $aAddress['error_message'];
     }
   }
-  else {
-    return $aAddress['error_message'];
+
+  /**
+   * @param $array
+   * @param $field
+   * @param $value
+   * @return mixed
+   */
+  static function getArrayFieldValue($array, $field, $value) {
+    if (!isset($array[$field])) {
+      return $value;
+    }
+    else {
+      return $array[$field];
+    }
   }
-}
+
+  /**
+   * @param $amount
+   * @return mixed
+   */
+  static function getCleanSmartdebitAmount($amount) {
+    $numeric_filtered = filter_var($amount, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+    return($numeric_filtered);
+  }
 }

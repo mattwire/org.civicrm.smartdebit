@@ -113,9 +113,21 @@ function smartdebit_civicrm_install()
         ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
     ");
 
+  // Create a table to store AUDDIS/ARUDD dates
+  if (!CRM_Core_DAO::checkTableExists('veda_smartdebit_auddis')) {
+    $createSql = "CREATE TABLE `veda_smartdebit_auddis` (
+                   `id` int(10) unsigned NOT NULL, 
+                   `date` date DEFAULT NULL,
+                   `type` tinyint DEFAULT NULL,
+                   `processed` boolean DEFAULT FALSE,
+                  PRIMARY KEY (`id`, `type`)
+         ) ENGINE=InnoDB AUTO_INCREMENT=350 DEFAULT CHARSET=latin1";
+    CRM_Core_DAO::executeQuery($createSql);
+  }
+
   // Create a table to store imported collection reports (CRM_Smartdebit_Auddis::getSmartDebitCollectionReport())
-  if (!CRM_Core_DAO::checkTableExists('veda_smartdebit_import')) {
-    $createSql = "CREATE TABLE `veda_smartdebit_import` (
+  if (!CRM_Core_DAO::checkTableExists('veda_smartdebit_collectionreports')) {
+    $createSql = "CREATE TABLE `veda_smartdebit_collectionreports` (
                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT, 
                    `transaction_id` varchar(255) DEFAULT NULL,
                    `contact` varchar(255) DEFAULT NULL,
@@ -129,8 +141,8 @@ function smartdebit_civicrm_install()
   }
 
   // This table is used to store the last set of successful imports
-  if (!CRM_Core_DAO::checkTableExists('veda_smartdebit_import_success_contributions')) {
-    $createSql = "CREATE TABLE `veda_smartdebit_import_success_contributions` (
+  if (!CRM_Core_DAO::checkTableExists('veda_smartdebit_success_contributions')) {
+    $createSql = "CREATE TABLE `veda_smartdebit_success_contributions` (
                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT, 
                    `transaction_id` varchar(255) DEFAULT NULL,
                    `contribution_id` int(11) DEFAULT NULL,

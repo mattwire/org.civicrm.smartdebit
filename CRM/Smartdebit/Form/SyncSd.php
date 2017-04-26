@@ -23,7 +23,7 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
       $now = new DateTime();
       $dateOfCollectionEnd = date('Y-m-d', (string)$now->getTimestamp()); // Today
     }
-    $dateOfCollectionStart = date('Y-m-d', strtotime($dateOfCollectionEnd . '-1 month'));
+    $dateOfCollectionStart = date('Y-m-d', strtotime($dateOfCollectionEnd . CRM_Smartdebit_Sync::COLLECTION_REPORT_AGE));
     $this->assign('dateOfCollectionEnd', $dateOfCollectionEnd);
     $this->assign('dateOfCollectionStart', $dateOfCollectionStart);
 
@@ -132,54 +132,6 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
     // Get IDs for processing
     $auddisIDs = $this->_auddisProcessor->getAuddisIDsForProcessing($auddisDates);
     $aruddIDs = $this->_auddisProcessor->getAruddIDsForProcessing($aruddDates);
-
-    /*foreach ($auddisDates as $date) {
-      // Find auddis ID
-      if (isset($this->_auddisArray['@attributes']['results']) && ($this->_auddisArray['@attributes']['results'] > 1)) {
-        foreach ($this->_auddisArray['auddis'] as $key => $auddis) {
-          if (isset($auddis['report_generation_date'])) {
-            if ($date == date('Y-m-d', strtotime($auddis['report_generation_date']))) {
-              $auddisIDs[] = $auddis['auddis_id'];
-              break;
-            }
-          }
-        }
-      }
-      else {
-        // Handle single result
-        $auddis = $this->_auddisArray['auddis'];
-        if (isset($auddis['report_generation_date'])) {
-          if ($date == date('Y-m-d', strtotime($auddis['report_generation_date']))) {
-            $auddisIDs[] = $auddis['auddis_id'];
-            break;
-          }
-        }
-      }
-    }
-
-    foreach ($aruddDates as $date) {
-      // Find arudd ID
-      if (isset($this->_aruddArray[0]['@attributes'])) {
-        foreach ($this->_aruddArray as $key => $arudd) {
-          if (isset($arudd['current_processing_date'])) {
-            if ($date == date('Y-m-d', strtotime($arudd['current_processing_date']))) {
-              $aruddIDs[] = $arudd['arudd_id'];
-              break;
-            }
-          }
-        }
-      }
-      else {
-        // Handle single result
-        $arudd = $this->_aruddArray;
-        if (isset($arudd['current_processing_date'])) {
-          if ($date == date('Y-m-d', strtotime($arudd['current_processing_date']))) {
-            $aruddIDs[] = $arudd['arudd_id'];
-            break;
-          }
-        }
-      }
-    }*/
 
     if (!empty($queryParams)) { $queryParams.='&'; }
     if (isset($auddisIDs)) {

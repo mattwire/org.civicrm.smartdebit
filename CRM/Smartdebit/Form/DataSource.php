@@ -39,7 +39,7 @@ class CRM_Smartdebit_Form_DataSource extends CRM_Core_Form {
       $queryParams.='collection_date='.urlencode($dateOfCollection);
     }
 
-    $collections = CRM_Smartdebit_Auddis::getSmartdebitCollectionReportForMonth( $dateOfCollection );
+    $collections = CRM_Smartdebit_Auddis::getSmartdebitCollectionReports($dateOfCollection);
     if (!isset($collections['error'])) {
       CRM_Smartdebit_Auddis::saveSmartdebitCollectionReport($collections);
     }

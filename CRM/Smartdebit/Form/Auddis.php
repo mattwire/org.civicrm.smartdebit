@@ -132,7 +132,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
     // Display the valid payments
     $contributionTrxnIdsList = "'dummyId'";
     $sdTrxnIds = array();
-    $selectQuery = "SELECT `transaction_id` as trxn_id, receive_date as receive_date FROM `veda_smartdebit_import`";
+    $selectQuery = "SELECT `transaction_id` as trxn_id, receive_date as receive_date FROM `veda_smartdebit_collectionreports`";
     $dao = CRM_Core_DAO::executeQuery($selectQuery);
     while ($dao->fetch()) {
       $sdTrxnIds[] = "'" . $dao->trxn_id . "' ";
@@ -160,7 +160,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
       $validIdsString = implode(',', $validIds);
       $sql = "SELECT ctrc.id contribution_recur_id ,ctrc.contact_id , cont.display_name ,ctrc.start_date , sdpayments.amount, ctrc.trxn_id , ctrc.frequency_unit, ctrc.payment_instrument_id, ctrc.contribution_status_id, ctrc.frequency_interval
       FROM civicrm_contribution_recur ctrc
-      INNER JOIN veda_smartdebit_import sdpayments ON sdpayments.transaction_id = ctrc.trxn_id
+      INNER JOIN veda_smartdebit_collectionreports sdpayments ON sdpayments.transaction_id = ctrc.trxn_id
       INNER JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id)
       WHERE ctrc.trxn_id IN ($validIdsString)";
 
@@ -223,7 +223,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
       $missingTrxnIdsString = implode(',', $missingTrxnIds);
       $findMissingQuery = "
           SELECT `transaction_id` as trxn_id, contact as display_name, contact_id as contact_id, amount as amount, receive_date as receive_date
-          FROM `veda_smartdebit_import`
+          FROM `veda_smartdebit_collectionreports`
           WHERE transaction_id IN ($missingTrxnIdsString)";
       $dao = CRM_Core_DAO::executeQuery($findMissingQuery);
       $key = 0;

@@ -24,7 +24,7 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
       $rejectedids = $rejectedAuddis+$rejectedArudd;
       $this->assign('rejectedids', $rejectedAuddis+$rejectedArudd);
 
-      $getSQL = "SELECT * FROM veda_smartdebit_import_success_contributions";
+      $getSQL = "SELECT * FROM veda_smartdebit_success_contributions";
       $getDAO = CRM_Core_DAO::executeQuery($getSQL);
       $ids    = $totalContributionAmount = array();
       while( $getDAO->fetch() ){

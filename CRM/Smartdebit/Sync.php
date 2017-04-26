@@ -1,11 +1,18 @@
 <?php
 
+// TODO: Add const DEBUG To remove lot's of debug info to log
+// TODO: Update sync tpl so it says "3 months"
+
 class CRM_Smartdebit_Sync
 {
   const QUEUE_NAME = 'sm-pull';
   const END_URL = 'civicrm/smartdebit/syncsd/confirm';
   const END_PARAMS = 'state=done';
   const BATCH_COUNT = 10;
+
+  const COLLECTION_REPORT_AGE = '-3 month';
+
+  const DEBUG = false;
 
   /**
    * If $auddisIDs and $aruddIDs are not set no AUDDIS/ARUDD records will be processed.
@@ -65,6 +72,7 @@ class CRM_Smartdebit_Sync
       $i++;
     }
 
+    CRM_Core_Error::debug_log_message('Smartdebit Sync: Retrieving AUDDIS reports.');
     // Get auddis/arudd IDs for last month if none specified.
     $auddisProcessor = new CRM_Smartdebit_Auddis();
 
@@ -73,7 +81,7 @@ class CRM_Smartdebit_Sync
       if ($auddisProcessor->getSmartdebitAuddisList()) {
         // Get list of auddis dates, convert them to IDs
         if ($auddisProcessor->getAuddisDates()) {
-          $auddisIDs = $auddisProcessor->getAuddisIDsForProcessing($auddisProcessor->getAuddisDatesList());
+          $auddisIDs = $auddisProcessor->getAuddisIdsForProcessing($auddisProcessor->getAuddisDatesList());
           $task = new CRM_Queue_Task(
             array('CRM_Smartdebit_Sync', 'syncSmartdebitAuddis'),
             array($auddisIDs),
@@ -84,6 +92,7 @@ class CRM_Smartdebit_Sync
       }
     }
 
+    CRM_Core_Error::debug_log_message('Smartdebit Sync: Retrieving ARUDD reports.');
     if (!isset($aruddIDs)) {
       // Get list of auddis records from smart debit
       if ($auddisProcessor->getSmartdebitAruddList()) {
@@ -137,13 +146,13 @@ class CRM_Smartdebit_Sync
       // Find the relevant auddis file
       foreach ($smartDebitAuddisIds as $auddisID) {
         $auddisFiles[] = CRM_Smartdebit_Auddis::getSmartdebitAuddisFile($auddisID);
+        // TODO: Don't convert to auddis files, just run direct with the IDs, then we can use ID at the end to mark processed
       }
       // Process AUDDIS files
       foreach ($auddisFiles as $auddisFile) {
         $auddisDate = $auddisFile['auddis_date'];
         unset($auddisFile['auddis_date']);
         foreach ($auddisFile as $key => $value) {
-
           $sql = "
             SELECT ctrc.id contribution_recur_id ,ctrc.contact_id , cont.display_name ,ctrc.start_date , ctrc.amount, ctrc.trxn_id , ctrc.frequency_unit, ctrc.payment_instrument_id, ctrc.financial_type_id
             FROM civicrm_contribution_recur ctrc
@@ -194,17 +203,20 @@ class CRM_Smartdebit_Sync
               // Allow auddis rejected contribution to be handled by hook
               CRM_Smartdebit_Utils_Hook::handleAuddisRejectedContribution($contributionID);
             }
+
+            // Create activity now we've processed auddis
+            // (if we didn't find a matching contribution don't mark as processed, we may be able to sync once reconciliation has been done)
+
+            $params = array(
+              'version' => 3,
+              'sequential' => 1,
+              'activity_type_id' => 6,
+              'subject' => 'SmartdebitAUDDIS' . $auddisDate,
+              'details' => 'Sync had been processed already for this date ' . $auddisDate,
+            );
+            $result = civicrm_api('Activity', 'create', $params);
           }
         }
-        // Create activity now we've processed auddis
-        $params = array(
-          'version' => 3,
-          'sequential' => 1,
-          'activity_type_id' => 6,
-          'subject' => 'SmartdebitAUDDIS' . $auddisDate,
-          'details' => 'Sync had been processed already for this date ' . $auddisDate,
-        );
-        $result = civicrm_api('Activity', 'create', $params);
       }
     }
     smartdebit_civicrm_saveSetting('rejected_auddis', $ids);
@@ -228,6 +240,7 @@ class CRM_Smartdebit_Sync
     if($smartDebitAruddIds) {
       foreach ($smartDebitAruddIds as $aruddID) {
         $aruddFiles[] = CRM_Smartdebit_Auddis::getSmartdebitAruddFile($aruddID);
+        // TODO: Don't convert to arudd files, just run direct with the IDs, then we can use ID at the end to mark processed
       }
       // Process ARUDD files
       foreach ($aruddFiles as $aruddFile) {
@@ -285,17 +298,19 @@ class CRM_Smartdebit_Sync
               // Allow auddis rejected contribution to be handled by hook
               CRM_Smartdebit_Utils_Hook::handleAuddisRejectedContribution( $contributionID );
             }
+
+            // Create activity now we've processed arudd
+            // (if we didn't find a matching contribution don't mark as processed, we may be able to sync once reconciliation has been done)
+            $params = array(
+              'version' => 3,
+              'sequential' => 1,
+              'activity_type_id' => 6,
+              'subject' => 'SmartdebitARUDD'.$aruddDate,
+              'details' => 'Sync had been processed already for this date '.$aruddDate,
+            );
+            $result = civicrm_api('Activity', 'create', $params);
           }
         }
-        // Create activity now we've processed arudd
-        $params = array(
-          'version' => 3,
-          'sequential' => 1,
-          'activity_type_id' => 6,
-          'subject' => 'SmartdebitARUDD'.$aruddDate,
-          'details' => 'Sync had been processed already for this date '.$aruddDate,
-        );
-        $result = civicrm_api('Activity', 'create', $params);
       }
     }
     smartdebit_civicrm_saveSetting('rejected_arudd', $ids);
@@ -313,7 +328,7 @@ class CRM_Smartdebit_Sync
   {
 
     // Clear out the results table
-    $emptySql = "TRUNCATE TABLE veda_smartdebit_import_success_contributions";
+    $emptySql = "TRUNCATE TABLE veda_smartdebit_success_contributions";
     CRM_Core_DAO::executeQuery($emptySql);
 
     // Import each transaction from smart debit
@@ -331,11 +346,14 @@ class CRM_Smartdebit_Sync
 
       // Get transaction details from collection report
       $selectQuery = "SELECT `receive_date` as receive_date, `amount` as amount 
-                      FROM `veda_smartdebit_import` 
+                      FROM `veda_smartdebit_collectionreports` 
                       WHERE `transaction_id` = %1";
       $params = array(1 => array($sdContact['reference_number'], 'String'));
       $daoCollectionReport = CRM_Core_DAO::executeQuery($selectQuery, $params);
-      $daoCollectionReport->fetch();
+      if (!$daoCollectionReport->fetch()) {
+        CRM_Core_Error::debug_log_message('Smartdebit syncSmartdebitRecords: No collection report for ' . $sdContact['reference_number']);
+        continue;
+      }
 
       // Smart debit charge file has dates in UK format
       // UK dates (eg. 27/05/1990) won't work with strtotime, even with timezone properly set.
@@ -367,7 +385,7 @@ class CRM_Smartdebit_Sync
 
       $contributeResult = civicrm_api('Contribution', 'create', $contributeParams);
 
-      CRM_Core_Error::debug_log_message('Smartdebit syncSmartdebitRecords: $contributeResult=' . print_r($contributeResult)); //DEBUG
+      CRM_Core_Error::debug_log_message('Smartdebit syncSmartdebitRecords: $contributeResult=' . print_r($contributeResult, true)); //DEBUG
 
       if (empty($contributeResult['is_error'])) {
         // Get recurring contribution ID
@@ -375,9 +393,9 @@ class CRM_Smartdebit_Sync
         $contactParams = array('version' => 3, 'id' => $contributionRecur['contact_id']);
         $contactResult = civicrm_api('Contact', 'getsingle', $contactParams);
 
-        // Store the results in veda_smartdebit_import_success_contributions table
+        // Store the results in veda_smartdebit_success_contributions table
         $keepSuccessResultsSQL = "
-          INSERT Into veda_smartdebit_import_success_contributions
+          INSERT Into veda_smartdebit_success_contributions
           ( `transaction_id`, `contribution_id`, `contact_id`, `contact`, `amount`, `frequency`)
           VALUES ( %1, %2, %3, %4, %5, %6 )
         ";
@@ -421,7 +439,7 @@ class CRM_Smartdebit_Sync
 
       if (!empty($contributionDetails['receive_date']) && !empty($params['receive_date'])) {
         // Find the date difference between the contribution date and new collection date
-        $dateDiff = CRM_Smartdebit_Sync::getDateDifference($params['receive_date'], $contributionDetails['receive_date']);
+        $dateDiff = CRM_Smartdebit_Sync::dateDifference($params['receive_date'], $contributionDetails['receive_date']);
 
         // if diff is less than set number of days, return Contribution ID to update the contribution
         // If $days == 0 it's a lifetime membership
@@ -440,7 +458,7 @@ class CRM_Smartdebit_Sync
       $dao = CRM_Core_DAO::executeQuery($sql , $sqlParams);
       while($dao->fetch()) {
         if (!empty($dao->receive_date) && !empty($params['receive_date'])) {
-          $dateDiff = CRM_Smartdebit_Sync::getDateDifference($params['receive_date'], $dao->receive_date);
+          $dateDiff = CRM_Smartdebit_Sync::dateDifference($params['receive_date'], $dao->receive_date);
 
           // if diff is less than set number of days, return Contribution ID to update the contribution
           if ($dateDiff < $days) {
@@ -587,24 +605,24 @@ class CRM_Smartdebit_Sync
             ) 
             VALUES (%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17, %18)";
       $params = array(
-        1 => array( self::getArrayFieldValue($smartDebitRecord, 'title', 'NULL'), 'String' ),
-        2 => array( self::getArrayFieldValue($smartDebitRecord, 'first_name', 'NULL'), 'String' ),
-        3 => array( self::getArrayFieldValue($smartDebitRecord, 'last_name', 'NULL'), 'String' ),
-        4 => array( self::getArrayFieldValue($smartDebitRecord, 'email_address', 'NULL'),  'String'),
-        5 => array( self::getArrayFieldValue($smartDebitRecord, 'address_1', 'NULL'), 'String' ),
-        6 => array( self::getArrayFieldValue($smartDebitRecord, 'address_2', 'NULL'), 'String' ),
-        7 => array( self::getArrayFieldValue($smartDebitRecord, 'address_3', 'NULL'), 'String' ),
-        8 => array( self::getArrayFieldValue($smartDebitRecord, 'town', 'NULL'), 'String' ),
-        9 => array( self::getArrayFieldValue($smartDebitRecord, 'county', 'NULL'), 'String' ),
-        10 => array( self::getArrayFieldValue($smartDebitRecord, 'postcode', 'NULL'), 'String' ),
-        11 => array( self::getCleanSmartdebitAmount(self::getArrayFieldValue($smartDebitRecord, 'first_amount', 'NULL')), 'String' ),
-        12 => array( self::getCleanSmartdebitAmount(self::getArrayFieldValue($smartDebitRecord, 'regular_amount', 'NULL')), 'String' ),
-        13 => array( self::getArrayFieldValue($smartDebitRecord, 'frequency_type', 'NULL'), 'String' ),
-        14 => array( self::getArrayFieldValue($smartDebitRecord, 'frequency_factor', 'NULL'), 'Int' ),
-        15 => array( self::getArrayFieldValue($smartDebitRecord, 'start_date', 'NULL'), 'String' ),
-        16 => array( self::getArrayFieldValue($smartDebitRecord, 'current_state', 'NULL'), 'Int' ),
-        17 => array( self::getArrayFieldValue($smartDebitRecord, 'reference_number', 'NULL'), 'String' ),
-        18 => array( self::getArrayFieldValue($smartDebitRecord, 'payerReference', 'NULL'), 'String' ),
+        1 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'title', 'NULL'), 'String' ),
+        2 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'first_name', 'NULL'), 'String' ),
+        3 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'last_name', 'NULL'), 'String' ),
+        4 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'email_address', 'NULL'),  'String'),
+        5 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'address_1', 'NULL'), 'String' ),
+        6 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'address_2', 'NULL'), 'String' ),
+        7 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'address_3', 'NULL'), 'String' ),
+        8 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'town', 'NULL'), 'String' ),
+        9 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'county', 'NULL'), 'String' ),
+        10 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'postcode', 'NULL'), 'String' ),
+        11 => array( CRM_Smartdebit_Utils::getCleanSmartdebitAmount(CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'first_amount', 'NULL')), 'String' ),
+        12 => array( CRM_Smartdebit_Utils::getCleanSmartdebitAmount(CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'regular_amount', 'NULL')), 'String' ),
+        13 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'frequency_type', 'NULL'), 'String' ),
+        14 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'frequency_factor', 'NULL'), 'Int' ),
+        15 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'start_date', 'NULL'), 'String' ),
+        16 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'current_state', 'NULL'), 'Int' ),
+        17 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'reference_number', 'NULL'), 'String' ),
+        18 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'payerReference', 'NULL'), 'String' ),
       );
       CRM_Core_DAO::executeQuery($sql, $params);
     }
