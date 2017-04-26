@@ -1,5 +1,6 @@
 <?php
 
+// TODO: Test everything (just removed lot's of settings, changed DB etc, test sync job)
 require_once 'smartdebit.civix.php';
 
 /**
@@ -143,8 +144,8 @@ function smartdebit_civicrm_install()
   }
 
   // If no civicrm_sd, then create that table
-  if (!CRM_Core_DAO::checkTableExists('veda_smartdebit_refresh')) {
-    $createSql = "CREATE TABLE `veda_smartdebit_refresh` (
+  if (!CRM_Core_DAO::checkTableExists('veda_smartdebit_mandates')) {
+    $createSql = "CREATE TABLE `veda_smartdebit_mandates` (
             `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
             `title` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
             `first_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -168,7 +169,7 @@ function smartdebit_civicrm_install()
            ) ENGINE=InnoDB AUTO_INCREMENT=350 DEFAULT CHARSET=latin1";
 
     CRM_Core_DAO::executeQuery($createSql);
-    $alterQuery = "alter table veda_smartdebit_refresh add index reference_number_idx(reference_number)";
+    $alterQuery = "alter table veda_smartdebit_mandates add index reference_number_idx(reference_number)";
     CRM_Core_DAO::executeQuery($alterQuery);
   }
 

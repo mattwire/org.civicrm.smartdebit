@@ -38,8 +38,11 @@ class CRM_Smartdebit_Sync
     if (empty($smartDebitPayerContacts))
       return FALSE;
 
-    $count = count($smartDebitPayerContacts);
+    // Update mandates table for reconciliation functions
+    CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($smartDebitPayerContacts);
 
+    // Save total count
+    $count = count($smartDebitPayerContacts);
     smartdebit_civicrm_saveSetting('total', $count);
 
     // Set the Number of Rounds
@@ -542,5 +545,70 @@ class CRM_Smartdebit_Sync
         CRM_Core_Error::debug_log_message('Smart Debit: getSmartdebitPayments Error: ' . $msg);
         return false;
     }
+  }
+
+  /**
+   * Update Smartdebit Mandates in table veda_smartdebit_mandates for further analysis
+   * This table is only used by Reconciliation functions
+   *
+   * @param $smartDebitPayerContactDetails (array of smart debit contact details : call CRM_Smartdebit_Sync::getSmartdebitPayerContactDetails())
+   * @return bool|int
+   */
+  static function updateSmartDebitMandatesTable($smartDebitPayerContactDetails) {
+    // if the civicrm_sd table exists, then empty it
+    $emptySql = "TRUNCATE TABLE `veda_smartdebit_mandates`";
+    CRM_Core_DAO::executeQuery($emptySql);
+
+    // Get payer contact details
+    if (empty($smartDebitPayerContactDetails)) {
+      return FALSE;
+    }
+    // Insert mandates into table
+    foreach ($smartDebitPayerContactDetails as $key => $smartDebitRecord) {
+      $sql = "INSERT INTO `veda_smartdebit_mandates`(
+            `title`,
+            `first_name`,
+            `last_name`, 
+            `email_address`,
+            `address_1`, 
+            `address_2`, 
+            `address_3`, 
+            `town`, 
+            `county`,
+            `postcode`,
+            `first_amount`,
+            `regular_amount`,
+            `frequency_type`,
+            `frequency_factor`,
+            `start_date`,
+            `current_state`,
+            `reference_number`,
+            `payerReference`
+            ) 
+            VALUES (%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17, %18)";
+      $params = array(
+        1 => array( self::getArrayFieldValue($smartDebitRecord, 'title', 'NULL'), 'String' ),
+        2 => array( self::getArrayFieldValue($smartDebitRecord, 'first_name', 'NULL'), 'String' ),
+        3 => array( self::getArrayFieldValue($smartDebitRecord, 'last_name', 'NULL'), 'String' ),
+        4 => array( self::getArrayFieldValue($smartDebitRecord, 'email_address', 'NULL'),  'String'),
+        5 => array( self::getArrayFieldValue($smartDebitRecord, 'address_1', 'NULL'), 'String' ),
+        6 => array( self::getArrayFieldValue($smartDebitRecord, 'address_2', 'NULL'), 'String' ),
+        7 => array( self::getArrayFieldValue($smartDebitRecord, 'address_3', 'NULL'), 'String' ),
+        8 => array( self::getArrayFieldValue($smartDebitRecord, 'town', 'NULL'), 'String' ),
+        9 => array( self::getArrayFieldValue($smartDebitRecord, 'county', 'NULL'), 'String' ),
+        10 => array( self::getArrayFieldValue($smartDebitRecord, 'postcode', 'NULL'), 'String' ),
+        11 => array( self::getCleanSmartdebitAmount(self::getArrayFieldValue($smartDebitRecord, 'first_amount', 'NULL')), 'String' ),
+        12 => array( self::getCleanSmartdebitAmount(self::getArrayFieldValue($smartDebitRecord, 'regular_amount', 'NULL')), 'String' ),
+        13 => array( self::getArrayFieldValue($smartDebitRecord, 'frequency_type', 'NULL'), 'String' ),
+        14 => array( self::getArrayFieldValue($smartDebitRecord, 'frequency_factor', 'NULL'), 'Int' ),
+        15 => array( self::getArrayFieldValue($smartDebitRecord, 'start_date', 'NULL'), 'String' ),
+        16 => array( self::getArrayFieldValue($smartDebitRecord, 'current_state', 'NULL'), 'Int' ),
+        17 => array( self::getArrayFieldValue($smartDebitRecord, 'reference_number', 'NULL'), 'String' ),
+        18 => array( self::getArrayFieldValue($smartDebitRecord, 'payerReference', 'NULL'), 'String' ),
+      );
+      CRM_Core_DAO::executeQuery($sql, $params);
+    }
+    $mandateFetchedCount = count($smartDebitPayerContactDetails);
+    return $mandateFetchedCount;
   }
 }

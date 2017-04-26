@@ -30,17 +30,3 @@ function civicrm_api3_smartdebit_sync($params) {
     return civicrm_api3_create_error($msg);
   }
 }
-
-/**
- * This is used to refresh mandates for smart debit reconciliation
- *
- * @param $params
- * @return array
- */
-function civicrm_api3_smartdebit_refreshsdmandatesincivi($params) {
-  $mandateFetched = CRM_Smartdebit_Form_ReconciliationList::insertSmartDebitToTable();
-  if (empty($mandateFetched)) {
-    return civicrm_api3_create_error('No mandates fetched from smart debit');
-  }
-  return civicrm_api3_create_success(array('No of Records refreshed' => $mandateFetched), $params, 'Smartdebit', 'refreshsdmandatesincivi');
-}

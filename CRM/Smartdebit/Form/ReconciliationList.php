@@ -40,21 +40,17 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     $sync = CRM_Utils_Array::value('sync', $_GET, '');
     if ($sync) {
       // Do a sync
-      try {
-        $result = civicrm_api3('Smartdebit', 'refreshsdmandatesincivi', array(
-          'sequential' => 1,
-        ));
-      }
-      catch (Exception $e) {
-        CRM_Core_Session::setStatus($e->getMessage(), 'Smart Debit');
-      }
+      $mandatesList = CRM_Smartdebit_Sync::getSmartdebitPayerContactDetails();
+      CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($mandatesList);
+
+      // Redirect back to this form
       $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/list', 'reset=1');
       CRM_Utils_System::redirect($url);
       return;
     }
 
     // Check if we have any data to use, otherwise we'll need to sync with Smartdebit
-    $query = "SELECT COUNT(*) FROM veda_smartdebit_refresh";
+    $query = "SELECT COUNT(*) FROM veda_smartdebit_mandates";
     $count = CRM_Core_DAO::singleValueQuery($query);
     $this->assign('totalMandates', $count);
     if ($count == 0) {
@@ -120,7 +116,7 @@ FROM civicrm_contribution_recur ctrc
 LEFT JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id) 
 LEFT JOIN civicrm_option_value opva ON (ctrc.payment_instrument_id = opva.value) 
 LEFT JOIN civicrm_option_group opgr ON (opgr.id = opva.option_group_id) 
-INNER JOIN veda_smartdebit_refresh csd ON csd.reference_number = ctrc.trxn_id 
+INNER JOIN veda_smartdebit_mandates csd ON csd.reference_number = ctrc.trxn_id 
 WHERE opgr.name = 'payment_instrument' 
 AND   opva.label = 'Direct Debit' ";
 
@@ -260,7 +256,7 @@ SELECT contact.id as contact_id,
   csd1.id as smart_debit_id,
   csd1.first_name,
   csd1.last_name 
-FROM veda_smartdebit_refresh csd1 
+FROM veda_smartdebit_mandates csd1 
 LEFT JOIN civicrm_contribution_recur ctrc ON ctrc.trxn_id = csd1.reference_number 
 LEFT JOIN civicrm_contact contact ON contact.id = csd1.payerReference 
 WHERE ( csd1.current_state = %1 OR csd1.current_state = %2 ) 
@@ -339,7 +335,7 @@ FROM civicrm_contribution_recur ctrc
 LEFT JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id) 
 LEFT JOIN civicrm_option_value opva ON (ctrc.payment_instrument_id = opva.value) 
 LEFT JOIN civicrm_option_group opgr ON (opgr.id = opva.option_group_id) 
-LEFT JOIN veda_smartdebit_refresh csd ON csd.reference_number = ctrc.trxn_id 
+LEFT JOIN veda_smartdebit_mandates csd ON csd.reference_number = ctrc.trxn_id 
 WHERE opgr.name = 'payment_instrument' 
 AND   opva.label = 'Direct Debit' 
 AND   csd.id IS NULL LIMIT 100";
@@ -484,70 +480,6 @@ AND   csd.id IS NULL LIMIT 100";
       'contact_id' => $params['contact_id'],
       'contribution_recur_id' => $params['contribution_recur_id'],
     ));
-  }
-
-  /**
-   * Retrieve SmartDebit payer contact details and populate table veda_smartdebit_refresh for further analysis
-   *
-   * @return bool|int
-   */
-  static function insertSmartdebitToTable() {
-    // if the civicrm_sd table exists, then empty it
-    $emptySql = "TRUNCATE TABLE `veda_smartdebit_refresh`";
-    CRM_Core_DAO::executeQuery($emptySql);
-
-    // Get payer contact details
-    $smartDebitArray = CRM_Smartdebit_Sync::getSmartdebitPayerContactDetails();
-    if (empty($smartDebitArray)) {
-      return FALSE;
-    }
-    // Insert mandates into table
-    foreach ($smartDebitArray as $key => $smartDebitRecord) {
-      $sql = "INSERT INTO `veda_smartdebit_refresh`(
-            `title`,
-            `first_name`,
-            `last_name`, 
-            `email_address`,
-            `address_1`, 
-            `address_2`, 
-            `address_3`, 
-            `town`, 
-            `county`,
-            `postcode`,
-            `first_amount`,
-            `regular_amount`,
-            `frequency_type`,
-            `frequency_factor`,
-            `start_date`,
-            `current_state`,
-            `reference_number`,
-            `payerReference`
-            ) 
-            VALUES (%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17, %18)";
-      $params = array(
-        1 => array( self::getArrayFieldValue($smartDebitRecord, 'title', 'NULL'), 'String' ),
-        2 => array( self::getArrayFieldValue($smartDebitRecord, 'first_name', 'NULL'), 'String' ),
-        3 => array( self::getArrayFieldValue($smartDebitRecord, 'last_name', 'NULL'), 'String' ),
-        4 => array( self::getArrayFieldValue($smartDebitRecord, 'email_address', 'NULL'),  'String'),
-        5 => array( self::getArrayFieldValue($smartDebitRecord, 'address_1', 'NULL'), 'String' ),
-        6 => array( self::getArrayFieldValue($smartDebitRecord, 'address_2', 'NULL'), 'String' ),
-        7 => array( self::getArrayFieldValue($smartDebitRecord, 'address_3', 'NULL'), 'String' ),
-        8 => array( self::getArrayFieldValue($smartDebitRecord, 'town', 'NULL'), 'String' ),
-        9 => array( self::getArrayFieldValue($smartDebitRecord, 'county', 'NULL'), 'String' ),
-        10 => array( self::getArrayFieldValue($smartDebitRecord, 'postcode', 'NULL'), 'String' ),
-        11 => array( self::getCleanSmartdebitAmount(self::getArrayFieldValue($smartDebitRecord, 'first_amount', 'NULL')), 'String' ),
-        12 => array( self::getCleanSmartdebitAmount(self::getArrayFieldValue($smartDebitRecord, 'regular_amount', 'NULL')), 'String' ),
-        13 => array( self::getArrayFieldValue($smartDebitRecord, 'frequency_type', 'NULL'), 'String' ),
-        14 => array( self::getArrayFieldValue($smartDebitRecord, 'frequency_factor', 'NULL'), 'Int' ),
-        15 => array( self::getArrayFieldValue($smartDebitRecord, 'start_date', 'NULL'), 'String' ),
-        16 => array( self::getArrayFieldValue($smartDebitRecord, 'current_state', 'NULL'), 'Int' ),
-        17 => array( self::getArrayFieldValue($smartDebitRecord, 'reference_number', 'NULL'), 'String' ),
-        18 => array( self::getArrayFieldValue($smartDebitRecord, 'payerReference', 'NULL'), 'String' ),
-      );
-      CRM_Core_DAO::executeQuery($sql, $params);
-    }
-    $mandateFetchedCount = count($smartDebitArray);
-    return $mandateFetchedCount;
   }
 
   /**

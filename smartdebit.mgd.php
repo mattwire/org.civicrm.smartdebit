@@ -26,31 +26,16 @@ return array(
     ),
   ),
   1 => array (
-    'name' => 'Cron:SmartDebit.getSmartDebitPayerContactDetails',
+    'name' => 'Cron:SmartDebit.syncFromSmartDebit',
     'entity' => 'Job',
     'params' => array (
       'version' => 3,
-      'name' => 'Sync contacts from SmartDebit to CiviCRM.',
-      'description' => 'Sync contacts from SmartDebit to CiviCRM.',
+      'name' => 'Sync from Smart Debit',
+      'description' => 'Sync mandates, payments, AUDDIS reports, ARUDD reports from SmartDebit to CiviCRM.',
       'run_frequency' => 'Daily',
       'api_entity' => 'Smartdebit',
       'api_action' => 'sync',
       'parameters' => '',
     ),
   ),
-  2 =>
-    array (
-      'name' => 'Cron:SmartDebit.RefreshSDMandatesInCivi',
-      'entity' => 'Job',
-      'params' =>
-        array (
-          'version' => 3,
-          'name' => 'Refresh veda_smartdebit_refresh table with latest Smart Debit Mandates',
-          'description' => 'Refresh veda_smartdebit_refresh table with latest Smart Debit Mandates',
-          'run_frequency' => 'Daily',
-          'api_entity' => 'Smartdebit',
-          'api_action' => 'refreshsdmandatesincivi',
-          'parameters' => '',
-        ),
-    ),
 );
