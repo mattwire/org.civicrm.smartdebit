@@ -130,8 +130,8 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
     // Make the query string to send in the url for the next page
     $queryParams = '';
     // Get IDs for processing
-    $this->_auddisProcessor->getAuddisIDsForProcessing($auddisDates);
-    $this->_auddisProcessor->getAruddIDsForProcessing($aruddDates);
+    $auddisIDs = $this->_auddisProcessor->getAuddisIDsForProcessing($auddisDates);
+    $aruddIDs = $this->_auddisProcessor->getAruddIDsForProcessing($aruddDates);
 
     /*foreach ($auddisDates as $date) {
       // Find auddis ID

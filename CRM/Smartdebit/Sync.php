@@ -67,31 +67,33 @@ class CRM_Smartdebit_Sync
 
     if (!isset($auddisIDs)) {
       // Get list of auddis records from smart debit
-      $auddisProcessor->getSmartdebitAuddisList();
-      // Get list of auddis dates, convert them to IDs
-      if ($auddisProcessor->getAuddisDatesList()) {
-        $auddisIDs = $auddisProcessor->getAuddisIDsForProcessing($auddisProcessor->getAuddisDates());
-        $task = new CRM_Queue_Task(
-          array('CRM_Smartdebit_Sync', 'syncSmartdebitAuddis'),
-          array($auddisIDs),
-          "Syncing smart debit AUDDIS reports"
-        );
-        $queue->createItem($task);
+      if ($auddisProcessor->getSmartdebitAuddisList()) {
+        // Get list of auddis dates, convert them to IDs
+        if ($auddisProcessor->getAuddisDates()) {
+          $auddisIDs = $auddisProcessor->getAuddisIDsForProcessing($auddisProcessor->getAuddisDatesList());
+          $task = new CRM_Queue_Task(
+            array('CRM_Smartdebit_Sync', 'syncSmartdebitAuddis'),
+            array($auddisIDs),
+            "Syncing smart debit AUDDIS reports"
+          );
+          $queue->createItem($task);
+        }
       }
     }
 
     if (!isset($aruddIDs)) {
       // Get list of auddis records from smart debit
-      $auddisProcessor->getSmartdebitAruddList();
-      // Get list of auddis dates, convert them to IDs
-      if ($auddisProcessor->getAruddDatesList()) {
-        $aruddIDs = $auddisProcessor->getAruddIDsForProcessing($auddisProcessor->getAruddDates());
-        $task = new CRM_Queue_Task(
-          array('CRM_Smartdebit_Sync', 'syncSmartdebitArudd'),
-          array($aruddIDs),
-          "Syncing smart debit ARUDD reports"
-        );
-        $queue->createItem($task);
+      if ($auddisProcessor->getSmartdebitAruddList()) {
+        // Get list of auddis dates, convert them to IDs
+        if ($auddisProcessor->getAruddDates()) {
+          $aruddIDs = $auddisProcessor->getAruddIDsForProcessing($auddisProcessor->getAruddDatesList());
+          $task = new CRM_Queue_Task(
+            array('CRM_Smartdebit_Sync', 'syncSmartdebitArudd'),
+            array($aruddIDs),
+            "Syncing smart debit ARUDD reports"
+          );
+          $queue->createItem($task);
+        }
       }
     }
 
@@ -217,7 +219,7 @@ class CRM_Smartdebit_Sync
     // Add contributions for rejected payments with the status of 'failed'
     $ids = array();
     // Reset the counter when sync starts
-    smartdebit_civicrm_saveSetting('rejected_auddis', NULL);
+    smartdebit_civicrm_saveSetting('rejected_arudd', NULL);
 
     // Retrieve ARUDD files from Smartdebit
     if($smartDebitAruddIds) {
@@ -386,8 +388,8 @@ class CRM_Smartdebit_Sync
         );
         CRM_Core_DAO::executeQuery($keepSuccessResultsSQL, $keepSuccessResultsParams);
       }
-      return CRM_Queue_Task::TASK_SUCCESS;
     }
+    return CRM_Queue_Task::TASK_SUCCESS;
   }
 
   /**

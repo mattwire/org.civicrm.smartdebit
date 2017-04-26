@@ -41,7 +41,8 @@ class CRM_Smartdebit_Auddis
   function getSmartdebitAuddisList($dateOfCollectionStart = null, $dateOfCollectionEnd = null)
   {
     if (!isset($dateOfCollectionEnd)) {
-      $dateOfCollectionEnd = date('Y-m-d', new DateTime()); // Today
+      $endDate = new DateTime();
+      $dateOfCollectionEnd = $endDate->format('Y-m-d'); // Today
     }
     if (!isset($dateOfCollectionStart)) {
       $dateOfCollectionStart = date('Y-m-d', strtotime($dateOfCollectionEnd . '-1 month'));
@@ -112,7 +113,8 @@ class CRM_Smartdebit_Auddis
   function getSmartdebitAruddList($dateOfCollectionStart = null, $dateOfCollectionEnd = null)
   {
     if (!isset($dateOfCollectionEnd)) {
-      $dateOfCollectionEnd = date('Y-m-d', new DateTime()); // Today
+      $endDate = new DateTime();
+      $dateOfCollectionEnd = $endDate->format('Y-m-d'); // Today
     }
     if (!isset($dateOfCollectionStart)) {
       $dateOfCollectionStart = date('Y-m-d', strtotime($dateOfCollectionEnd . '-1 month'));
