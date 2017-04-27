@@ -212,17 +212,6 @@ class CRM_Smartdebit_Sync
   {
     // Import each transaction from smart debit
     foreach ($smartDebitPayerContacts as $key => $sdContact) {
-      try {
-        $contributionRecur = civicrm_api3('ContributionRecur', 'getsingle', array(
-          'trxn_id' => $sdContact['reference_number'],
-        ));
-      } catch (Exception $e) {
-        CRM_Core_Error::debug_log_message('Smartdebit syncSmartdebitRecords: Not Matched=' . $sdContact['reference_number']);
-        continue;
-      }
-
-      if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit syncSmartdebitRecords: Matched=' . $sdContact['reference_number']); }
-
       // Get transaction details from collection report
       $selectQuery = "SELECT `receive_date` as receive_date, `amount` as amount 
                       FROM `veda_smartdebit_collectionreports` 
@@ -234,48 +223,83 @@ class CRM_Smartdebit_Sync
         continue;
       }
 
-      // Smart debit charge file has dates in UK format
-      // UK dates (eg. 27/05/1990) won't work with strtotime, even with timezone properly set.
-      // However, if you just replace "/" with "-" it will work fine.
-      $receiveDate = date('Y-m-d', strtotime(str_replace('/', '-', $daoCollectionReport->receive_date)));
+      self::processCollection($sdContact['reference_number'], $daoCollectionReport->receive_date, $daoCollectionReport->amount, 'Completed');
+    }
+    return CRM_Queue_Task::TASK_SUCCESS;
+  }
 
-      $contributeParams =
-        array(
-          'version' => 3,
-          'contact_id' => $contributionRecur['contact_id'],
-          'contribution_recur_id' => $contributionRecur['id'],
-          'total_amount' => $daoCollectionReport->amount,
-          'invoice_id' => md5(uniqid(rand(), TRUE)),
-          'trxn_id' => $sdContact['reference_number'] . '/' . CRM_Utils_Date::processDate($receiveDate),
-          'financial_type_id' => $contributionRecur['financial_type_id'],
-          'payment_instrument_id' => $contributionRecur['payment_instrument_id'],
-          'contribution_status_id' => CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed'),
-          'source' => 'Smart Debit Import',
-          'receive_date' => CRM_Utils_Date::processDate($receiveDate),
-        );
+  /**
+   * Process the collection/auddis/arudd record and add/update contributions as required
+   * @param $trxnId
+   * @param $receiveDate
+   * @param $amount
+   * @return false|contributionId
+   */
+  static function processCollection($trxnId, $receiveDate, $contributionStatus, $amount) {
+    if (empty($trxnId) || empty($receiveDate)  || empty($contributionStatus)) {
+      // amount can be empty
+      return FALSE;
+    }
 
-      // Check if the contribution is first payment
-      // if yes, update the contribution instead of creating one
-      // as CiviCRM should have created the first contribution
-      $contributeParams = self::checkIfFirstPayment($contributeParams, $contributionRecur['frequency_unit'], $contributionRecur['frequency_interval']);
+    // Get existing recurring contribution
+    try {
+      $contributionRecur = civicrm_api3('ContributionRecur', 'getsingle', array(
+        'trxn_id' => $trxnId,
+      ));
+    } catch (Exception $e) {
+      CRM_Core_Error::debug_log_message('Smartdebit processCollection: Not Matched=' . $trxnId);
+      return FALSE;
+    }
 
-      // Allow params to be modified via hook
-      CRM_Smartdebit_Utils_Hook::alterSmartdebitContributionParams($contributeParams);
+    if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit processCollection: Matched=' . $trxnId); }
 
-      $contributeResult = civicrm_api('Contribution', 'create', $contributeParams);
+    if (empty($amount)) {
+      $amount = $contributionRecur['amount'];
+    }
+    // Smart debit charge file has dates in UK format
+    // UK dates (eg. 27/05/1990) won't work with strtotime, even with timezone properly set.
+    // However, if you just replace "/" with "-" it will work fine.
+    $receiveDate = date('Y-m-d', strtotime(str_replace('/', '-', $receiveDate)));
 
-      if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit syncSmartdebitRecords: $contributeResult=' . print_r($contributeResult, true)); }
+    $contributeParams =
+      array(
+        'version' => 3,
+        'contact_id' => $contributionRecur['contact_id'],
+        'contribution_recur_id' => $contributionRecur['id'],
+        'total_amount' => $amount,
+        'invoice_id' => md5(uniqid(rand(), TRUE)),
+        'trxn_id' => $trxnId . '/' . CRM_Utils_Date::processDate($receiveDate),
+        'financial_type_id' => $contributionRecur['financial_type_id'],
+        'payment_instrument_id' => $contributionRecur['payment_instrument_id'],
+        'contribution_status_id' => CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', $contributionStatus),
+        'source' => 'Smart Debit Import',
+        'receive_date' => CRM_Utils_Date::processDate($receiveDate),
+      );
 
-      if (empty($contributeResult['is_error'])) {
-        // Get recurring contribution ID
-        // get contact display name to display in result screen
-        $contactParams = array('version' => 3, 'id' => $contributionRecur['contact_id']);
-        $contactResult = civicrm_api('Contact', 'getsingle', $contactParams);
+    // Check if the contribution is first payment
+    // if yes, update the contribution instead of creating one
+    // as CiviCRM should have created the first contribution
+    $contributeParams = self::checkIfFirstPayment($contributeParams, $contributionRecur['frequency_unit'], $contributionRecur['frequency_interval']);
 
-        // Update Recurring contribution to "In Progress"
-        $contributionRecur['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
-        CRM_Smartdebit_Base::createRecurContribution($contributionRecur);
+    // Allow params to be modified via hook
+    CRM_Smartdebit_Utils_Hook::alterSmartdebitContributionParams($contributeParams);
 
+    $contributeResult = civicrm_api('Contribution', 'create', $contributeParams);
+
+    if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit processCollection: $contributeResult=' . print_r($contributeResult, true)); }
+
+    if (empty($contributeResult['is_error'])) {
+      // Get recurring contribution ID
+      // get contact display name to display in result screen
+      $contactParams = array('version' => 3, 'id' => $contributionRecur['contact_id']);
+      $contactResult = civicrm_api('Contact', 'getsingle', $contactParams);
+
+      // Update Recurring contribution to "In Progress"
+      $contributionRecur['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
+      CRM_Smartdebit_Base::createRecurContribution($contributionRecur);
+
+      // Only record completed collections in DB
+      if ($contributionStatus == 'Completed') {
         // Store the results in veda_smartdebit_success_contributions table
         $keepSuccessResultsSQL = "
           INSERT INTO `veda_smartdebit_success_contributions`(
@@ -289,17 +313,18 @@ class CRM_Smartdebit_Sync
           VALUES (%1,%2,%3,%4,%5,%6)
         ";
         $keepSuccessResultsParams = array(
-          1 => array($sdContact['reference_number'], 'String'),
+          1 => array($trxnId, 'String'),
           2 => array($contributeResult['id'], 'Integer'),
           3 => array($contactResult['id'], 'Integer'),
           4 => array($contactResult['display_name'], 'String'),
-          5 => array($daoCollectionReport->amount, 'String'),
+          5 => array($amount, 'String'),
           6 => array($contributionRecur['frequency_interval'] . ' ' . $contributionRecur['frequency_unit'], 'String'),
         );
         CRM_Core_DAO::executeQuery($keepSuccessResultsSQL, $keepSuccessResultsParams);
       }
+      return $contributeResult['id'];
     }
-    return CRM_Queue_Task::TASK_SUCCESS;
+    return FALSE;
   }
 
   /**
@@ -322,81 +347,43 @@ class CRM_Smartdebit_Sync
         continue;
       }
 
-      $sql = "
-            SELECT ctrc.id contribution_recur_id ,ctrc.contact_id , cont.display_name ,ctrc.start_date , ctrc.amount, ctrc.trxn_id , ctrc.frequency_unit, ctrc.payment_instrument_id, ctrc.financial_type_id
-            FROM civicrm_contribution_recur ctrc
-            INNER JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id)
-            WHERE ctrc.trxn_id = %1";
+      $contributionId = self::processCollection($value[$refKey], $value[$dateKey], 'Failed', 0);
 
-      $params = array(1 => array($value[$refKey], 'String'));
-      $dao = CRM_Core_DAO::executeQuery($sql, $params);
-
-      // Contribution receive date is "now"
-      /*$receiveDate = new DateTime();
-      $receiveDateString = $receiveDate->format('YmdHis');*/
-      $receiveDateString = date('YmdHis', strtotime($value[$dateKey]. ' 00:00:00'));
-      $trxnId = $value[$refKey] . '/' . $receiveDateString;
-
-      if ($dao->fetch()) {
-        $contributeParams = array(
-          'version' => 3,
-          'contact_id' => $dao->contact_id,
-          'contribution_recur_id' => $dao->contribution_recur_id,
-          'total_amount' => $dao->amount,
-          'trxn_id' => $trxnId,
-          'financial_type_id' => $dao->financial_type_id,
-          'payment_instrument_id' => $dao->payment_instrument_id,
-          'contribution_status_id' => CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Failed'),
-          'receive_date' => $value[$dateKey],
-        );
-
-        // Look for an existing contribution and update existing if available
+      if ($contributionId) {
+        // Look for an existing contribution
         try {
           $existingContribution = civicrm_api3('Contribution', 'getsingle', array(
             'return' => array("id"),
-            'trxn_id' => $trxnId,
-          ));
-          if (!empty($existingContribution['id'])) {
-            $contributeParams['id'] = $existingContribution['id'];
-          }
-        }
-        catch (Exception $e) {
-          // No existing contribution as expected, continue.
-          $contributeParams['source'] = 'Smart Debit Import';
-          $contributeParams['invoice_id'] = md5(uniqid(rand(), TRUE));
-        }
-
-        // Allow params to be modified via hook
-        CRM_Smartdebit_Utils_Hook::alterSmartdebitContributionParams($contributeParams);
-        $contributeResult = civicrm_api('Contribution', 'create', $contributeParams);
-
-        if (!$contributeResult['is_error']) {
-          $contributionId = $contributeResult['id'];
-          // get contact display name to display in result screen
-          $contactParams = array('version' => 3, 'id' => $contributeResult['values'][$contributionId]['contact_id']);
-          $contactResult = civicrm_api('Contact', 'getsingle', $contactParams);
-
-          $rejectedIds[$contributionId] = array('cid' => $contributeResult['values'][$contributionId]['contact_id'],
             'id' => $contributionId,
-            'display_name' => $contactResult['display_name'],
-            'total_amount' => CRM_Utils_Money::format($contributeResult['values'][$contributionId]['total_amount']),
-            'trxn_id' => $value[$refKey],
-            'status' => $contributeResult['label'],
-          );
-
-          // Allow auddis rejected contribution to be handled by hook
-          CRM_Smartdebit_Utils_Hook::handleAuddisRejectedContribution($contributionId);
+          ));
+        } catch (Exception $e) {
+          return FALSE;
         }
-      }
-      else {
+
+        // get contact display name to display in result screen
+        $contactParams = array('version' => 3, 'id' => $existingContribution['values'][$contributionId]['contact_id']);
+        $contactResult = civicrm_api('Contact', 'getsingle', $contactParams);
+
+        $rejectedIds[$contributionId] = array('cid' => $existingContribution['values'][$contributionId]['contact_id'],
+          'id' => $contributionId,
+          'display_name' => $contactResult['display_name'],
+          'total_amount' => CRM_Utils_Money::format($existingContribution['values'][$contributionId]['total_amount']),
+          'trxn_id' => $value[$refKey],
+          'status' => $existingContribution['label'],
+        );
+
+        // Allow auddis rejected contribution to be handled by hook
+        CRM_Smartdebit_Utils_Hook::handleAuddisRejectedContribution($contributionId);
+      } else {
         CRM_Core_Error::debug_log_message('Smartdebit processAuddis: ' . $value[$refKey] . ' NOT matched to contribution in CiviCRM - try reconciliation.');
         $errors = TRUE;
       }
-      if (!$errors) {
-        // Mark auddis as processed if we actually found a matching contribution
-        CRM_Smartdebit_Auddis::setAuddisRecordProcessed($auddisId);
-      }
     }
+    if (!$errors) {
+      // Mark auddis as processed if we actually found a matching contribution
+      CRM_Smartdebit_Auddis::setAuddisRecordProcessed($auddisId);
+    }
+
     return $rejectedIds;
   }
 
