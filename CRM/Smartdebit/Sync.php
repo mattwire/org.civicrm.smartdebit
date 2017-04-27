@@ -161,7 +161,7 @@ class CRM_Smartdebit_Sync
         unset($auddisFile['auddis_date']);
         $refKey = 'reference';
         $dateKey = 'effective-date';
-        $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey));
+        $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey, 'AUDDIS report'));
       }
     }
     smartdebit_civicrm_saveSetting('rejected_auddis', $rejectedIds);
@@ -191,7 +191,7 @@ class CRM_Smartdebit_Sync
         unset($aruddFile['arudd_date']);
         $refKey = 'ref';
         $dateKey = 'originalProcessingDate';
-        $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($aruddId, $aruddFile, $refKey, $dateKey));
+        $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($aruddId, $aruddFile, $refKey, $dateKey, 'ARUDD report'));
       }
     }
     smartdebit_civicrm_saveSetting('rejected_arudd', $rejectedIds);
@@ -223,7 +223,7 @@ class CRM_Smartdebit_Sync
         continue;
       }
 
-      self::processCollection($sdContact['reference_number'], $daoCollectionReport->receive_date, $daoCollectionReport->amount, 'Completed');
+      self::processCollection($sdContact['reference_number'], $daoCollectionReport->receive_date, $daoCollectionReport->amount, 'Completed', 'Collection Report');
     }
     return CRM_Queue_Task::TASK_SUCCESS;
   }
@@ -235,7 +235,7 @@ class CRM_Smartdebit_Sync
    * @param $amount
    * @return false|contributionId
    */
-  static function processCollection($trxnId, $receiveDate, $contributionStatus, $amount) {
+  static function processCollection($trxnId, $receiveDate, $contributionStatus, $amount, $collectionDescription) {
     if (empty($trxnId) || empty($receiveDate)  || empty($contributionStatus)) {
       // amount can be empty
       return FALSE;
@@ -272,14 +272,14 @@ class CRM_Smartdebit_Sync
         'financial_type_id' => $contributionRecur['financial_type_id'],
         'payment_instrument_id' => $contributionRecur['payment_instrument_id'],
         'contribution_status_id' => CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', $contributionStatus),
-        'source' => 'Smart Debit Import',
+        'source' => 'Smart Debit: ' . $collectionDescription,
         'receive_date' => CRM_Utils_Date::processDate($receiveDate),
       );
 
     // Check if the contribution is first payment
     // if yes, update the contribution instead of creating one
     // as CiviCRM should have created the first contribution
-    $contributeParams = self::checkIfFirstPayment($contributeParams, $contributionRecur['frequency_unit'], $contributionRecur['frequency_interval']);
+    $contributeParams = self::checkIfFirstPayment($contributeParams, $contributionRecur);
 
     // Allow params to be modified via hook
     CRM_Smartdebit_Utils_Hook::alterSmartdebitContributionParams($contributeParams);
@@ -336,7 +336,7 @@ class CRM_Smartdebit_Sync
    * @param $dateKey
    * @return array
    */
-  static function processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey) {
+  static function processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey, $collectionDescription) {
     $errors = FALSE;
     $rejectedIds = array();
 
@@ -347,7 +347,7 @@ class CRM_Smartdebit_Sync
         continue;
       }
 
-      $contributionId = self::processCollection($value[$refKey], $value[$dateKey], 'Failed', 0);
+      $contributionId = self::processCollection($value[$refKey], $value[$dateKey], 'Failed', 0, $collectionDescription);
 
       if ($contributionId) {
         // Look for an existing contribution
@@ -391,62 +391,70 @@ class CRM_Smartdebit_Sync
    * Function to check if the contribution is first contribution
    * for the recurring contribution record
    *
-   * @param $params
+   * @param $newContribution
    * @param string $frequencyUnit
    * @param int $frequencyInterval
    * @return bool|array
    */
-  static function checkIfFirstPayment($params, $frequencyUnit = 'year', $frequencyInterval = 1) {
-    if (empty($params['contribution_recur_id'])) {
+  static function checkIfFirstPayment($newContribution, $contributionRecur) {
+    if (empty($newContribution['contribution_recur_id'])) {
       if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: No recur_id'); }
       return false;
     }
-
-    // Get days difference to determine if this is first payment
-    $days = CRM_Smartdebit_Sync::daysDifferenceForFrequency($frequencyUnit, $frequencyInterval);
+    if (empty($contributionRecur['frequency_unit'])) {
+      $contributionRecur['frequency_unit'] = 'year';
+    }
+    if (empty($contributionRecur['frequency_interval'])) {
+      $contributionRecur['frequency_interval'] = 1;
+    }
 
     $contributionResult = civicrm_api3('Contribution', 'get', array(
-      'contribution_recur_id' => $params['contribution_recur_id'],
+      'sequential' => 1,
+      'options' => array('sort' => "receive_date DESC"),
+      'contribution_recur_id' => $newContribution['contribution_recur_id'],
     ));
 
     // We have only one contribution for the recurring record
-    if ($contributionResult['count'] == 1) {
-      if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: 1 contribution. id='.$contributionResult['id']); }
-      $contributionDetails = $contributionResult['values'][$contributionResult['id']];
+    if ($contributionResult['count'] > 0) {
+      if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: '.$contributionResult['count'].' contribution(s). id='.$contributionResult['id']); }
+      $contributionDetails = $contributionResult['values'][0];
 
-      if (!empty($contributionDetails['receive_date']) && !empty($params['receive_date'])) {
+      // Check if trxn_ids are identical, if so, update this trxn
+      if ($contributionDetails['trxn_id'] == $newContribution['trxn_id']) {
+        $newContribution['id'] = $contributionDetails['id'];
+        if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Identical-Using existing contribution'); }
+        return $newContribution;
+      }
+
+      // Check if the transaction Id is one of ours, and not identical
+      if (!empty($contributionDetails['trxn_id'])) {
+        // Does our trxn_id start with the recurring one?
+        if (substr($contributionDetails['trxn_id'], 0, strlen($contributionRecur['trxn_id'])) === $contributionRecur['trxn_id']) {
+          // Does our trxn_id contain a '/' after the ref?
+          if (substr($contributionDetails['trxn_id'], strlen($contributionRecur['trxn_id'] - 1, 1)) === '/') {
+            // Not identical but one of ours, so we'll create a new one
+            if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Not identical,ours. Creating new contribution'); }
+            return $newContribution;
+          }
+        }
+      }
+
+      if (!empty($contributionDetails['receive_date']) && !empty($newContribution['receive_date'])) {
         // Find the date difference between the contribution date and new collection date
-        $dateDiff = CRM_Smartdebit_Sync::dateDifference($params['receive_date'], $contributionDetails['receive_date']);
+        $dateDiff = CRM_Smartdebit_Sync::dateDifference($newContribution['receive_date'], $contributionDetails['receive_date']);
+        // Get days difference to determine if this is first payment
+        $days = CRM_Smartdebit_Sync::daysDifferenceForFrequency($contributionRecur['frequency_unit'], $contributionRecur['frequency_interval']);
 
         // if diff is less than set number of days, return Contribution ID to update the contribution
         // If $days == 0 it's a lifetime membership
         if (($dateDiff < $days) && ($days != 0)) {
-          if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Using existing contribution'); }
-          $params['id'] = $contributionResult['id'];
+          if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Within dates,Using existing contribution'); }
+          $newContribution['id'] = $contributionDetails['id'];
+          return $newContribution;
         }
       }
     }
-    // Get the recent pending contribution if there is more than 1 payment for the recurring record
-    else if ($contributionResult['count'] > 1) {
-      $sqlParams = array(
-        1 => array($params['contribution_recur_id'], 'Integer'),
-      );
-      $sql = "SELECT cc.id, cc.receive_date FROM civicrm_contribution cc WHERE cc.contribution_recur_id = %1 ORDER BY cc.receive_date DESC";
-      $dao = CRM_Core_DAO::executeQuery($sql , $sqlParams);
-      while($dao->fetch()) {
-        if (!empty($dao->receive_date) && !empty($params['receive_date'])) {
-          if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Most recent contribution. id='.$dao->id); }
-          $dateDiff = CRM_Smartdebit_Sync::dateDifference($params['receive_date'], $dao->receive_date);
-
-          // if diff is less than set number of days, return Contribution ID to update the contribution
-          if ($dateDiff < $days) {
-            if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Using existing contribution'); }
-            $params['id'] = $dao->id;
-          }
-        }
-      }
-    }
-    return $params;
+    return $newContribution;
   }
 
   /**
