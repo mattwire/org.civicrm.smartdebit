@@ -223,7 +223,7 @@ class CRM_Smartdebit_Sync
         continue;
       }
 
-      self::processCollection($sdContact['reference_number'], $daoCollectionReport->receive_date, $daoCollectionReport->amount, 'Completed', 'Collection Report');
+      self::processCollection($sdContact['reference_number'], $daoCollectionReport->receive_date, 'Completed', $daoCollectionReport->amount, 'Collection Report');
     }
     return CRM_Queue_Task::TASK_SUCCESS;
   }
