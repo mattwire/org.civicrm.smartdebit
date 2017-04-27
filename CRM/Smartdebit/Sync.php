@@ -191,6 +191,8 @@ class CRM_Smartdebit_Sync
       }
     }
     smartdebit_civicrm_saveSetting('rejected_arudd', $rejectedIds);
+
+    CRM_Core_Error::debug_log_message('Smartdebit: Sync Job End.');
     return CRM_Queue_Task::TASK_SUCCESS;
   }
 
