@@ -1,8 +1,11 @@
 <?php
 
-// TODO: Add const DEBUG To remove lot's of debug info to log
-// TODO: Update sync tpl so it says "3 months"
-
+/**
+ * Class CRM_Smartdebit_Sync
+ *
+ * This is the main class responsible for the "Sync" scheduled job
+ * It can also be accessed at civicrm/smartdebit/sync
+ */
 class CRM_Smartdebit_Sync
 {
   const QUEUE_NAME = 'sm-pull';
@@ -15,7 +18,7 @@ class CRM_Smartdebit_Sync
   const DEBUG = false;
 
   /**
-   * If $auddisIDs and $aruddIDs are not set no AUDDIS/ARUDD records will be processed.
+   * If $auddisIDs and $aruddIDs are not set all available AUDDIS/ARUDD records will be processed.
    *
    * @param bool $interactive
    * @param null $auddisIDs
@@ -62,9 +65,9 @@ class CRM_Smartdebit_Sync
       $counter = ($rounds > 1) ? ($start + self::BATCH_COUNT) : $count;
       if ($counter > $count) $counter = $count;
       $task    = new CRM_Queue_Task(
-        array('CRM_Smartdebit_Sync', 'syncSmartdebitRecords'),
+        array('CRM_Smartdebit_Sync', 'syncSmartdebitCollectionReports'),
         array($smartDebitPayerContactsBatch),
-        "Pulling smart debit - Contacts {$counter} of {$count}"
+        "Syncing smart debit collection reports - contacts {$counter} of {$count}"
       );
 
       // Add the Task to the Queue
@@ -131,95 +134,30 @@ class CRM_Smartdebit_Sync
    *
    * @param CRM_Queue_TaskContext $ctx
    * @param $smartDebitAuddisIds
-   *
-   * // FIXME: Need to test this
    */
   static function syncSmartdebitAuddis(CRM_Queue_TaskContext $ctx, $smartDebitAuddisIds)
   {
     // Add contributions for rejected payments with the status of 'failed'
-    $ids = array();
     // Reset the counter when sync starts
     smartdebit_civicrm_saveSetting('rejected_auddis', NULL);
+    // Rejected Ids is used to display on confirm form, would be nice to tidy and have it's own table or something
+    $rejectedIds = array();
 
     // Retrieve AUDDIS files from Smartdebit
     if ($smartDebitAuddisIds) {
       // Find the relevant auddis file
-      foreach ($smartDebitAuddisIds as $auddisID) {
-        $auddisFiles[] = CRM_Smartdebit_Auddis::getSmartdebitAuddisFile($auddisID);
-        // TODO: Don't convert to auddis files, just run direct with the IDs, then we can use ID at the end to mark processed
-      }
-      // Process AUDDIS files
-      foreach ($auddisFiles as $auddisFile) {
+      foreach ($smartDebitAuddisIds as $auddisId) {
+        // Process AUDDIS files
+        $auddisFile = CRM_Smartdebit_Auddis::getSmartdebitAuddisFile($auddisId);
         $auddisDate = $auddisFile['auddis_date'];
         unset($auddisFile['auddis_date']);
-        foreach ($auddisFile as $key => $value) {
-          $sql = "
-            SELECT ctrc.id contribution_recur_id ,ctrc.contact_id , cont.display_name ,ctrc.start_date , ctrc.amount, ctrc.trxn_id , ctrc.frequency_unit, ctrc.payment_instrument_id, ctrc.financial_type_id
-            FROM civicrm_contribution_recur ctrc
-            INNER JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id)
-            WHERE ctrc.trxn_id = %1";
-
-          $params = array(1 => array($value['reference'], 'String'));
-          $dao = CRM_Core_DAO::executeQuery($sql, $params);
-
-          // Contribution receive date is "now"
-          $receiveDate = new DateTime();
-          $receiveDateString = $receiveDate->format('YmdHis');
-
-          if ($dao->fetch()) {
-            $contributeParams =
-              array(
-                'version' => 3,
-                'contact_id' => $dao->contact_id,
-                'contribution_recur_id' => $dao->contribution_recur_id,
-                'total_amount' => $dao->amount,
-                'invoice_id' => md5(uniqid(rand(), TRUE)),
-                'trxn_id' => $value['reference'] . '/' . $receiveDateString,
-                'financial_type_id' => $dao->financial_type_id,
-                'payment_instrument_id' => $dao->payment_instrument_id,
-                'contribution_status_id' => CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Failed'),
-                'source' => 'Smart Debit Import',
-                'receive_date' => $value['effective-date'],
-              );
-
-            // Allow params to be modified via hook
-            CRM_Smartdebit_Utils_Hook::alterSmartdebitContributionParams($contributeParams);
-            $contributeResult = civicrm_api('Contribution', 'create', $contributeParams);
-
-            if (!$contributeResult['is_error']) {
-              $contributionID = $contributeResult['id'];
-              // get contact display name to display in result screen
-              $contactParams = array('version' => 3, 'id' => $contributeResult['values'][$contributionID]['contact_id']);
-              $contactResult = civicrm_api('Contact', 'getsingle', $contactParams);
-
-              $ids[$contributionID] = array('cid' => $contributeResult['values'][$contributionID]['contact_id'],
-                'id' => $contributionID,
-                'display_name' => $contactResult['display_name'],
-                'total_amount' => CRM_Utils_Money::format($contributeResult['values'][$contributionID]['total_amount']),
-                'trxn_id' => $value['reference'],
-                'status' => $contributeResult['label'],
-              );
-
-              // Allow auddis rejected contribution to be handled by hook
-              CRM_Smartdebit_Utils_Hook::handleAuddisRejectedContribution($contributionID);
-            }
-
-            // Create activity now we've processed auddis
-            // (if we didn't find a matching contribution don't mark as processed, we may be able to sync once reconciliation has been done)
-
-            $params = array(
-              'version' => 3,
-              'sequential' => 1,
-              'activity_type_id' => 6,
-              'subject' => 'SmartdebitAUDDIS' . $auddisDate,
-              'details' => 'Sync had been processed already for this date ' . $auddisDate,
-            );
-            $result = civicrm_api('Activity', 'create', $params);
-          }
-        }
+        $refKey = 'reference';
+        $dateKey = 'effective-date';
+        $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey));
       }
     }
-    smartdebit_civicrm_saveSetting('rejected_auddis', $ids);
+    smartdebit_civicrm_saveSetting('rejected_auddis', $rejectedIds);
+    return CRM_Queue_Task::TASK_SUCCESS;
   }
 
   /**
@@ -228,92 +166,28 @@ class CRM_Smartdebit_Sync
    * @param CRM_Queue_TaskContext $ctx
    * @param $smartDebitAruddIds
    *
-   * // FIXME: Need to test this
+   * @return int
    */
   static function syncSmartdebitArudd (CRM_Queue_TaskContext $ctx, $smartDebitAruddIds) {
     // Add contributions for rejected payments with the status of 'failed'
-    $ids = array();
+    $rejectedIds = array();
     // Reset the counter when sync starts
     smartdebit_civicrm_saveSetting('rejected_arudd', NULL);
 
     // Retrieve ARUDD files from Smartdebit
     if($smartDebitAruddIds) {
-      foreach ($smartDebitAruddIds as $aruddID) {
-        $aruddFiles[] = CRM_Smartdebit_Auddis::getSmartdebitAruddFile($aruddID);
-        // TODO: Don't convert to arudd files, just run direct with the IDs, then we can use ID at the end to mark processed
-      }
-      // Process ARUDD files
-      foreach ($aruddFiles as $aruddFile) {
+      foreach ($smartDebitAruddIds as $aruddId) {
+        // Process ARUDD files
+        $aruddFile = CRM_Smartdebit_Auddis::getSmartdebitAruddFile($aruddId);
         $aruddDate = $aruddFile['arudd_date'];
         unset($aruddFile['arudd_date']);
-        foreach ($aruddFile as $key => $value) {
-          $sql = "
-            SELECT ctrc.id contribution_recur_id ,ctrc.contact_id , cont.display_name ,ctrc.start_date , ctrc.amount, ctrc.trxn_id , ctrc.frequency_unit, ctrc.payment_instrument_id, ctrc.financial_type_id
-            FROM civicrm_contribution_recur ctrc
-            INNER JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id)
-            WHERE ctrc.trxn_id = %1";
-
-          $params = array( 1 => array( $value['ref'], 'String' ) );
-          $dao = CRM_Core_DAO::executeQuery( $sql, $params);
-
-          // Contribution receive date is "now"
-          $receiveDate = new DateTime();
-          $receiveDateString = $receiveDate->format('YmdHis');
-
-          if ($dao->fetch()) {
-            $contributeParams =
-              array(
-                'version'                => 3,
-                'contact_id'             => $dao->contact_id,
-                'contribution_recur_id'  => $dao->contribution_recur_id,
-                'total_amount'           => $dao->amount,
-                'invoice_id'             => md5(uniqid(rand(), TRUE )),
-                'trxn_id'                => $value['ref'].'/'.$receiveDateString,
-                'financial_type_id'      => $dao->financial_type_id,
-                'payment_instrument_id'  => $dao->payment_instrument_id,
-                'contribution_status_id' => CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Failed'),
-                'source'                 => 'Smart Debit Import',
-                'receive_date'           => $value['originalProcessingDate'],
-              );
-
-            // Allow params to be modified via hook
-            CRM_Smartdebit_Utils_Hook::alterSmartdebitContributionParams( $contributeParams );
-
-            $contributeResult = civicrm_api('Contribution', 'create', $contributeParams);
-
-            if(!$contributeResult['is_error']) {
-              $contributionID   = $contributeResult['id'];
-              // get contact display name to display in result screen
-              $contactParams = array('version' => 3, 'id' => $contributeResult['values'][$contributionID]['contact_id']);
-              $contactResult = civicrm_api('Contact', 'getsingle', $contactParams);
-
-              $ids[$contributionID] = array('cid' => $contributeResult['values'][$contributionID]['contact_id'],
-                'id' => $contributionID,
-                'display_name' => $contactResult['display_name'],
-                'total_amount' => CRM_Utils_Money::format($contributeResult['values'][$contributionID]['total_amount']),
-                'trxn_id'      => $value['ref'],
-                'status'       => $contributeResult['label'],
-              );
-
-              // Allow auddis rejected contribution to be handled by hook
-              CRM_Smartdebit_Utils_Hook::handleAuddisRejectedContribution( $contributionID );
-            }
-
-            // Create activity now we've processed arudd
-            // (if we didn't find a matching contribution don't mark as processed, we may be able to sync once reconciliation has been done)
-            $params = array(
-              'version' => 3,
-              'sequential' => 1,
-              'activity_type_id' => 6,
-              'subject' => 'SmartdebitARUDD'.$aruddDate,
-              'details' => 'Sync had been processed already for this date '.$aruddDate,
-            );
-            $result = civicrm_api('Activity', 'create', $params);
-          }
-        }
+        $refKey = 'ref';
+        $dateKey = 'originalProcessingDate';
+        $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($aruddId, $aruddFile, $refKey, $dateKey));
       }
     }
-    smartdebit_civicrm_saveSetting('rejected_arudd', $ids);
+    smartdebit_civicrm_saveSetting('rejected_arudd', $rejectedIds);
+    return CRM_Queue_Task::TASK_SUCCESS;
   }
 
   /**
@@ -324,9 +198,8 @@ class CRM_Smartdebit_Sync
    * @param $smartDebitPayerContacts
    * @return int
    */
-  static function syncSmartdebitRecords(CRM_Queue_TaskContext $ctx, $smartDebitPayerContacts)
+  static function syncSmartdebitCollectionReports(CRM_Queue_TaskContext $ctx, $smartDebitPayerContacts)
   {
-
     // Clear out the results table
     $emptySql = "TRUNCATE TABLE veda_smartdebit_success_contributions";
     CRM_Core_DAO::executeQuery($emptySql);
@@ -342,7 +215,7 @@ class CRM_Smartdebit_Sync
         continue;
       }
 
-      CRM_Core_Error::debug_log_message('Smartdebit syncSmartdebitRecords: Matched=' . $sdContact['reference_number']);
+      if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit syncSmartdebitRecords: Matched=' . $sdContact['reference_number']); }
 
       // Get transaction details from collection report
       $selectQuery = "SELECT `receive_date` as receive_date, `amount` as amount 
@@ -385,7 +258,7 @@ class CRM_Smartdebit_Sync
 
       $contributeResult = civicrm_api('Contribution', 'create', $contributeParams);
 
-      CRM_Core_Error::debug_log_message('Smartdebit syncSmartdebitRecords: $contributeResult=' . print_r($contributeResult, true)); //DEBUG
+      if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit syncSmartdebitRecords: $contributeResult=' . print_r($contributeResult, true)); }
 
       if (empty($contributeResult['is_error'])) {
         // Get recurring contribution ID
@@ -414,16 +287,114 @@ class CRM_Smartdebit_Sync
   }
 
   /**
+   * This function is used to process Auddis and Arudd records from an Auddis/Arudd file
+   *
+   * @param $auddisId
+   * @param $auddisFile
+   * @param $refKey
+   * @param $dateKey
+   * @return array
+   */
+  static function processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey) {
+    $errors = FALSE;
+    $rejectedIds = array();
+
+    // Process each record in the auddis file
+    foreach ($auddisFile as $key => $value) {
+      if (!isset($value[$refKey]) || !isset($value[$dateKey])) {
+        CRM_Core_Error::debug_log_message('Smartdebit processAuddis. Id=' . $auddisId . '. Malformed Auddis/Arudd record from Smartdebit.');
+        continue;
+      }
+
+      $sql = "
+            SELECT ctrc.id contribution_recur_id ,ctrc.contact_id , cont.display_name ,ctrc.start_date , ctrc.amount, ctrc.trxn_id , ctrc.frequency_unit, ctrc.payment_instrument_id, ctrc.financial_type_id
+            FROM civicrm_contribution_recur ctrc
+            INNER JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id)
+            WHERE ctrc.trxn_id = %1";
+
+      $params = array(1 => array($value[$refKey], 'String'));
+      $dao = CRM_Core_DAO::executeQuery($sql, $params);
+
+      // Contribution receive date is "now"
+      $receiveDate = new DateTime();
+      $receiveDateString = $receiveDate->format('YmdHis');
+      $trxnId = $value[$refKey] . '/' . $receiveDateString;
+
+      if ($dao->fetch()) {
+        $contributeParams = array(
+          'version' => 3,
+          'contact_id' => $dao->contact_id,
+          'contribution_recur_id' => $dao->contribution_recur_id,
+          'total_amount' => $dao->amount,
+          'invoice_id' => md5(uniqid(rand(), TRUE)),
+          'trxn_id' => $trxnId,
+          'financial_type_id' => $dao->financial_type_id,
+          'payment_instrument_id' => $dao->payment_instrument_id,
+          'contribution_status_id' => CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Failed'),
+          'source' => 'Smart Debit Import',
+          'receive_date' => $value[$dateKey],
+        );
+
+        // Look for an existing contribution and update existing if available
+        try {
+          $existingContribution = civicrm_api3('Contribution', 'getsingle', array(
+            'return' => array("id"),
+            'trxn_id' => $trxnId,
+          ));
+          if (!empty($existingContribution['id'])) {
+            $contributeParams['id'] = $existingContribution['id'];
+          }
+        }
+        catch (Exception $e) {
+          // No existing contribution as expected, continue.
+        }
+
+        // Allow params to be modified via hook
+        CRM_Smartdebit_Utils_Hook::alterSmartdebitContributionParams($contributeParams);
+        $contributeResult = civicrm_api('Contribution', 'create', $contributeParams);
+
+        if (!$contributeResult['is_error']) {
+          $contributionId = $contributeResult['id'];
+          // get contact display name to display in result screen
+          $contactParams = array('version' => 3, 'id' => $contributeResult['values'][$contributionId]['contact_id']);
+          $contactResult = civicrm_api('Contact', 'getsingle', $contactParams);
+
+          $rejectedIds[$contributionId] = array('cid' => $contributeResult['values'][$contributionId]['contact_id'],
+            'id' => $contributionId,
+            'display_name' => $contactResult['display_name'],
+            'total_amount' => CRM_Utils_Money::format($contributeResult['values'][$contributionId]['total_amount']),
+            'trxn_id' => $value[$refKey],
+            'status' => $contributeResult['label'],
+          );
+
+          // Allow auddis rejected contribution to be handled by hook
+          CRM_Smartdebit_Utils_Hook::handleAuddisRejectedContribution($contributionId);
+        }
+      }
+      else {
+        CRM_Core_Error::debug_log_message('Smartdebit processAuddis: ' . $value[$refKey] . ' NOT matched to contribution in CiviCRM - try reconciliation.');
+        $errors = TRUE;
+      }
+      if (!$errors) {
+        // Mark auddis as processed if we actually found a matching contribution
+        CRM_Smartdebit_Auddis::setAuddisRecordProcessed($auddisId);
+      }
+    }
+    return $rejectedIds;
+  }
+
+  /**
    * Function to check if the contribution is first contribution
    * for the recurring contribution record
    *
    * @param $params
    * @param string $frequencyUnit
    * @param int $frequencyInterval
+   * @return bool|array
    */
   static function checkIfFirstPayment($params, $frequencyUnit = 'year', $frequencyInterval = 1) {
     if (empty($params['contribution_recur_id'])) {
-      return;
+      return false;
     }
 
     // Get days difference to determine if this is first payment

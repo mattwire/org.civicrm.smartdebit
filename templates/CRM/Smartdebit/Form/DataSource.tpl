@@ -1,7 +1,7 @@
 <h3>{ts}Select the date you wish to import data for:{/ts}</h3>
 <div class="crm-block crm-form-block crm-export-form-block">
   <div class="description">
-    <p>{ts}CiviCRM will attempt to retrieve AUDDIS and ARUDD records for a 1 month period ending with the date you specify here.{/ts}</p>
+    <p>{ts}CiviCRM will attempt to retrieve AUDDIS and ARUDD records for a {$period} period ending with the date you specify here.{/ts}</p>
   </div>
     <div class="help">
         <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}This should not normally be necessary as the collection reports are retrieved daily by the SmartDebit scheduled job.

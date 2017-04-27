@@ -1,6 +1,5 @@
 <?php
 
-// TODO: Test everything (just removed lot's of settings, changed DB etc, test sync job)
 require_once 'smartdebit.civix.php';
 
 /**
