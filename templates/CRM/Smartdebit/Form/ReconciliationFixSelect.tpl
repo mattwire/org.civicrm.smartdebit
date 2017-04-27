@@ -44,7 +44,7 @@
     </tr>
     <tr>
       <td>
-        {$form.reference_number.label}
+        {$form.reference_number.label} (Transaction Id)
       </td>
       <td>
         {$form.reference_number.html}
@@ -74,7 +74,7 @@
       </td>
       <td>
         {$form.contribution_recur_record.html}<br />
-        <sub>( Payment Processor / Contribution Status / Amount)</sub>
+        <sub>( Payment Processor / Contribution Status / Amount / Transaction Id)</sub>
       </td>
     </tr>
   </table>

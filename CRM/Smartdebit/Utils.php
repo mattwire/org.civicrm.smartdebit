@@ -86,20 +86,21 @@ class CRM_Smartdebit_Utils {
    */
   static function getContactRecurringContributions($contactID) {
     // Get recurring contributions by contact Id
-    $aContributionRecur = CRM_Contribute_BAO_ContributionRecur::getRecurContributions($contactID);
-    foreach ($aContributionRecur as $ContributionRecur) {
+    $contributionRecurRecords = civicrm_api3('ContributionRecur', 'get', array(
+      'sequential' => 1,
+      'contact_id' => $contactID,
+      'options' => array('limit' => 0),
+      'return' => array("payment_processor_id", "contribution_status_id", "amount", "trxn_id"),
+    ));
+    // Get contribution Status options
+    $contributionStatusOptions = CRM_Contribute_BAO_Contribution::buildOptions('contribution_status_id', 'validate');
+
+    foreach ($contributionRecurRecords['values'] as $contributionRecur) {
       // Get payment processor name used for recurring contribution
-      $sql = " SELECT name FROM civicrm_payment_processor WHERE id = %1 ";
-      if (!empty($ContributionRecur['payment_processor_id'])) {
-        $param = array(1 => array($ContributionRecur['payment_processor_id'], 'Integer'));
-        $paymentProcessorName = CRM_Core_DAO::singleValueQuery($sql, $param);
-      }
-      else {
-        // If payment_processor_id is NULL (can happen with corrupt recurring records, or processor deleted).
-        $paymentProcessorName = 'Unknown';
-      }
+      $paymentProcessorName = CRM_Core_Payment_Smartdebit::getSmartDebitPaymentProcessorName($contributionRecur['payment_processor_id']);
+      $contributionStatus = $contributionStatusOptions[$contributionRecur['contribution_status_id']];
       // Create display name for recurring contribution
-      $cRecur[$ContributionRecur['id']] = $paymentProcessorName.'/'.$ContributionRecur['contribution_status'].'/'.$ContributionRecur['amount'];
+      $cRecur[$contributionRecur['id']] = $paymentProcessorName.'/'.$contributionStatus.'/'.$contributionRecur['amount'].'/'.$contributionRecur['trxn_id'];
     }
     $cRecur['new_recur'] = 'Create New Recurring';
     return $cRecur;
@@ -126,14 +127,7 @@ class CRM_Smartdebit_Utils {
     $contributionStatus = $contributionStatusOptions[$cRecur['contribution_status_id']];
 
     //get payment processor name
-    if(!empty($cRecur['payment_processor_id'])){
-      $sql   = "SELECT name 
-                FROM civicrm_payment_processor 
-                WHERE id = %1
-                ";
-      $param = array( 1 => array( $cRecur['payment_processor_id'], 'Integer') );
-      $dao   = CRM_Core_DAO::singleValueQuery($sql, $param);
-    }
+    $paymentProcessorName = CRM_Core_Payment_Smartdebit::getSmartDebitPaymentProcessorName($cRecur['payment_processor_id']);
 
     $contributionRecur = array();
     if(!empty($cRecur)){
@@ -141,7 +135,7 @@ class CRM_Smartdebit_Utils {
         'id'                => $cRecur['id'],
         'status'            => $contributionStatus,
         'amount'            => $cRecur['amount'],
-        'payment_processor' => $dao
+        'payment_processor' => $paymentProcessorName,
       );
     }
     return $contributionRecur;

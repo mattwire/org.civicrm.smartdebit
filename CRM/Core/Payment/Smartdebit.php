@@ -890,4 +890,26 @@ EOF;
     // If we don't have a valid processor id return false;
     return FALSE;
   }
+
+  /**
+   * Get the name of the payment processor
+   * @param $ppId
+   * @return string
+   */
+  static function getSmartDebitPaymentProcessorName($ppId) {
+    $paymentProcessorName = 'Unknown';
+    try {
+      $paymentProcessor = civicrm_api3('PaymentProcessor', 'getsingle', array(
+        'return' => array("name"),
+        'id' => $ppId,
+      ));
+      if (isset($paymentProcessor['name'])) {
+        $paymentProcessorName = $paymentProcessor['name'];
+      }
+    }
+    catch (Exception $e) {
+      // Payment processor not found, use the default already set above.
+    }
+    return $paymentProcessorName;
+  }
 }
