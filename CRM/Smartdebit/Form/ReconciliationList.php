@@ -407,7 +407,7 @@ AND   csd.id IS NULL LIMIT 100";
 
       // Set state of recurring contribution (10=live,1=New at SmartDebit)
       if ($smartDebitRecord['current_state'] == 10 || $smartDebitRecord['current_state'] == 1) {
-        $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
+        $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
       }
       else {
         $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Cancelled');
@@ -428,6 +428,7 @@ AND   csd.id IS NULL LIMIT 100";
 
       // Link Membership to recurring contribution
       if (!empty($params['membership_id'])) {
+        $params['contribution_recur_id'] = $recurId;
         try {
           $result = self::linkMembershipToRecurContribution($params);
           $membershipId = $result['id'];

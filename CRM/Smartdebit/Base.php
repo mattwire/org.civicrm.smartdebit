@@ -468,7 +468,6 @@ WHERE  ddi_reference = %0";
   /**
    * Create a new recurring contribution for the direct debit instruction we set up.
    * @param $recurParams
-   * // FIXME: No longer used, we can remove
    */
   static function createRecurContribution($recurParams) {
     // Mandatory Parameters
