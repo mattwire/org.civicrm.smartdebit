@@ -417,21 +417,25 @@ class CRM_Smartdebit_Sync
     // We have only one contribution for the recurring record
     if ($contributionResult['count'] > 0) {
       if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: '.$contributionResult['count'].' contribution(s). id='.$contributionResult['id']); }
-      $contributionDetails = $contributionResult['values'][0];
 
-      // Check if trxn_ids are identical, if so, update this trxn
-      if ($contributionDetails['trxn_id'] == $newContribution['trxn_id']) {
-        $newContribution['id'] = $contributionDetails['id'];
-        if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Identical-Using existing contribution'); }
-        return $newContribution;
+      foreach ($contributionResult['values'] as $contributionDetails) {
+        // Check if trxn_ids are identical, if so, update this trxn
+        if (strcmp($contributionDetails['trxn_id'], $newContribution['trxn_id']) == 0) {
+          $newContribution['id'] = $contributionDetails['id'];
+          if (CRM_Smartdebit_Sync::DEBUG) {
+            CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Identical-Using existing contribution');
+          }
+          return $newContribution;
+        }
       }
 
+      $contributionDetails = $contributionResult['values'][0];
       // Check if the transaction Id is one of ours, and not identical
       if (!empty($contributionDetails['trxn_id'])) {
         // Does our trxn_id start with the recurring one?
-        if (substr($contributionDetails['trxn_id'], 0, strlen($contributionRecur['trxn_id'])) === $contributionRecur['trxn_id']) {
+        if (strcmp(substr($contributionDetails['trxn_id'], 0, strlen($contributionRecur['trxn_id'])), $contributionRecur['trxn_id']) == 0) {
           // Does our trxn_id contain a '/' after the ref?
-          if (substr($contributionDetails['trxn_id'], strlen($contributionRecur['trxn_id'] - 1, 1)) === '/') {
+          if (strcmp(substr($contributionDetails['trxn_id'], strlen($contributionRecur['trxn_id']), 1), '/') == 0) {
             // Not identical but one of ours, so we'll create a new one
             if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Not identical,ours. Creating new contribution'); }
             return $newContribution;
