@@ -628,7 +628,7 @@ WHERE  ddi_reference = %0";
     // Mandatory Parameters
     // Amount
     if (empty($params['total_amount'])) {
-      CRM_Core_Error::debug_log_message('Smartdebit createRecurContribution: ERROR must specify amount!');
+      CRM_Core_Error::debug_log_message('Smartdebit createContribution: ERROR must specify amount!');
       return FALSE;
     }
     else {
@@ -636,7 +636,7 @@ WHERE  ddi_reference = %0";
       $params['total_amount'] = preg_replace("/([^0-9\\.])/i", "", $params['total_amount']);
     }
     if (empty($params['contact_id'])) {
-      CRM_Core_Error::debug_log_message('Smartdebit createRecurContribution: ERROR must specify contact_id!');
+      CRM_Core_Error::debug_log_message('Smartdebit createContribution: ERROR must specify contact_id!');
       return FALSE;
     }
 
@@ -696,7 +696,7 @@ WHERE  ddi_reference = %0";
       $params['invoice_id'] = md5(uniqid(rand(), TRUE ));
     }
 
-    // Build recur params
+    // Build contribution params
     $contributionParams = array(
       'contact_id' =>  $params['contact_id'],
       'receive_date' => $params['receive_date'],
@@ -712,7 +712,13 @@ WHERE  ddi_reference = %0";
     );
     if (!empty($params['contribution_id'])) {
       $contributionParams['contribution_id'] = $params['contribution_id'];
+      $contributionParams['id'] = $params['contribution_id'];
     }
+    elseif (!empty($params['id'])) {
+      $contributionParams['id'] = $params['id'];
+      $contributionParams['contribution_id'] = $params['id'];
+    }
+
     if (!empty($params['contribution_recur_id'])) {
       $contributionParams['contribution_recur_id'] = $params['contribution_recur_id'];
     }
@@ -720,5 +726,24 @@ WHERE  ddi_reference = %0";
     // Create/Update the contribution
     $result = civicrm_api3('Contribution', 'create', $contributionParams);
     return $result;
+  }
+
+  /**
+   * Check if contribution exists for given transaction Id. Return contribution, false otherwise.
+   *
+   * @param $transactionId
+   * @return bool|int
+   */
+  static function contributionExists($transactionId) {
+    try {
+      $contribution = civicrm_api3('Contribution', 'getsingle', array(
+        'trxn_id' => $transactionId,
+      ));
+      return $contribution;
+    }
+    catch (Exception $e) {
+      // Contribution does not exist
+      return FALSE;
+    }
   }
 }

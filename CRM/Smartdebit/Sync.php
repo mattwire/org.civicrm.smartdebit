@@ -322,8 +322,9 @@ class CRM_Smartdebit_Sync
       $dao = CRM_Core_DAO::executeQuery($sql, $params);
 
       // Contribution receive date is "now"
-      $receiveDate = new DateTime();
-      $receiveDateString = $receiveDate->format('YmdHis');
+      /*$receiveDate = new DateTime();
+      $receiveDateString = $receiveDate->format('YmdHis');*/
+      $receiveDateString = date('YmdHis', strtotime($value[$dateKey]. ' 00:00:00'));
       $trxnId = $value[$refKey] . '/' . $receiveDateString;
 
       if ($dao->fetch()) {
@@ -332,12 +333,10 @@ class CRM_Smartdebit_Sync
           'contact_id' => $dao->contact_id,
           'contribution_recur_id' => $dao->contribution_recur_id,
           'total_amount' => $dao->amount,
-          'invoice_id' => md5(uniqid(rand(), TRUE)),
           'trxn_id' => $trxnId,
           'financial_type_id' => $dao->financial_type_id,
           'payment_instrument_id' => $dao->payment_instrument_id,
           'contribution_status_id' => CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Failed'),
-          'source' => 'Smart Debit Import',
           'receive_date' => $value[$dateKey],
         );
 
@@ -353,6 +352,8 @@ class CRM_Smartdebit_Sync
         }
         catch (Exception $e) {
           // No existing contribution as expected, continue.
+          $contributeParams['source'] = 'Smart Debit Import';
+          $contributeParams['invoice_id'] = md5(uniqid(rand(), TRUE));
         }
 
         // Allow params to be modified via hook

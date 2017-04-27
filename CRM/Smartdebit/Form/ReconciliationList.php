@@ -428,6 +428,21 @@ AND   csd.id IS NULL LIMIT 100";
         CRM_Core_Session::setStatus("Error creating recurring contribution for contact (".$params['contact_id'].") " . $e->getMessage(), 'Smart Debit');
       }
 
+      // A contribution with just the SD payer reference may exist if an older version of SmartDebit extension was used.
+      // If we find one, we need to update it
+      // If no contribution exists, we don't need to create one, as the sync job will do that for us.
+      $contribution = CRM_Smartdebit_Base::contributionExists($params['payer_reference']);
+      if ($contribution) {
+        if (!empty($recurId)) {
+          $contribution['contribution_recur_id'] = $recurId;
+        }
+        $contribution['trxn_id'] = $params['payer_reference'].'/'.date('YmdHis', strtotime($recurParams['start_date']));
+        $contribution['contribution_status_id'] = $recurParams['contribution_status_id'];
+        $contribution['total_amount'] = $recurParams['amount'];
+        $contribution['receive_date'] = $recurParams['start_date'];
+        CRM_Smartdebit_Base::createContribution($contribution);
+      }
+
       // Link Membership to recurring contribution
       if (!empty($params['membership_id'])) {
         $params['contribution_recur_id'] = $recurId;
