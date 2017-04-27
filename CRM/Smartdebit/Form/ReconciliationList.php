@@ -79,6 +79,8 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     $listArray = array();
     $fixMeContact = FALSE;
     $totalRows = NULL;
+    // Get contribution Status options
+    $contributionStatusOptions = CRM_Contribute_BAO_Contribution::buildOptions('contribution_status_id', 'validate');
 
     // The following differences are highlighted
     // 1. Transaction Id in Smart Debit and Civi for the same contact
@@ -222,10 +224,10 @@ AND   opva.label = 'Direct Debit' ";
           $listArray[$dao->smart_debit_id]['frequency_unit']        = $dao->frequency_unit;
           $listArray[$dao->smart_debit_id]['sd_frequency_type']     = $dao->frequency_type;
           $listArray[$dao->smart_debit_id]['frequency_interval']    = $dao->frequency_interval;
-          $listArray[$dao->smart_debit_id]['sd_frequency_factor']     = $dao->frequency_factor;
+          $listArray[$dao->smart_debit_id]['sd_frequency_factor']   = $dao->frequency_factor;
           $listArray[$dao->smart_debit_id]['amount']                = $dao->amount;
           $listArray[$dao->smart_debit_id]['sd_amount']             = $dao->regular_amount;
-          $listArray[$dao->smart_debit_id]['contribution_status_id']    = $dao->contribution_status_id;
+          $listArray[$dao->smart_debit_id]['contribution_status_id'] = $contributionStatusOptions[$dao->contribution_status_id];
           $listArray[$dao->smart_debit_id]['sd_contribution_status_id'] = self::formatSDStatus($dao->current_state);
           $listArray[$dao->smart_debit_id]['transaction_id']        = $dao->trxn_id;
           $listArray[$dao->smart_debit_id]['differences']           = $differences;
