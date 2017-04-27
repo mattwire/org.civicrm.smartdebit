@@ -266,6 +266,10 @@ class CRM_Smartdebit_Sync
         $contactParams = array('version' => 3, 'id' => $contributionRecur['contact_id']);
         $contactResult = civicrm_api('Contact', 'getsingle', $contactParams);
 
+        // Update Recurring contribution to "In Progress"
+        $contributionRecur['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
+        CRM_Smartdebit_Base::createRecurContribution($contributionRecur);
+
         // Store the results in veda_smartdebit_success_contributions table
         $keepSuccessResultsSQL = "
           INSERT INTO `veda_smartdebit_success_contributions`(

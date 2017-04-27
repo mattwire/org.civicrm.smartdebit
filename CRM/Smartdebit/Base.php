@@ -492,8 +492,8 @@ WHERE  ddi_reference = %0";
     }
     // Set status
     if (empty($recurParams['contribution_status_id'])) {
-      // Default to "In Progress" as we assume setup was successful at this point
-      $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
+      // Default to "Pending". This will change to "In Progress" on a successful sync once the first payment has been received
+      $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
     }
     // Set unit/interval
     if (isset($recurParams['frequency_type'])) {
