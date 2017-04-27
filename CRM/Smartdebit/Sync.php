@@ -272,7 +272,6 @@ class CRM_Smartdebit_Sync
         'financial_type_id' => $contributionRecur['financial_type_id'],
         'payment_instrument_id' => $contributionRecur['payment_instrument_id'],
         'contribution_status_id' => CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', $contributionStatus),
-        'source' => 'Smart Debit: ' . $collectionDescription,
         'receive_date' => CRM_Utils_Date::processDate($receiveDate),
       );
 
@@ -280,6 +279,11 @@ class CRM_Smartdebit_Sync
     // if yes, update the contribution instead of creating one
     // as CiviCRM should have created the first contribution
     $contributeParams = self::checkIfFirstPayment($contributeParams, $contributionRecur);
+
+    // Only set the source description if we're creating a new contribution
+    if (empty($contributeParams['id'])) {
+      $contributeParams['source'] = 'Smart Debit: ' . $collectionDescription;
+    }
 
     // Allow params to be modified via hook
     CRM_Smartdebit_Utils_Hook::alterSmartdebitContributionParams($contributeParams);
