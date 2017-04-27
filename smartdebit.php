@@ -309,7 +309,7 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
   _smartdebit_civix_insert_navigation_menu($menu, 'Administer', $item[0]);
 
   $item[] = array (
-    'label' => ts('Smart Debit Settings', array('domain' => 'uk.co.vedaconsulting.smartdebit')),
+    'label' => ts('Settings', array('domain' => 'uk.co.vedaconsulting.smartdebit')),
     'name'       => 'Settings',
     'url'        => 'civicrm/smartdebit/settings?reset=1',
     'permission' => 'administer CiviCRM',
@@ -319,25 +319,34 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
   _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[1]);
 
   $item[] = array(
-    'label' => ts('Import Smart Debit Contributions', array('domain' => 'uk.co.vedaconsulting.smartdebit')),
-    'label' => ts('Import Smart Debit Contributions'),
-    'name'  => 'Import Smart Debit Contributions',
+    'label' => ts('Manual Sync', array('domain' => 'uk.co.vedaconsulting.smartdebit')),
+    'name'  => 'Manual Sync',
     'url'   => 'civicrm/smartdebit/syncsd?reset=1',
     'permission' => 'access CiviContribute',
     'operator'   => NULL,
     'separator'  => NULL,
   );
-  _smartdebit_civix_insert_navigation_menu($menu, 'Contributions', $item[2]);
+  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[2]);
+
+  $item[] = array(
+    'label' => ts('Run Sync Task', array('domain' => 'uk.co.vedaconsulting.smartdebit')),
+    'name'  => 'Run Sync Task',
+    'url'   => 'civicrm/smartdebit/sync?reset=1',
+    'permission' => 'access CiviContribute',
+    'operator'   => NULL,
+    'separator'  => NULL,
+  );
+  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[3]);
 
   $item[] =  array (
-    'label' => ts('Smart Debit Reconciliation', array('domain' => 'uk.co.vedaconsulting.smartdebit')),
-    'name' => 'Smart Debit Reconciliation',
+    'label' => ts('Reconcile Transactions', array('domain' => 'uk.co.vedaconsulting.smartdebit')),
+    'name' => 'Reconcile Transactions',
     'url' => 'civicrm/smartdebit/reconciliation/list?reset=1',
     'permission' => 'administer CiviCRM',
     'operator'   => NULL,
     'separator'  => NULL,
   );
-  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[3]);
+  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[4]);
 
   _smartdebit_civix_navigationMenu($menu);
 }
