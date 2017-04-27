@@ -268,12 +268,18 @@ class CRM_Smartdebit_Sync
 
         // Store the results in veda_smartdebit_success_contributions table
         $keepSuccessResultsSQL = "
-          INSERT Into veda_smartdebit_success_contributions
-          ( `transaction_id`, `contribution_id`, `contact_id`, `contact`, `amount`, `frequency`)
-          VALUES ( %1, %2, %3, %4, %5, %6 )
+          INSERT INTO `veda_smartdebit_success_contributions`(
+            `transaction_id`,
+            `contribution_id`,
+            `contact_id`,
+            `contact`,
+            `amount`,
+            `frequency`
+            )
+          VALUES (%1,%2,%3,%4,%5,%6)
         ";
         $keepSuccessResultsParams = array(
-          1 => array($sdContact, 'String'),
+          1 => array($sdContact['reference_number'], 'String'),
           2 => array($contributeResult['id'], 'Integer'),
           3 => array($contactResult['id'], 'Integer'),
           4 => array($contactResult['display_name'], 'String'),
@@ -574,7 +580,7 @@ class CRM_Smartdebit_Sync
             `reference_number`,
             `payerReference`
             ) 
-            VALUES (%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17, %18)";
+            VALUES (%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18)";
       $params = array(
         1 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'title', 'NULL'), 'String' ),
         2 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'first_name', 'NULL'), 'String' ),
