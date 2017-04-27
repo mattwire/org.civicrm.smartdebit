@@ -361,13 +361,13 @@ class CRM_Smartdebit_Sync
         }
 
         // get contact display name to display in result screen
-        $contactParams = array('version' => 3, 'id' => $existingContribution['values'][$contributionId]['contact_id']);
+        $contactParams = array('version' => 3, 'id' => $existingContribution['contact_id']);
         $contactResult = civicrm_api('Contact', 'getsingle', $contactParams);
 
-        $rejectedIds[$contributionId] = array('cid' => $existingContribution['values'][$contributionId]['contact_id'],
+        $rejectedIds[$contributionId] = array('cid' => $existingContribution['contact_id'],
           'id' => $contributionId,
           'display_name' => $contactResult['display_name'],
-          'total_amount' => CRM_Utils_Money::format($existingContribution['values'][$contributionId]['total_amount']),
+          'total_amount' => CRM_Utils_Money::format($existingContribution['total_amount']),
           'trxn_id' => $value[$refKey],
           'status' => $existingContribution['label'],
         );

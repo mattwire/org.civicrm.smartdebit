@@ -17,8 +17,8 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
 
     if ($state == 'done') {
       $this->status = 1;
-      $rejectedAuddis  = smartdebit_civicrm_getSetting('rejected_auddis');
-      $rejectedArudd  = smartdebit_civicrm_getSetting('rejected_arudd');
+      $rejectedAuddis = smartdebit_civicrm_getSetting('rejected_auddis');
+      $rejectedArudd = smartdebit_civicrm_getSetting('rejected_arudd');
       $this->assign('rejectedAuddis', $rejectedAuddis);
       $this->assign('rejectedArudd', $rejectedArudd);
       $rejectedids = $rejectedAuddis+$rejectedArudd;
@@ -26,8 +26,8 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
 
       $getSQL = "SELECT * FROM veda_smartdebit_success_contributions";
       $getDAO = CRM_Core_DAO::executeQuery($getSQL);
-      $ids    = $totalContributionAmount = array();
-      while( $getDAO->fetch() ){
+      $ids = $totalContributionAmount = array();
+      while ($getDAO->fetch()){
         $transactionURL = CRM_Utils_System::url("civicrm/contact/view/contribution", "action=view&reset=1&id={$getDAO->contribution_id}&cid={$getDAO->contact_id}&context=home");
         $contactURL     = CRM_Utils_System::url("civicrm/contact/view", "reset=1&cid={$getDAO->contact_id}");
         $ids[] = array(
@@ -35,8 +35,6 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
           'display_name'    => sprintf("<a href=%s>%s</a>", $contactURL, $getDAO->contact),
           'amount'          => CRM_Utils_Money::format($getDAO->amount),
           'frequency'       => ucwords($getDAO->frequency),
-          'from'            => ($getDAO->membership_renew_from == 'NULL') ? 'NULL' : CRM_Utils_Date::customFormat($getDAO->membership_renew_from),
-          'to'              => ($getDAO->membership_renew_to == 'NULL') ? 'NULL' : CRM_Utils_Date::customFormat($getDAO->membership_renew_to),
         );
         $totalContributionAmount[] =  $getDAO->amount;
       }
