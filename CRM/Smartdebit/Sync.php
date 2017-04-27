@@ -89,14 +89,16 @@ class CRM_Smartdebit_Sync
         // Get list of auddis dates, convert them to IDs
         if ($auddisProcessor->getAuddisDates()) {
           $auddisIDs = $auddisProcessor->getAuddisIdsForProcessing($auddisProcessor->getAuddisDatesList());
-          $task = new CRM_Queue_Task(
-            array('CRM_Smartdebit_Sync', 'syncSmartdebitAuddis'),
-            array($auddisIDs),
-            "Syncing smart debit AUDDIS reports"
-          );
-          $queue->createItem($task);
         }
       }
+    }
+    if (!empty($auddisIDs)) {
+      $task = new CRM_Queue_Task(
+        array('CRM_Smartdebit_Sync', 'syncSmartdebitAuddis'),
+        array($auddisIDs),
+        "Syncing smart debit AUDDIS reports"
+      );
+      $queue->createItem($task);
     }
 
     CRM_Core_Error::debug_log_message('Smartdebit Sync: Retrieving ARUDD reports.');
@@ -106,14 +108,16 @@ class CRM_Smartdebit_Sync
         // Get list of auddis dates, convert them to IDs
         if ($auddisProcessor->getAruddDates()) {
           $aruddIDs = $auddisProcessor->getAruddIDsForProcessing($auddisProcessor->getAruddDatesList());
-          $task = new CRM_Queue_Task(
-            array('CRM_Smartdebit_Sync', 'syncSmartdebitArudd'),
-            array($aruddIDs),
-            "Syncing smart debit ARUDD reports"
-          );
-          $queue->createItem($task);
         }
       }
+    }
+    if (!empty($aruddIDs)) {
+      $task = new CRM_Queue_Task(
+        array('CRM_Smartdebit_Sync', 'syncSmartdebitArudd'),
+        array($aruddIDs),
+        "Syncing smart debit ARUDD reports"
+      );
+      $queue->createItem($task);
     }
 
     if (!empty($smartDebitPayerContacts)) {
