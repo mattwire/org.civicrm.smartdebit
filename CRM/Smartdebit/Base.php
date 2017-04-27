@@ -601,9 +601,16 @@ WHERE  ddi_reference = %0";
       'invoice_id' => $recurParams['invoice_id'],
     );
 
-    if (!empty($recurParams['id'])) {
+    // We're updating an existing recurring contribution
+    // Either id or contribution_recur_id can be set, but contribution_recur_id will take precedence
+    if (!empty($recurParams['contribution_recur_id'])) {
       // We're updating an existing recurring contribution
+      $params['id'] = $recurParams['contribution_recur_id'];
+      $params['contribution_recur_id'] = $recurParams['contribution_recur_id'];
+    }
+    elseif (!empty($recurParams['id'])) {
       $params['id'] = $recurParams['id'];
+      $params['contribution_recur_id'] = $recurParams['id'];
     }
 
     // Create the recurring contribution
