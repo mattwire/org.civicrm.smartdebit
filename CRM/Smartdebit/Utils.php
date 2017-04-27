@@ -35,7 +35,7 @@ class CRM_Smartdebit_Utils {
       if (!empty($membershipId)) {
         if ($mId == $membershipId) {
           // Found our membership, set the details and return
-          $membershipOptions['id'] = $mId;
+          $membershipOptions['id'] = $detail['id'];
           $membershipOptions['start_date'] = $start_date;
           $membershipOptions['end_date'] = $end_date;
           $membershipOptions['type'] = $type;
@@ -46,7 +46,7 @@ class CRM_Smartdebit_Utils {
       else {
         // We just return a description of the membership for selection
         // Add description to list of memberships
-        $membershipOptions[$mId] = $type.'/'.$status.'/'.$start_date.'/'.$end_date;
+        $membershipOptions[$detail['id']] = $type.'/'.$status.'/'.$start_date.'/'.$end_date;
       }
     }
     if (empty($membershipId)) {
