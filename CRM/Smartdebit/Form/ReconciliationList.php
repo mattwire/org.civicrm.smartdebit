@@ -437,7 +437,7 @@ AND   csd.id IS NULL LIMIT 100";
           $contribution['contribution_recur_id'] = $recurId;
         }
         $contribution['trxn_id'] = $params['payer_reference'].'/'.date('YmdHis', strtotime($recurParams['start_date']));
-        $contribution['contribution_status_id'] = $recurParams['contribution_status_id'];
+        //$contribution['contribution_status_id'] = $recurParams['contribution_status_id'];
         $contribution['total_amount'] = $recurParams['amount'];
         $contribution['receive_date'] = $recurParams['start_date'];
         CRM_Smartdebit_Base::createContribution($contribution);
