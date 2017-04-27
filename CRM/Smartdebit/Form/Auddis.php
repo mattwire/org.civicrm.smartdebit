@@ -17,118 +17,102 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
  */
 
   function buildQuickForm() {
-    $auddisFiles = array();
-    $aruddFiles = array();
     $auddisIDs = array_filter(explode(',', CRM_Utils_Request::retrieve('auddisID', 'String', $this, false)));
     $aruddIDs = array_filter(explode(',', CRM_Utils_Request::retrieve('aruddID', 'String', $this, false)));
 
-    if (!empty($auddisIDs)) {
-      foreach ($auddisIDs as $auddisID) {
-        $auddisFiles[] = CRM_Smartdebit_Auddis::getSmartdebitAuddisFile($auddisID);
-      }
-    }
-    if (!empty($aruddIDs)) {
-      foreach ($aruddIDs as $aruddID) {
-        $aruddFiles[] = CRM_Smartdebit_Auddis::getSmartdebitAruddFile($aruddID);
-      }
-    }
-
     // Display the rejected payments
     $newAuddisRecords = array();
-    $key = 0;
     $rejectedIds = array();
-    foreach ($auddisFiles as $auddisFile) {
-      unset($auddisFile['auddis_date']);
-      foreach ($auddisFile as $inside => $value) {
-        $sql = "
+    $counts['auddis'] = 0;
+    $counts['auddis_matched'] = 0;
+    $counts['auddis_amount'] = 0;
+    if (!empty($auddisIDs)) {
+      foreach ($auddisIDs as $auddisID) {
+        $auddisFile = CRM_Smartdebit_Auddis::getSmartdebitAuddisFile($auddisID);
+        unset($auddisFile['auddis_date']);
+        foreach ($auddisFile as $inside => $value) {
+          $sql = "
           SELECT ctrc.id as contribution_recur_id ,ctrc.contact_id , cont.display_name ,ctrc.start_date , ctrc.amount, ctrc.trxn_id , ctrc.frequency_unit, ctrc.frequency_interval
           FROM civicrm_contribution_recur ctrc
           LEFT JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id)
           WHERE ctrc.trxn_id = %1";
 
-        $params = array(1 => array($value['reference'], 'String'));
-        $dao = CRM_Core_DAO::executeQuery($sql, $params);
-        $rejectedIds[] = "'" . $value['reference'] . "' ";
+          $params = array(1 => array($value['reference'], 'String'));
+          $dao = CRM_Core_DAO::executeQuery($sql, $params);
+          $rejectedIds[] = "'" . $value['reference'] . "' ";
 
-        if ($dao->fetch()) {
-          $newAuddisRecords[$key]['contribution_recur_id'] = $dao->contribution_recur_id;
-          $newAuddisRecords[$key]['contact_id'] = $dao->contact_id;
-          $newAuddisRecords[$key]['contact_name'] = $dao->display_name;
-          $newAuddisRecords[$key]['start_date'] = $dao->start_date;
-          $newAuddisRecords[$key]['frequency'] = $dao->frequency_interval.' '.$dao->frequency_unit;
-          $newAuddisRecords[$key]['amount'] = $dao->amount;
-          $newAuddisRecords[$key]['transaction_id'] = $dao->trxn_id;
+          if ($dao->fetch()) {
+            $newAuddisRecords[$counts['auddis']]['contribution_recur_id'] = $dao->contribution_recur_id;
+            $newAuddisRecords[$counts['auddis']]['contact_id'] = $dao->contact_id;
+            $newAuddisRecords[$counts['auddis']]['contact_name'] = $dao->display_name;
+            $newAuddisRecords[$counts['auddis']]['start_date'] = $dao->start_date;
+            $newAuddisRecords[$counts['auddis']]['frequency'] = $dao->frequency_interval . ' ' . $dao->frequency_unit;
+            $newAuddisRecords[$counts['auddis']]['amount'] = $dao->amount;
+            $newAuddisRecords[$counts['auddis']]['transaction_id'] = $dao->trxn_id;
+            $counts['auddis_matched'] = 0;
+          } else {
+            $newAuddisRecords[$counts['auddis']]['contact_id'] = $value['payer-reference'];
+            $newAuddisRecords[$counts['auddis']]['contact_name'] = $value['payer-name'];
+            $newAuddisRecords[$counts['auddis']]['start_date'] = $value['effective-date'];
+            $newAuddisRecords[$counts['auddis']]['contribution_recur_id'] = 0; // We use this in tpl to decide how to display contact name
+            $newAuddisRecords[$counts['auddis']]['amount'] = 0;
+          }
+          $newAuddisRecords[$counts['auddis']]['reference'] = $value['reference'];
+          $newAuddisRecords[$counts['auddis']]['reason-code'] = $value['reason-code'];
+          $counts['auddis']++;
+          $counts['auddis_amount'] += $newAuddisRecords[$counts['auddis']]['amount'];
         }
-        else {
-          $newAuddisRecords[$key]['contact_id'] = $value['payer-reference'];
-          $newAuddisRecords[$key]['contact_name'] = $value['payer-name'];
-          $newAuddisRecords[$key]['start_date'] = $value['effective-date'];
-          $newAuddisRecords[$key]['contribution_recur_id'] = 0; // We use this in tpl to decide how to display contact name
-        }
-        $newAuddisRecords[$key]['reference'] = $value['reference'];
-        $newAuddisRecords[$key]['reason-code'] = $value['reason-code'];
-        $key++;
       }
     }
 
-    // Calculate the total rejected
-    $totalMatchedAuddisRejected = 0;
-    foreach ($newAuddisRecords as $key => $value) {
-      if (isset($value['amount'])) {
-        $totalMatchedAuddisRejected += $value['amount'];
-      }
-    }
-    $summary['Rejected Contribution in the auddis']['count'] = count($newAuddisRecords);
-    $summary['Rejected Contribution in the auddis']['total'] = CRM_Utils_Money::format($totalMatchedAuddisRejected);
-    $this->assign('totalMatchedAuddisRejected', $totalMatchedAuddisRejected);
-
-    $totalAuddisRejectedCount = count($rejectedIds);
-    $this->assign('totalAuddisRejectedCount', $totalAuddisRejectedCount);
+    $summary['Rejected Contribution in the auddis']['count'] = $counts['auddis'];
+    $summary['Rejected Contribution in the auddis']['total'] = CRM_Utils_Money::format($counts['auddis_amount']);
+    $this->assign('totalMatchedAuddisRejected', $counts['auddis_amount']);
 
     $newAruddRecords = array();
-    $key = 0;
-    foreach ($aruddFiles as $aruddFile) {
-      unset($aruddFile['arudd_date']);
-      foreach ($aruddFile as $inside => $value) {
-        $sql = "
+    $counts['arudd'] = 0;
+    $counts['arudd_matched'] = 0;
+    $counts['arudd_amount'] = 0;
+    if (!empty($aruddIDs)) {
+      foreach ($aruddIDs as $aruddID) {
+        $aruddFile = CRM_Smartdebit_Auddis::getSmartdebitAruddFile($aruddID);
+        unset($aruddFile['arudd_date']);
+        foreach ($aruddFile as $inside => $value) {
+          $sql = "
           SELECT ctrc.id contribution_recur_id ,ctrc.contact_id , cont.display_name ,ctrc.start_date , ctrc.amount, ctrc.trxn_id , ctrc.frequency_unit, ctrc.frequency_interval
           FROM civicrm_contribution_recur ctrc
           LEFT JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id)
           WHERE ctrc.trxn_id = %1";
 
-        $params = array(1 => array($value['ref'], 'String'));
-        $dao = CRM_Core_DAO::executeQuery($sql, $params);
-        $rejectedIds[] = "'" . $value['ref'] . "' ";
-        if ($dao->fetch()) {
-          $newAruddRecords[$key]['contribution_recur_id'] = $dao->contribution_recur_id;
-          $newAruddRecords[$key]['contact_id'] = $dao->contact_id;
-          $newAruddRecords[$key]['contact_name'] = $dao->display_name;
-          $newAruddRecords[$key]['start_date'] = $dao->start_date;
-          $newAruddRecords[$key]['frequency'] = $dao->frequency_interval . ' ' . $dao->frequency_unit;
-          $newAruddRecords[$key]['amount'] = $dao->amount;
-          $newAruddRecords[$key]['transaction_id'] = $dao->trxn_id;
+          $params = array(1 => array($value['ref'], 'String'));
+          $dao = CRM_Core_DAO::executeQuery($sql, $params);
+          $rejectedIds[] = "'" . $value['ref'] . "' ";
+          if ($dao->fetch()) {
+            $newAruddRecords[$counts['arudd']]['contribution_recur_id'] = $dao->contribution_recur_id;
+            $newAruddRecords[$counts['arudd']]['contact_id'] = $dao->contact_id;
+            $newAruddRecords[$counts['arudd']]['contact_name'] = $dao->display_name;
+            $newAruddRecords[$counts['arudd']]['start_date'] = $dao->start_date;
+            $newAruddRecords[$counts['arudd']]['frequency'] = $dao->frequency_interval . ' ' . $dao->frequency_unit;
+            $newAruddRecords[$counts['arudd']]['amount'] = $dao->amount;
+            $newAruddRecords[$counts['arudd']]['transaction_id'] = $dao->trxn_id;
+            $counts['arudd_matched']++;
+          } else {
+            $newAruddRecords[$counts['arudd']]['contact_id'] = $value['payerReference'];
+            $newAruddRecords[$counts['arudd']]['start_date'] = $value['originalProcessingDate'];
+            $newAruddRecords[$counts['arudd']]['amount'] = $value['valueOf'];
+          }
+          $newAruddRecords[$counts['arudd']]['reference'] = $value['ref'];
+          $newAruddRecords[$counts['arudd']]['reason-code'] = $value['returnDescription'];
+          $counts['arudd']++;
+          $counts['arudd_amount'] += $newAruddRecords[$counts['arudd']]['amount'];
         }
-        else {
-          $newAruddRecords[$key]['contact_id'] = $value['payerReference'];
-          $newAruddRecords[$key]['start_date'] = $value['originalProcessingDate'];
-          $newAruddRecords[$key]['amount'] = $value['valueOf'];
-        }
-        $newAruddRecords[$key]['reference'] = $value['ref'];
-        $newAruddRecords[$key]['reason-code'] = $value['returnDescription'];
-        $key++;
       }
     }
 
-    // Calculate the total rejected
-    $totalRejectedArudd = 0;
-    foreach ($newAruddRecords as $key => $value) {
-      $totalRejectedArudd += $value['amount'];
-    }
-    $summary['Rejected Contribution in the arudd']['count'] = count($newAruddRecords);
-    $summary['Rejected Contribution in the arudd']['total'] = CRM_Utils_Money::format($totalRejectedArudd);
-    $this->assign('totalRejectedArudd', $totalRejectedArudd);
-    $listArray = array();
+    $summary['Rejected Contribution in the arudd']['count'] = $counts['arudd'];
+    $summary['Rejected Contribution in the arudd']['total'] = CRM_Utils_Money::format($counts['arudd_amount']);
 
+    $listArray = array();
     // Display the valid payments
     $contributionTrxnIdsList = "'dummyId'";
     $sdTrxnIds = array();
@@ -156,6 +140,9 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
     $validIds = array_diff($sdTrxnIds, $recurTransactionIds, $rejectedIds);
 
     if (!empty($validIds)) {
+      $counts['contribution_matched'] = 0;
+      $counts['contribution_matched_amount'] = 0;
+
       // Get list of transactionIDs that have matching recurring contributions in CiviCRM and Smartdebit
       $validIdsString = implode(',', $validIds);
       $sql = "SELECT ctrc.id contribution_recur_id ,ctrc.contact_id , cont.display_name ,ctrc.start_date , sdpayments.amount, ctrc.trxn_id , ctrc.frequency_unit, ctrc.payment_instrument_id, ctrc.contribution_status_id, ctrc.frequency_interval
@@ -163,9 +150,8 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
       INNER JOIN veda_smartdebit_collectionreports sdpayments ON sdpayments.transaction_id = ctrc.trxn_id
       INNER JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id)
       WHERE ctrc.trxn_id IN ($validIdsString)";
-
       $dao = CRM_Core_DAO::executeQuery($sql);
-      $key = 0;
+
       while ($dao->fetch()) {
         $matchTrxnIds[] = "'" . trim($dao->trxn_id) . "' ";
         $params = array('contribution_recur_id' => $dao->contribution_recur_id,
@@ -181,8 +167,9 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
         // Allow params to be validated via hook
         CRM_Smartdebit_Utils_Hook::validateSmartdebitContributionParams($params);
 
-        $listArray[$key] = $params;
-        $key++;
+        $listArray[$counts['contribution_matched']] = $params;
+        $counts['contribution_matched']++;
+        $counts['contribution_matched_amount'] += $dao->amount;
       }
       //Store the list of matched transaction IDs in settings table for use later
       if (!empty($matchTrxnIds)) {
@@ -199,49 +186,42 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
         WHERE cc.`trxn_id` IN ( $contributionTrxnIdsList )";
     $dao = CRM_Core_DAO::executeQuery($contributionQuery);
     $existArray = array();
-    $key = 0;
-    while ($dao->fetch()) {
-      $existArray[$key]['contact_id'] = $dao->contact_id;
-      $existArray[$key]['contact_name'] = $dao->display_name;
-      $existArray[$key]['start_date'] = $dao->start_date;
-      $existArray[$key]['frequency'] = $dao->frequency_interval . ' ' . $dao->frequency_unit;
-      $existArray[$key]['amount'] = $dao->total_amount;
-      $existArray[$key]['transaction_id'] = $dao->trxn_id;
-      $key++;
-    }
-    $totalExist = 0;
-    foreach ($existArray as $value) {
-      $totalExist += $value['amount'];
-    }
+    $counts['contribution_existing'] = 0;
+    $counts['contribution_existing_amount'] = 0;
 
-    $summary['Contribution already processed']['count'] = count($existArray);
-    $summary['Contribution already processed']['total'] = CRM_Utils_Money::format($totalExist);
+    while ($dao->fetch()) {
+      $existArray[$counts['contribution_existing']]['contact_id'] = $dao->contact_id;
+      $existArray[$counts['contribution_existing']]['contact_name'] = $dao->display_name;
+      $existArray[$counts['contribution_existing']]['start_date'] = $dao->start_date;
+      $existArray[$counts['contribution_existing']]['frequency'] = $dao->frequency_interval . ' ' . $dao->frequency_unit;
+      $existArray[$counts['contribution_existing']]['amount'] = $dao->total_amount;
+      $existArray[$counts['contribution_existing']]['transaction_id'] = $dao->trxn_id;
+      $counts['contribution_existing']++;
+      $counts['contribution_existing_amount'] += $dao->total_amount;
+    }
 
     // Get a list of transactionIDs that are in Smartdebit but not CiviCRM
     $missingTrxnIds = array_diff($validIds, $matchTrxnIds);
     if (!empty($missingTrxnIds)) {
+      $counts['contribution_missing'] = 0;
+      $counts['contribution_missing_amount'] = 0;
+
       $missingTrxnIdsString = implode(',', $missingTrxnIds);
       $findMissingQuery = "
           SELECT `transaction_id` as trxn_id, contact as display_name, contact_id as contact_id, amount as amount, receive_date as receive_date
           FROM `veda_smartdebit_collectionreports`
           WHERE transaction_id IN ($missingTrxnIdsString)";
       $dao = CRM_Core_DAO::executeQuery($findMissingQuery);
-      $key = 0;
       while ($dao->fetch()) {
-        $missingArray[$key]['contact_name'] = $dao->display_name;
-        $missingArray[$key]['contact_id'] = $dao->contact_id;
-        $missingArray[$key]['amount'] = $dao->amount;
-        $missingArray[$key]['transaction_id'] = $dao->trxn_id;
-        $missingArray[$key]['receive_date'] = $dao->receive_date;
-        $key++;
+        $missingArray[$counts['contribution_missing']]['contact_name'] = $dao->display_name;
+        $missingArray[$counts['contribution_missing']]['contact_id'] = $dao->contact_id;
+        $missingArray[$counts['contribution_missing']]['amount'] = $dao->amount;
+        $missingArray[$counts['contribution_missing']]['transaction_id'] = $dao->trxn_id;
+        $missingArray[$counts['contribution_missing']]['receive_date'] = $dao->receive_date;
+        $counts['contribution_missing']++;
+        $counts['contribution_missing_amount']+=$dao->amount;
       }
     }
-    $totalMissing = 0;
-    foreach ($missingArray as $value) {
-      $totalMissing += $value['amount'];
-    }
-    $summary['Contribution not matched to contacts']['count'] = count($missingArray);
-    $summary['Contribution not matched to contacts']['total'] = CRM_Utils_Money::format($totalMissing);
 
     // Create query url for continue
     $queryParams = '';
@@ -256,11 +236,6 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
     if (!empty($queryParams)) { $queryParams.='&'; }
     $queryParams .= 'reset=1';
 
-    // No AUDDIS or ARUDD dates
-    if (empty($auddisIDs) && empty($aruddIDs)) {
-      CRM_Core_Session::setStatus('You haven\'t selected any AUDDIS or ARUDD dates for import!', 'Smart Debit', 'alert');
-    }
-
     $bQueryParams = '';
     if (!empty($bQueryParams)) { $bQueryParams.='&'; }
     $bQueryParams.='reset=1';
@@ -271,7 +246,8 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
       'js' => array('onclick' => "location.href='{$redirectUrlBack}'; return false;"),
       'name' => ts('Back'),
     );
-    if(!empty($matchTrxnIds)) {
+    // Show next button if there is something to sync
+    if(!empty($counts['contribution_matched']) || !empty($counts['arudd_matched']) || !empty($counts['auddis_matched'])) {
       $redirectUrlContinue  = CRM_Utils_System::url('civicrm/smartdebit/syncsd/confirm', $queryParams);
       $buttons[] = array(
         'type' => 'next',
@@ -282,26 +258,26 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
     $this->addButtons($buttons);
     CRM_Utils_System::setTitle('Synchronise CiviCRM with Smart Debit: View Results');
 
+    $summary['Contribution already processed']['count'] = $counts['contribution_existing'];
+    $summary['Contribution already processed']['total'] = CRM_Utils_Money::format($counts['contribution_existing_amount']);
+    $summary['Contribution not matched to contacts']['count'] = $counts['contribution_missing'];
+    $summary['Contribution not matched to contacts']['total'] = CRM_Utils_Money::format($counts['contribution_missing_amount']);
+    $summary['Contribution matched to contacts']['count'] = $counts['contribution_matched'];
+    $summary['Contribution matched to contacts']['total'] = CRM_Utils_Money::format($counts['contribution_matched_amount']);
 
-    // Prepare statistics
-    $totalMatched = 0;
-    foreach ($listArray as $value) {
-      $totalMatched += $value['amount'];
-    }
-
-    $summary['Contribution matched to contacts']['count'] = count($listArray);
-    $summary['Contribution matched to contacts']['total'] = CRM_Utils_Money::format($totalMatched);
-
-    $totalSummaryNumber = count($newAuddisRecords) + count($newAruddRecords) + count($existArray) + count($missingArray) + count($listArray);
-    $totalSummaryAmount = $totalMatchedAuddisRejected + $totalRejectedArudd + $totalExist + $totalMissing + $totalMatched;
+    $totalSummaryNumber = $counts['auddis'] + $counts['arudd'] + $counts['contribution_existing'] + $counts['contribution_missing'] + $counts['contribution_matched'];
+    $totalSummaryAmount = $counts['auddis_amount'] + $counts['arudd_amount'] + $counts['contribution_existing_amount'] + $counts['contribution_missing_amount'] + $counts['contribution_matched_amount'];
 
     $this->assign('newAuddisRecords', $newAuddisRecords);
     $this->assign('newAruddRecords', $newAruddRecords);
     $this->assign('listArray', $listArray);
-    $this->assign('totalMatched', CRM_Utils_Money::format($totalMatched));
-    $this->assign('totalMatchedCount', $summary['Contribution matched to contacts']['count']);
-    $this->assign('totalExist', CRM_Utils_Money::format($totalExist));
-    $this->assign('totalMissing', CRM_Utils_Money::format($totalMissing));
+    $this->assign('totalMatched', CRM_Utils_Money::format($counts['contribution_matched_amount']));
+    $this->assign('totalMatchedCount', $counts['contribution_matched']);
+    $this->assign('totalMatchedAuddis', $counts['auddis_matched']);
+    $this->assign('totalMatchedArudd', $counts['arudd_matched']);
+    $this->assign('totalRejectedArudd', $counts['arudd_amount']);
+    $this->assign('totalExist', CRM_Utils_Money::format($counts['contribution_existing_amount']));
+    $this->assign('totalMissing', CRM_Utils_Money::format($counts['contribution_missing_amount']));
     $this->assign('existArray', $existArray);
     $this->assign('missingArray', $missingArray);
     $this->assign('summaryNumber', $totalSummaryNumber);
