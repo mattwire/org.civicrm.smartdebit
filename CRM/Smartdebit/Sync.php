@@ -55,6 +55,10 @@ class CRM_Smartdebit_Sync
     $count = count($smartDebitPayerContacts);
     smartdebit_civicrm_saveSetting('total', $count);
 
+    // Clear out the results table
+    $emptySql = "TRUNCATE TABLE veda_smartdebit_success_contributions";
+    CRM_Core_DAO::executeQuery($emptySql);
+
     // Set the Number of Rounds
     $rounds = ceil($count/self::BATCH_COUNT);
     // Setup a Task in the Queue
@@ -200,10 +204,6 @@ class CRM_Smartdebit_Sync
    */
   static function syncSmartdebitCollectionReports(CRM_Queue_TaskContext $ctx, $smartDebitPayerContacts)
   {
-    // Clear out the results table
-    $emptySql = "TRUNCATE TABLE veda_smartdebit_success_contributions";
-    CRM_Core_DAO::executeQuery($emptySql);
-
     // Import each transaction from smart debit
     foreach ($smartDebitPayerContacts as $key => $sdContact) {
       try {
