@@ -8,8 +8,6 @@
                 <th> Contact Name </th>
                 <th> Amount </th>
                 <th> Frequency </th>
-                <th> Membership Renewal From </th>
-                <th> Membership Renewal To </th>
             </tr>
         </thead>
         <tbody>
@@ -19,8 +17,6 @@
                     <td>{$row.display_name}</td>                   
                     <td align="right">{$row.amount}</td>                   
                     <td>{$row.frequency}</td>                   
-                    <td>{$row.from}</td>                   
-                    <td>{$row.to}</td>                   
                 </tr>
             {/foreach}
             {if $totalAmountAdded}
