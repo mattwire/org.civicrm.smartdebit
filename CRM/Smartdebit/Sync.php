@@ -407,6 +407,7 @@ class CRM_Smartdebit_Sync
    */
   static function checkIfFirstPayment($params, $frequencyUnit = 'year', $frequencyInterval = 1) {
     if (empty($params['contribution_recur_id'])) {
+      if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: No recur_id'); }
       return false;
     }
 
@@ -419,6 +420,7 @@ class CRM_Smartdebit_Sync
 
     // We have only one contribution for the recurring record
     if ($contributionResult['count'] == 1) {
+      if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: 1 contribution. id='.$contributionResult['id']); }
       $contributionDetails = $contributionResult['values'][$contributionResult['id']];
 
       if (!empty($contributionDetails['receive_date']) && !empty($params['receive_date'])) {
@@ -428,8 +430,8 @@ class CRM_Smartdebit_Sync
         // if diff is less than set number of days, return Contribution ID to update the contribution
         // If $days == 0 it's a lifetime membership
         if (($dateDiff < $days) && ($days != 0)) {
+          if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Using existing contribution'); }
           $params['id'] = $contributionResult['id'];
-          unset($params['source']);
         }
       }
     }
@@ -442,12 +444,13 @@ class CRM_Smartdebit_Sync
       $dao = CRM_Core_DAO::executeQuery($sql , $sqlParams);
       while($dao->fetch()) {
         if (!empty($dao->receive_date) && !empty($params['receive_date'])) {
+          if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Most recent contribution. id='.$dao->id); }
           $dateDiff = CRM_Smartdebit_Sync::dateDifference($params['receive_date'], $dao->receive_date);
 
           // if diff is less than set number of days, return Contribution ID to update the contribution
           if ($dateDiff < $days) {
+            if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Using existing contribution'); }
             $params['id'] = $dao->id;
-            unset($params['source']);
           }
         }
       }
