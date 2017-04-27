@@ -466,11 +466,23 @@ AND   csd.id IS NULL LIMIT 100";
       }
     }
 
+    try {
+      $membershipRecord = civicrm_api3('Membership', 'getsingle', array(
+        'id' => $params['membership_id'],
+      ));
+    }
+    catch (Exception $e) {
+      // Failed to find membership.  This should never happen unless we get a malformed submission
+      CRM_Core_Session::setStatus('Failed to find membership with Id: ' . $params['membership_id'], 'Smart Debit: Link Membership');
+      return FALSE;
+    }
+
     return civicrm_api3('Membership', 'create', array(
       'sequential' => 1,
       'id' => $params['membership_id'],
       'contact_id' => $params['contact_id'],
       'contribution_recur_id' => $params['contribution_recur_id'],
+      'membership_type_id' => $membershipRecord['membership_type_id'],
     ));
   }
 
