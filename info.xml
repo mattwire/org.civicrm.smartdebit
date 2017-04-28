@@ -10,17 +10,18 @@
   </maintainer>
   <urls>
     <url desc="Main Extension Page">https://github.com/mattwire/uk.co.vedaconsulting.smartdebit</url>
-    <url desc="Documentation">https://github.com/mattwire/uk.co.vedaconsulting.smartdebit</url>
-    <url desc="Support">https://github.com/mattwire/uk.co.vedaconsulting.smartdebit</url>
+    <url desc="Documentation">https://github.com/mattwire/uk.co.vedaconsulting.smartdebit/wiki</url>
+    <url desc="Support">https://github.com/mattwire/uk.co.vedaconsulting.smartdebit/issues</url>
+    <url desc="Author">https://www.mjwconsult.co.uk</url>
     <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
   </urls>
-  <releaseDate>2017-04-23</releaseDate>
+  <releaseDate>2017-04-28</releaseDate>
   <version>1.0</version>
-  <develStage>alpha</develStage>
+  <develStage>beta</develStage>
   <compatibility>
     <ver>4.7</ver>
   </compatibility>
-  <comments>Based on the vedaconsulting ukdirectdebit, smartdebit and smartdebit_reconciliation modules.
+  <comments>Based on the vedaconsulting (https://vedaconsulting.co.uk) ukdirectdebit, smartdebit and smartdebit_reconciliation modules.
   Re-written for CiviCRM 4.7</comments>
   <civix>
     <namespace>CRM/Smartdebit</namespace>
