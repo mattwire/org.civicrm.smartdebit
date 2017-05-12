@@ -621,8 +621,7 @@ WHERE  ddi_reference = %0";
   /**
    * Create/update a contribution for the direct debit.
    * @param $params
-   * @return object
-   * // FIXME: No longer used, we can remove
+   * @return array (API Result)
    */
   static function createContribution($params) {
     // Mandatory Parameters

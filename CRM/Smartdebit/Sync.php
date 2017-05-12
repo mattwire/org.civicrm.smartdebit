@@ -250,7 +250,7 @@ class CRM_Smartdebit_Sync
       CRM_Core_Error::debug_log_message('Smartdebit processCollection: Not Matched=' . $trxnId);
       return FALSE;
     }
-
+    if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit processCollection: $contributionRecur=' . print_r($contributionRecur, true)); }
     if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit processCollection: Matched=' . $trxnId); }
 
     if (empty($amount)) {
@@ -288,8 +288,9 @@ class CRM_Smartdebit_Sync
     // Allow params to be modified via hook
     CRM_Smartdebit_Utils_Hook::alterSmartdebitContributionParams($contributeParams);
 
-    $contributeResult = civicrm_api('Contribution', 'create', $contributeParams);
+    $contributeResult = CRM_Smartdebit_Base::createContribution($contributeParams);
 
+    if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit processCollection: $contributeParams=' . print_r($contributeParams, true)); }
     if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit processCollection: $contributeResult=' . print_r($contributeResult, true)); }
 
     if (empty($contributeResult['is_error'])) {
