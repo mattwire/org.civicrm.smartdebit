@@ -27,55 +27,6 @@ function smartdebit_civicrm_xmlMenu(&$files) {
  */
 function smartdebit_civicrm_install()
 {
-  // Create an Direct Debit Activity Type
-  // See if we already have this type
-  $ddActivity = civicrm_api3('OptionValue', 'get', array(
-    'option_group_id' => "activity_type",
-    'name' => "Direct Debit Sign Up",
-  ));
-  if (empty($ddActivity['count'])) {
-    $activityParams = array('version' => '3'
-    , 'option_group_id' => "activity_type"
-    , 'name' => 'Direct Debit Sign Up'
-    , 'description' => 'Direct Debit Sign Up');
-    $activityType = civicrm_api('OptionValue', 'Create', $activityParams);
-    $activityTypeId = $activityType['values'][$activityType['id']]['value'];
-    smartdebit_civicrm_saveSetting('activity_type', $activityTypeId);
-  }
-
-  // See if we already have this type
-  $ddActivity = civicrm_api3('OptionValue', 'get', array(
-    'option_group_id' => "activity_type",
-    'name' => "DD Confirmation Letter",
-  ));
-  if (empty($ddActivity['count'])) {
-    // Otherwise create it
-    $activityParams = array('version' => '3'
-    , 'option_group_id' => "activity_type"
-    , 'name' => 'DD Confirmation Letter'
-    , 'description' => 'DD Confirmation Letter');
-    $activityType = civicrm_api('OptionValue', 'Create', $activityParams);
-    $activityTypeId = $activityType['values'][$activityType['id']]['value'];
-    smartdebit_civicrm_saveSetting('activity_type_letter', $activityTypeId);
-  }
-
-  // Create an Direct Debit Payment Instrument
-  // See if we already have this type
-  $ddPayment = civicrm_api3('OptionValue', 'get', array(
-    'option_group_id' => "payment_instrument",
-    'name' => "Direct Debit",
-  ));
-  if (empty($ddPayment['count'])) {
-    // Otherwise create it
-    $paymentParams = array('version' => '3'
-    , 'option_group_id' => "payment_instrument"
-    , 'name' => 'Direct Debit'
-    , 'description' => 'Direct Debit');
-    $paymentType = civicrm_api('OptionValue', 'Create', $paymentParams);
-    $paymentTypeId = $paymentType['values'][$paymentType['id']]['value'];
-    smartdebit_civicrm_saveSetting('payment_instrument_id', $paymentTypeId);
-  }
-
   // On install, create a table for keeping track of online direct debits
   CRM_Core_DAO::executeQuery("
          CREATE TABLE IF NOT EXISTS `civicrm_direct_debit` (
@@ -193,6 +144,55 @@ function smartdebit_civicrm_install()
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_postInstall
  */
 function smartdebit_civicrm_postInstall() {
+  // Create an Direct Debit Activity Type
+  // See if we already have this type
+  $ddActivity = civicrm_api3('OptionValue', 'get', array(
+    'option_group_id' => "activity_type",
+    'name' => "Direct Debit Sign Up",
+  ));
+  if (empty($ddActivity['count'])) {
+    $activityParams = array('version' => '3'
+    , 'option_group_id' => "activity_type"
+    , 'name' => 'Direct Debit Sign Up'
+    , 'description' => 'Direct Debit Sign Up');
+    $activityType = civicrm_api('OptionValue', 'Create', $activityParams);
+    $activityTypeId = $activityType['values'][$activityType['id']]['value'];
+    smartdebit_civicrm_saveSetting('activity_type', $activityTypeId);
+  }
+
+  // See if we already have this type
+  $ddActivity = civicrm_api3('OptionValue', 'get', array(
+    'option_group_id' => "activity_type",
+    'name' => "DD Confirmation Letter",
+  ));
+  if (empty($ddActivity['count'])) {
+    // Otherwise create it
+    $activityParams = array('version' => '3'
+    , 'option_group_id' => "activity_type"
+    , 'name' => 'DD Confirmation Letter'
+    , 'description' => 'DD Confirmation Letter');
+    $activityType = civicrm_api('OptionValue', 'Create', $activityParams);
+    $activityTypeId = $activityType['values'][$activityType['id']]['value'];
+    smartdebit_civicrm_saveSetting('activity_type_letter', $activityTypeId);
+  }
+
+  // Create an Direct Debit Payment Instrument
+  // See if we already have this type
+  $ddPayment = civicrm_api3('OptionValue', 'get', array(
+    'option_group_id' => "payment_instrument",
+    'name' => "Direct Debit",
+  ));
+  if (empty($ddPayment['count'])) {
+    // Otherwise create it
+    $paymentParams = array('version' => '3'
+    , 'option_group_id' => "payment_instrument"
+    , 'name' => 'Direct Debit'
+    , 'description' => 'Direct Debit');
+    $paymentType = civicrm_api('OptionValue', 'Create', $paymentParams);
+    $paymentTypeId = $paymentType['values'][$paymentType['id']]['value'];
+    smartdebit_civicrm_saveSetting('payment_instrument_id', $paymentTypeId);
+  }
+
   _smartdebit_civix_civicrm_postInstall();
 }
 
