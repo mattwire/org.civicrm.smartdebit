@@ -232,8 +232,10 @@ AND   opva.label = 'Direct Debit' ";
           $listArray[$dao->smart_debit_id]['differences']           = $differences;
           $fixmeurl = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/fix/select', "cid=".$dao->contact_id."&reference_number=".$dao->reference_number,  TRUE, NULL, FALSE, TRUE, TRUE);
           if ($difference['amount'] || $difference['frequency'] || $difference['status']) {
-            // Can't fix contact Id
-            $listArray[$dao->smart_debit_id]['fix_me_url'] = $fixmeurl;
+            // Show fix me link if difference is amount, frequency or status
+            if (!empty($dao->regular_amount)) { // We don't support no amount at smartdebit
+              $listArray[$dao->smart_debit_id]['fix_me_url'] = $fixmeurl;
+            }
           }
           if ($difference['contact']) {
             // Assign to form so we can use it
@@ -297,7 +299,9 @@ AND ctrc.id IS NULL";
           $fixmeUrl = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/fix/select', "reference_number=".$dao->reference_number,  TRUE, NULL, FALSE, TRUE, TRUE);
         }
         // Add the record
-        $listArray[$dao->smart_debit_id]['fix_me_url'] = $fixmeUrl;
+        if (!empty($dao->regular_amount)) { // We don't support no amount at smartdebit
+          $listArray[$dao->smart_debit_id]['fix_me_url'] = $fixmeUrl;
+        }
         $listArray[$dao->smart_debit_id]['recordFound'] = $transactionRecordFound;
         $listArray[$dao->smart_debit_id]['contact_id'] = $missingContactID;
         $listArray[$dao->smart_debit_id]['contact_name'] = $missingContactName;
