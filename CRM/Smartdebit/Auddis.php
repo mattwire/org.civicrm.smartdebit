@@ -419,7 +419,7 @@ class CRM_Smartdebit_Auddis
     // Take action based upon the response status
     switch ( strtoupper( $response["Status"] ) ) {
       case 'OK':
-        if (!isset($response['Successes']) || !isset($response['Rejects'])) {
+        if (!isset($response['Successes']['Success']) || !isset($response['Rejects'])) {
           $collections['error'] = $response['Summary'];
           return $collections;
         }
