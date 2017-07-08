@@ -59,8 +59,8 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
           }
           $newAuddisRecords[$counts['auddis']]['reference'] = $value['reference'];
           $newAuddisRecords[$counts['auddis']]['reason-code'] = $value['reason-code'];
-          $counts['auddis']++;
           $counts['auddis_amount'] += $newAuddisRecords[$counts['auddis']]['amount'];
+          $counts['auddis']++;
         }
       }
     }
@@ -103,8 +103,8 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
           }
           $newAruddRecords[$counts['arudd']]['reference'] = $value['ref'];
           $newAruddRecords[$counts['arudd']]['reason-code'] = $value['returnDescription'];
-          $counts['arudd']++;
           $counts['arudd_amount'] += $newAruddRecords[$counts['arudd']]['amount'];
+          $counts['arudd']++;
         }
       }
     }

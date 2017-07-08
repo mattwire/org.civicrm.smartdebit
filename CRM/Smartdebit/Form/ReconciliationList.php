@@ -124,7 +124,6 @@ AND   opva.label = 'Direct Debit' ";
 
       $dao = CRM_Core_DAO::executeQuery( $sql);
 
-      // Remove first 2 characters (Ascii characters 194 & 163)
       while ($dao->fetch()) {
         // Smart Debit Record Found
         // 1. Transaction Id in Smart Debit and Civi for the same contact
