@@ -258,26 +258,26 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
     $this->addButtons($buttons);
     CRM_Utils_System::setTitle('Synchronise CiviCRM with Smart Debit: View Results');
 
-    $summary['Contribution already processed']['count'] = $counts['contribution_existing'];
-    $summary['Contribution already processed']['total'] = CRM_Utils_Money::format($counts['contribution_existing_amount']);
-    $summary['Contribution not matched to contacts']['count'] = $counts['contribution_missing'];
-    $summary['Contribution not matched to contacts']['total'] = CRM_Utils_Money::format($counts['contribution_missing_amount']);
-    $summary['Contribution matched to contacts']['count'] = $counts['contribution_matched'];
-    $summary['Contribution matched to contacts']['total'] = CRM_Utils_Money::format($counts['contribution_matched_amount']);
+    $summary['Contribution already processed']['count'] = CRM_Utils_Array::value('contribution_existing', $counts);
+    $summary['Contribution already processed']['total'] = CRM_Utils_Money::format(CRM_Utils_Array::value('contribution_existing_amount', $counts));
+    $summary['Contribution not matched to contacts']['count'] = CRM_Utils_Array::value('contribution_missing', $counts);
+    $summary['Contribution not matched to contacts']['total'] = CRM_Utils_Money::format(CRM_Utils_Array::value('contribution_missing_amount', $counts));
+    $summary['Contribution matched to contacts']['count'] = CRM_Utils_Array::value('contribution_matched', $counts);
+    $summary['Contribution matched to contacts']['total'] = CRM_Utils_Money::format(CRM_Utils_Array::value('contribution_matched_amount', $counts));
 
-    $totalSummaryNumber = $counts['auddis'] + $counts['arudd'] + $counts['contribution_existing'] + $counts['contribution_missing'] + $counts['contribution_matched'];
-    $totalSummaryAmount = $counts['auddis_amount'] + $counts['arudd_amount'] + $counts['contribution_existing_amount'] + $counts['contribution_missing_amount'] + $counts['contribution_matched_amount'];
+    $totalSummaryNumber = CRM_Utils_Array::value('auddis', $counts) + CRM_Utils_Array::value('arudd', $counts) + CRM_Utils_Array::value('contribution_existing', $counts) + CRM_Utils_Array::value('contribution_missing', $counts) + CRM_Utils_Array::value('contribution_matched', $counts);
+    $totalSummaryAmount = CRM_Utils_Array::value('auddis_amount', $counts) + CRM_Utils_Array::value('arudd_amount', $counts) + CRM_Utils_Array::value('contribution_existing_amount', $counts) + CRM_Utils_Array::value('contribution_missing_amount', $counts) + CRM_Utils_Array::value('contribution_matched_amount', $counts);
 
     $this->assign('newAuddisRecords', $newAuddisRecords);
     $this->assign('newAruddRecords', $newAruddRecords);
     $this->assign('listArray', $listArray);
-    $this->assign('totalMatched', CRM_Utils_Money::format($counts['contribution_matched_amount']));
-    $this->assign('totalMatchedCount', $counts['contribution_matched']);
-    $this->assign('totalMatchedAuddis', $counts['auddis_matched']);
-    $this->assign('totalMatchedArudd', $counts['arudd_matched']);
-    $this->assign('totalRejectedArudd', $counts['arudd_amount']);
-    $this->assign('totalExist', CRM_Utils_Money::format($counts['contribution_existing_amount']));
-    $this->assign('totalMissing', CRM_Utils_Money::format($counts['contribution_missing_amount']));
+    $this->assign('totalMatched', CRM_Utils_Money::format(CRM_Utils_Array::value('contribution_matched_amount', $counts)));
+    $this->assign('totalMatchedCount', CRM_Utils_Array::value('contribution_matched', $counts));
+    $this->assign('totalMatchedAuddis', CRM_Utils_Array::value('auddis_matched', $counts));
+    $this->assign('totalMatchedArudd', CRM_Utils_Array::value('arudd_matched', $counts));
+    $this->assign('totalRejectedArudd', CRM_Utils_Array::value('arudd_amount', $counts));
+    $this->assign('totalExist', CRM_Utils_Money::format(CRM_Utils_Array::value('contribution_existing_amount', $counts)));
+    $this->assign('totalMissing', CRM_Utils_Money::format(CRM_Utils_Array::value('contribution_missing_amount', $counts)));
     $this->assign('existArray', $existArray);
     $this->assign('missingArray', $missingArray);
     $this->assign('summaryNumber', $totalSummaryNumber);
