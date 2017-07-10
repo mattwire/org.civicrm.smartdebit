@@ -409,6 +409,15 @@ AND   csd.id IS NULL LIMIT 100";
       $recurParams['next_sched_contribution'] = $smartDebitRecord['start_date'].' 00:00:00';
       $recurParams['trxn_id'] = $params['payer_reference'];
 
+      $auditlog = CRM_Smartdebit_Sync::getSmartdebitAuditLog($params['payer_reference']);
+      if (isset($auditlog[0]['description'])) {
+        if (strpos($auditlog[0]['description'], 'Created') !== FALSE) {
+          if (isset($auditlog[0]['timestamp'])) {
+            $recurParams['create_date'] = $auditlog[0]['timestamp'];
+          }
+        }
+      }
+
       // Set state of recurring contribution (10=live,1=New at SmartDebit)
       if ($smartDebitRecord['current_state'] == 10 || $smartDebitRecord['current_state'] == 1) {
         $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
