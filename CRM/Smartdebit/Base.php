@@ -557,6 +557,17 @@ WHERE  ddi_reference = %0";
     if (empty($recurParams['invoice_id'])) {
       $recurParams['invoice_id'] = md5(uniqid(rand(), TRUE ));
     }
+    // Auto renew (default to 1, but for single payments it should be 0
+    if (!isset($recurParams['auto_renew'])) {
+      $recurParams['auto_renew'] = 1;
+    }
+    // Defaults to 0 if not set, but we set to 1 if not auto-renew, so make sure array is set here.
+    if (!isset($recurParams['installments'])) {
+      $recurParams['installments'] = '';
+    }
+    if (!isset($recurParams['is_test'])) {
+      $recurParams['is_test'] = 0;
+    }
 
     // Build recur params
     $params = array(
@@ -572,11 +583,13 @@ WHERE  ddi_reference = %0";
       'contribution_status_id'=> $recurParams['contribution_status_id'],
       'trxn_id'	=> $recurParams['trxn_id'],
       'financial_type_id'	=> $recurParams['financial_type_id'],
-      'auto_renew' => '1', // Make auto renew
+      'auto_renew' => $recurParams['auto_renew'],
       'cycle_day' => $recurParams['cycle_day'],
       'currency' => $recurParams['currency'],
       'payment_instrument_id' => $recurParams['payment_instrument_id'],
       'invoice_id' => $recurParams['invoice_id'],
+      'installments' => $recurParams['installments'],
+      'is_test' => $recurParams['is_test'],
     );
 
     // We're updating an existing recurring contribution

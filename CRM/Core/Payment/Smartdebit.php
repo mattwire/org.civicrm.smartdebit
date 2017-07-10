@@ -549,14 +549,51 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    * Add transaction Id to recurring contribution
    * @param $params
    */
-  static function setRecurTransactionId($params) {
+  static function setRecurTransactionId(&$params) {
     // As the recur transaction is created before payment, we need to update it with our params after payment
-    if (!empty($params['contributionRecurID']) && !(empty($params['trxn_id']))) {
-      $result = civicrm_api3('ContributionRecur', 'create', array(
-        'sequential' => 1,
-        'id' => $params['contributionRecurID'],
-        'trxn_id' => $params['trxn_id'],
-      ));
+    if (!empty($params['trxn_id'])) {
+      if (!empty($params['contributionRecurID'])) {
+        // Recurring transaction, so this is a recurring payment
+        $recurParams = array (
+          'id' => $params['contributionRecurID'],
+          'trxn_id' => $params['trxn_id'],
+        );
+        // Update the recurring payment
+        $result = civicrm_api3('ContributionRecur', 'create', $recurParams);
+      }
+      else {
+        // No recurring transaction, assume this is a non-recurring payment (so create a recurring contribution with a single installment
+        // Get the financial type ID
+        $financialType['name'] = $params['contributionType_name'];
+        $financialType=CRM_Financial_BAO_FinancialType::retrieve($financialType,$defaults);
+        // Fill recurring transaction parameters
+        $recurParams = array(
+          'contact_id' =>  $params['contactID'],
+          'create_date' => $params['receive_date'],
+          'modified_date' => $params['receive_date'],
+          'start_date' => $params['receive_date'],
+          'amount' => $params['amount'],
+          'frequency_unit' => 'year',
+          'frequency_interval' => '1',
+          'trxn_id'	=> $params['trxn_id'],
+          'financial_type_id'	=> $financialType->id,
+          'auto_renew' => '0', // Make auto renew
+          'cycle_day' => $params['preferred_collection_day'],
+          'currency' => $params['currencyID'],
+          'invoice_id' => $params['invoiceID'],
+          'installments' => 1,
+          'contribution_status_id' => CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending'),
+        );
+        $recur = CRM_Smartdebit_Base::createRecurContribution($recurParams);
+        $params['contributionRecurID'] = $recur['id'];
+        $params['contribution_recur_id'] = $recur['id'];
+        // We need to link the recurring contribution and contribution record, as Civi won't do it for us (4.7.21)
+        $addRecurId['id'] = $params['contributionID'];
+        $addRecurId['contribution_recur_id'] = $params['contribution_recur_id'];
+        $addRecurId['contact_id'] = $params['contactID'];
+        $contribution = civicrm_api3('Contribution', 'create', $addRecurId);
+        $params['is_recur'] = 1; // Required for CRM_Core_Payment to set contribution status = Pending
+      }
     }
   }
 
