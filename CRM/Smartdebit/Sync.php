@@ -45,6 +45,18 @@ class CRM_Smartdebit_Sync
     CRM_Core_Error::debug_log_message('Smartdebit Sync: Retrieving Smart Debit Payer Contact Details.');
     // Get list of payers from Smartdebit
     $smartDebitPayerContacts = CRM_Smartdebit_Sync::getSmartdebitPayerContactDetails();
+
+    foreach ($smartDebitPayerContacts as $key => $sdContact) {
+      // Check if a recurring contribution exists, otherwise remove it from list for processing
+      $sql = "SELECT ctrc.trxn_id FROM civicrm_contribution_recur ctrc
+      INNER JOIN veda_smartdebit_collectionreports sdpayments ON sdpayments.transaction_id = ctrc.trxn_id
+      WHERE ctrc.trxn_id = '{$sdContact['reference_number']}'";
+      $trxn_id = CRM_Core_DAO::singleValueQuery($sql);
+      if (!isset($trxn_id)) {
+        // If we don't have a matching recurring contribution in CiviCRM, unset and don't try to sync. Run Reconciliation to create a recur in Civi
+        unset($smartDebitPayerContacts[$key]);
+      }
+    }
     if (empty($smartDebitPayerContacts))
       return FALSE;
 
@@ -137,7 +149,20 @@ class CRM_Smartdebit_Sync
     return FALSE;
   }
 
-  /**
+  static function runViaWeb($runner) {
+    if ($runner) {
+      // Run Everything in the Queue via the Web.
+      $runner->runAllViaWeb();
+    }
+    else {
+      CRM_Core_Session::setStatus(ts('Nothing to pull. Make sure smart debit settings are correctly configured in the payment processor setting page'));
+      $url = CRM_Utils_System::url(CRM_Smartdebit_Sync::END_URL, CRM_Smartdebit_Sync::END_PARAMS, TRUE, NULL, FALSE);
+      CRM_Utils_System::redirect($url);
+    }
+  }
+
+
+/**
    * Sync the AUDDIS records with contacts
    *
    * @param CRM_Queue_TaskContext $ctx

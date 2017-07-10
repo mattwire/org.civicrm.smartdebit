@@ -83,11 +83,6 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
     $aruddIDs = unserialize($params['aruddIDs']);
 
     $runner = CRM_Smartdebit_Sync::getRunner(TRUE, $auddisIDs, $aruddIDs);
-    if ($runner) {
-      // Run Everything in the Queue via the Web.
-      $runner->runAllViaWeb();
-    } else {
-      CRM_Core_Session::setStatus(ts('Nothing to pull. Make sure smart debit settings are correctly configured in the payment processor setting page'));
-    }
+    CRM_Smartdebit_Sync::runViaWeb($runner);
   }
 }
