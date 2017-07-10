@@ -486,7 +486,7 @@ WHERE  ddi_reference = %0";
     }
 
     // Optional parameters
-    // Set default processor_id
+    // Set default payment_processor_id
     if (empty($recurParams['payment_processor_id'])) {
       $recurParams['payment_processor_id'] = CRM_Core_Payment_Smartdebit::getSmartdebitPaymentProcessorID();
     }
@@ -540,27 +540,6 @@ WHERE  ddi_reference = %0";
     if (empty($recurParams['cycle_day'])) {
       $recurParams['cycle_day'] = date('j', strtotime($recurParams['start_date'])); //Day of the month without leading zeros
     }
-    // processor id (match trxn_id)
-    if (empty($recurParams['processor_id'])) {
-      if (!empty($recurParams['reference_number'])) {
-        $recurParams['processor_id'] = $recurParams['reference_number'];
-      }
-      elseif (!empty($recurParams['trxn_id'])) {
-        $recurParams['processor_id'] = $recurParams['trxn_id'];
-      }
-      else {
-        $recurParams['processor_id'] = '';
-      }
-    }
-    // trxn_id (match processor id)
-    if (empty($recurParams['trxn_id'])) {
-      if (!empty($recurParams['processor_id'])) {
-        $recurParams['trxn_id'] = $recurParams['processor_id'];
-      }
-      else {
-        $recurParams['trxn_id'] = '';
-      }
-    }
     // Default value for payment_instrument id (payment method, eg. "Direct Debit")
     if (empty($recurParams['payment_instrument_id'])){
       $recurParams['payment_instrument_id'] = CRM_Smartdebit_Base::getDefaultPaymentInstrumentID();
@@ -596,7 +575,6 @@ WHERE  ddi_reference = %0";
       'auto_renew' => '1', // Make auto renew
       'cycle_day' => $recurParams['cycle_day'],
       'currency' => $recurParams['currency'],
-      'processor_id' => $recurParams['processor_id'],
       'payment_instrument_id' => $recurParams['payment_instrument_id'],
       'invoice_id' => $recurParams['invoice_id'],
     );
@@ -640,7 +618,7 @@ WHERE  ddi_reference = %0";
     }
 
     // Optional parameters
-    // Set default processor_id
+    // Set default payment_processor_id
     if (empty($params['payment_processor_id'])) {
       $params['payment_processor_id'] = CRM_Core_Payment_Smartdebit::getSmartdebitPaymentProcessorID();
     }
@@ -655,27 +633,6 @@ WHERE  ddi_reference = %0";
     }
     else {
       $params['receive_date'] = CRM_Utils_Date::processDate($params['receive_date']);
-    }
-    // processor id (match trxn_id)
-    if (empty($params['processor_id'])) {
-      if (!empty($params['reference_number'])) {
-        $params['processor_id'] = $params['reference_number'];
-      }
-      elseif (!empty($params['trxn_id'])) {
-        $params['processor_id'] = $params['trxn_id'];
-      }
-      else {
-        $params['processor_id'] = '';
-      }
-    }
-    // trxn_id (match processor id)
-    if (empty($params['trxn_id'])) {
-      if (!empty($params['processor_id'])) {
-        $params['trxn_id'] = $params['processor_id'];
-      }
-      else {
-        $params['trxn_id'] = '';
-      }
     }
     // Default value for payment_instrument id (payment method, eg. "Direct Debit")
     if (empty($params['payment_instrument_id'])){
@@ -705,7 +662,6 @@ WHERE  ddi_reference = %0";
       'trxn_id'	=> $params['trxn_id'],
       'financial_type_id'	=> $params['financial_type_id'],
       'currency' => $params['currency'],
-      'processor_id' => $params['processor_id'],
       'payment_instrument_id' => $params['payment_instrument_id'],
       'invoice_id' => $params['invoice_id'],
     );

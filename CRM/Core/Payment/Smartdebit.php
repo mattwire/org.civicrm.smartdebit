@@ -773,11 +773,11 @@ EOF;
       catch (Exception $e) {
         return FALSE;
       }
-      if (empty($contributionRecur['processor_id'])) {
-        CRM_Core_Session::setStatus(ts('The recurring contribution cannot be cancelled (No reference (processor_id) found).'), 'Smart Debit', 'error');
+      if (empty($contributionRecur['trxn_id'])) {
+        CRM_Core_Session::setStatus(ts('The recurring contribution cannot be cancelled (No reference (trxn_id) found).'), 'Smart Debit', 'error');
         return FALSE;
       }
-      $reference = $contributionRecur['processor_id'];
+      $reference = $contributionRecur['trxn_id'];
       $request_path = 'api/ddi/variable/' . $reference . '/cancel';
       $smartDebitParams = array(
         'variable_ddi[service_user][pslid]' => $serviceUserId,

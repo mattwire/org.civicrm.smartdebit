@@ -393,7 +393,7 @@ function smartdebit_civicrm_pageRun(&$page)
 
       $queryParams = array(
         'sequential' => 1,
-        'return' => array("processor_id", "id"),
+        'return' => array("trxn_id", "id"),
         'id' => $recurID,
         'contact_id' => $contactID,
       );
@@ -401,8 +401,8 @@ function smartdebit_civicrm_pageRun(&$page)
       $recurRef = civicrm_api3('ContributionRecur', 'getsingle', $queryParams);
 
       $contributionRecurDetails = array();
-      if (!empty($recurRef['processor_id'])) {
-        $smartDebitResponse = CRM_Smartdebit_Sync::getSmartDebitPayerContactDetails($recurRef['processor_id']);
+      if (!empty($recurRef['trxn_id'])) {
+        $smartDebitResponse = CRM_Smartdebit_Sync::getSmartDebitPayerContactDetails($recurRef['trxn_id']);
         foreach ($smartDebitResponse[0] as $key => $value) {
           $contributionRecurDetails[$key] = $value;
         }
@@ -486,7 +486,7 @@ function smartdebit_civicrm_buildForm( $formName, &$form )
         $frequencyUnit = $subscriptionDetails->frequency_unit;
         $frequencyInterval = $subscriptionDetails->frequency_interval;
         $recur = new CRM_Contribute_BAO_ContributionRecur();
-        $recur->processor_id = $reference;
+        $recur->trxn_id = $reference;
         $recur->find(TRUE);
         $startDate = $recur->start_date;
         list($defaults['start_date'], $defaults['start_date_time']) = CRM_Utils_Date::setDateDefaults($startDate, NULL);

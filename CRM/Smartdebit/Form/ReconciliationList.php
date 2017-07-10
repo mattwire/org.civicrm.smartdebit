@@ -408,7 +408,6 @@ AND   csd.id IS NULL LIMIT 100";
       $recurParams['start_date'] = $smartDebitRecord['start_date'].' 00:00:00';
       $recurParams['next_sched_contribution'] = $smartDebitRecord['start_date'].' 00:00:00';
       $recurParams['trxn_id'] = $params['payer_reference'];
-      $recurParams['processor_id'] = $params['payer_reference'];
 
       // Set state of recurring contribution (10=live,1=New at SmartDebit)
       if ($smartDebitRecord['current_state'] == 10 || $smartDebitRecord['current_state'] == 1) {
