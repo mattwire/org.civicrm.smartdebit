@@ -1,11 +1,7 @@
 <h3>{ts}Select the AUDDIS and ARUDD dates that you wish to process now:{/ts}</h3>
 <div class="help">
-    <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}The below tables summarise the data available in the selected AUDDIS/ARUDD files.{/ts}</span><br />
-    {if ($totalMatchedCount gt 0) or ($totalMatchedAuddis gt 0) or ($totalMatchedArudd gt 0)}
-        <strong>{ts}To import click continue.{/ts}</strong>
-    {else}
-        <strong>{ts}As there are no matching contacts you cannot import any transactions.{/ts}</strong>
-    {/if}
+    <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}The below tables summarise the data available from SmartDebit in the selected AUDDIS/ARUDD files and collection reports.{/ts}</span><br />
+    <strong>{ts}To synchronise CiviCRM from Smartdebit click continue.{/ts}</strong>
 </div>
 <div class="crm-block crm-form-block crm-export-form-block">
     <div class="crm-block crm-form-block crm-campaignmonitor-sync-form-block">

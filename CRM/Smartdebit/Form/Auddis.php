@@ -246,15 +246,15 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
       'js' => array('onclick' => "location.href='{$redirectUrlBack}'; return false;"),
       'name' => ts('Back'),
     );
-    // Show next button if there is something to sync
-    if(!empty($counts['contribution_matched']) || !empty($counts['arudd_matched']) || !empty($counts['auddis_matched'])) {
-      $redirectUrlContinue  = CRM_Utils_System::url('civicrm/smartdebit/syncsd/confirm', $queryParams);
-      $buttons[] = array(
-        'type' => 'next',
-        'js' => array('onclick' => "location.href='{$redirectUrlContinue}'; return false;"),
-        'name' => ts('Continue'),
-      );
-    }
+
+    // Show next button to perform sync
+    $redirectUrlContinue  = CRM_Utils_System::url('civicrm/smartdebit/syncsd/confirm', $queryParams);
+    $buttons[] = array(
+      'type' => 'next',
+      'js' => array('onclick' => "location.href='{$redirectUrlContinue}'; return false;"),
+      'name' => ts('Continue'),
+    );
+
     $this->addButtons($buttons);
     CRM_Utils_System::setTitle('Synchronise CiviCRM with Smart Debit: View Results');
 

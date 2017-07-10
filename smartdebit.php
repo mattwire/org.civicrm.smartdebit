@@ -328,16 +328,6 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
   );
   _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[2]);
 
-  $item[] = array(
-    'label' => ts('Run Sync Task', array('domain' => 'uk.co.vedaconsulting.smartdebit')),
-    'name'  => 'Run Sync Task',
-    'url'   => 'civicrm/smartdebit/sync?reset=1',
-    'permission' => 'access CiviContribute',
-    'operator'   => NULL,
-    'separator'  => NULL,
-  );
-  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[3]);
-
   $item[] =  array (
     'label' => ts('Reconcile Transactions', array('domain' => 'uk.co.vedaconsulting.smartdebit')),
     'name' => 'Reconcile Transactions',
@@ -346,7 +336,7 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
     'operator'   => NULL,
     'separator'  => NULL,
   );
-  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[4]);
+  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[3]);
 
   _smartdebit_civix_navigationMenu($menu);
 }
@@ -588,4 +578,3 @@ function smartdebit_civicrm_links( $op, $objectName, $objectId, &$links, &$mask,
     );
   }
 }
-

@@ -46,6 +46,9 @@ class CRM_Smartdebit_Sync
     // Get list of payers from Smartdebit
     $smartDebitPayerContacts = CRM_Smartdebit_Sync::getSmartdebitPayerContactDetails();
 
+    // Update mandates table for reconciliation functions
+    CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($smartDebitPayerContacts);
+
     foreach ($smartDebitPayerContacts as $key => $sdContact) {
       // Check if a recurring contribution exists, otherwise remove it from list for processing
       $sql = "SELECT ctrc.trxn_id FROM civicrm_contribution_recur ctrc
@@ -60,18 +63,12 @@ class CRM_Smartdebit_Sync
     if (empty($smartDebitPayerContacts))
       return FALSE;
 
-    // Update mandates table for reconciliation functions
-    CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($smartDebitPayerContacts);
-
-    // Save total count
-    $count = count($smartDebitPayerContacts);
-    smartdebit_civicrm_saveSetting('total', $count);
-
     // Clear out the results table
     $emptySql = "TRUNCATE TABLE veda_smartdebit_success_contributions";
     CRM_Core_DAO::executeQuery($emptySql);
 
     // Set the Number of Rounds
+    $count = count($smartDebitPayerContacts);
     $rounds = ceil($count/self::BATCH_COUNT);
     // Setup a Task in the Queue
     $i = 0;

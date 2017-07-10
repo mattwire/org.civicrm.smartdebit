@@ -56,16 +56,6 @@
     <component>Contact</component>
   </item>
   <item>
-    <path>civicrm/smartdebit/sync</path>
-    <title>Smart Debit Sync Scheduled Job</title>
-    <path_arguments></path_arguments>
-    <page_callback>CRM_Smartdebit_Form_Sync</page_callback>
-    <access_arguments>administer CiviCRM</access_arguments>
-    <page_type>0</page_type>
-    <component>Contact</component>
-  </item>
-
-  <item>
     <path>civicrm/smartdebit/reconciliation/list</path>
     <title>Smart Debit Reconciliation</title>
     <path_arguments></path_arguments>

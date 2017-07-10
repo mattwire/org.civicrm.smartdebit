@@ -49,10 +49,18 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
   }
 
   public function buildQuickForm() {
-    $auddisIDs = array_filter(explode(',', CRM_Utils_Request::retrieve('auddisID', 'String', $this, false)));
-    $aruddIDs = array_filter(explode(',', CRM_Utils_Request::retrieve('aruddID', 'String', $this, false)));
-    $this->add('hidden', 'auddisIDs', serialize($auddisIDs));
-    $this->add('hidden', 'aruddIDs', serialize($aruddIDs));
+    // Retrieve auddisIDs/aruddIDs if specified as parameters
+    $auddisIDs = CRM_Utils_Request::retrieve('auddisID', 'String', $this, false);
+    if (isset($auddisIDs)) {
+      $auddisIDs = array_filter(explode(',', $auddisIDs));
+      $this->add('hidden', 'auddisIDs', serialize($auddisIDs));
+    }
+    $aruddIDs = CRM_Utils_Request::retrieve('aruddID', 'String', $this, false);
+    if (isset($aruddIDs)) {
+      $aruddIDs = array_filter(explode(',', $aruddIDs));
+      $this->add('hidden', 'aruddIDs', serialize($aruddIDs));
+    }
+
     $redirectUrlBack = CRM_Utils_System::url('civicrm', 'reset=1');
 
     $this->addButtons(array(
@@ -79,8 +87,8 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
 
   public function postProcess() {
     $params     = $this->controller->exportValues();
-    $auddisIDs = unserialize($params['auddisIDs']);
-    $aruddIDs = unserialize($params['aruddIDs']);
+    isset($params['auddisIDs']) ? $auddisIDs = unserialize($params['auddisIDs']) : $auddisIDs = NULL;
+    isset($params['aruddIDs']) ? $aruddIDs = unserialize($params['aruddIDs']) : $aruddIDs = NULL;
 
     $runner = CRM_Smartdebit_Sync::getRunner(TRUE, $auddisIDs, $aruddIDs);
     CRM_Smartdebit_Sync::runViaWeb($runner);
