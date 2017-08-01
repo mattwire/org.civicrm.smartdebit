@@ -16,4 +16,5 @@ Please use the latest CiviCRM release when possible.  Minimum supported version 
 
 ## Changelog
 1.0: uk.co.vedaconsulting.smartdebit: Testing, bugfixes.
+
 1.1: Rename to org.civicrm.smartdebit to reflect multiple contributions.  This is the first release that should be used. 
