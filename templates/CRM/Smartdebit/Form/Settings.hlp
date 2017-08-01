@@ -1,5 +1,4 @@
-{*
- +--------------------------------------------------------------------+
+{*--------------------------------------------------------------------+
  | CiviCRM version 4.7                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2017                                |
@@ -21,8 +20,8 @@
  | at info[AT]civicrm[DOT]org. If you have questions about the        |
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
- +--------------------------------------------------------------------+
-*}
+ +-------------------------------------------------------------------*}
+
 {htxt id='payment_instrument_id'}
 {ts}Select the payment method to record for direct debit payments (usually "Direct Debit"){/ts}
 {/htxt}

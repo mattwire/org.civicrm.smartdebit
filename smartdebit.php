@@ -1,4 +1,27 @@
 <?php
+/*--------------------------------------------------------------------+
+ | CiviCRM version 4.7                                                |
++--------------------------------------------------------------------+
+ | Copyright CiviCRM LLC (c) 2004-2017                                |
++--------------------------------------------------------------------+
+ | This file is a part of CiviCRM.                                    |
+ |                                                                    |
+ | CiviCRM is free software; you can copy, modify, and distribute it  |
+ | under the terms of the GNU Affero General Public License           |
+ | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
+ |                                                                    |
+ | CiviCRM is distributed in the hope that it will be useful, but     |
+ | WITHOUT ANY WARRANTY; without even the implied warranty of         |
+ | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
+ | See the GNU Affero General Public License for more details.        |
+ |                                                                    |
+ | You should have received a copy of the GNU Affero General Public   |
+ | License and the CiviCRM Licensing Exception along                  |
+ | with this program; if not, contact CiviCRM LLC                     |
+ | at info[AT]civicrm[DOT]org. If you have questions about the        |
+ | GNU Affero General Public License or the licensing of CiviCRM,     |
+ | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
+ +-------------------------------------------------------------------*/
 
 require_once 'smartdebit.civix.php';
 
@@ -299,7 +322,7 @@ function smartdebit_civicrm_preProcess($formName, &$form) {
  */
 function smartdebit_civicrm_navigationMenu(&$menu) {
   $item[] =  array (
-    'label' => ts('Smart Debit', array('domain' => 'uk.co.vedaconsulting.smartdebit')),
+    'label' => ts('Smart Debit', array('domain' => 'org.civicrm.smartdebit')),
     'name'       => 'Smart Debit',
     'url'        => NULL,
     'permission' => 'administer CiviCRM',
@@ -309,7 +332,7 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
   _smartdebit_civix_insert_navigation_menu($menu, 'Administer', $item[0]);
 
   $item[] = array (
-    'label' => ts('Settings', array('domain' => 'uk.co.vedaconsulting.smartdebit')),
+    'label' => ts('Settings', array('domain' => 'org.civicrm.smartdebit')),
     'name'       => 'Settings',
     'url'        => 'civicrm/smartdebit/settings?reset=1',
     'permission' => 'administer CiviCRM',
@@ -319,7 +342,7 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
   _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[1]);
 
   $item[] = array(
-    'label' => ts('Manual Sync', array('domain' => 'uk.co.vedaconsulting.smartdebit')),
+    'label' => ts('Manual Sync', array('domain' => 'org.civicrm.smartdebit')),
     'name'  => 'Manual Sync',
     'url'   => 'civicrm/smartdebit/syncsd?reset=1',
     'permission' => 'access CiviContribute',
@@ -329,7 +352,7 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
   _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[2]);
 
   $item[] =  array (
-    'label' => ts('Reconcile Transactions', array('domain' => 'uk.co.vedaconsulting.smartdebit')),
+    'label' => ts('Reconcile Transactions', array('domain' => 'org.civicrm.smartdebit')),
     'name' => 'Reconcile Transactions',
     'url' => 'civicrm/smartdebit/reconciliation/list?reset=1',
     'permission' => 'administer CiviCRM',
@@ -399,7 +422,7 @@ function smartdebit_civicrm_pageRun(&$page)
       }
       // Add Smart Debit details via js
       CRM_Core_Resources::singleton()->addVars('smartdebit', array( 'recurdetails' => $contributionRecurDetails));
-      CRM_Core_Resources::singleton()->addScriptFile('uk.co.vedaconsulting.smartdebit', 'js/recurdetails.js');
+      CRM_Core_Resources::singleton()->addScriptFile('org.civicrm.smartdebit', 'js/recurdetails.js');
       $contributionRecurDetails = json_encode($contributionRecurDetails);
       $page->assign('contributionRecurDetails', $contributionRecurDetails);
     }

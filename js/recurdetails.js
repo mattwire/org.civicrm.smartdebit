@@ -1,3 +1,5 @@
+// https://civicrm.org/licensing
+
 CRM.$(function($) {
     var smartDetails = CRM.vars.smartdebit.recurdetails;
     if (!CRM.$.isEmptyObject(smartDetails)) {

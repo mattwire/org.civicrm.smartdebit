@@ -23,6 +23,7 @@
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
 *}
+// FIXME: This overrides the core template (at L53-55, L71-75, L137-141 to refer to direct debit)
 {if $action & 1024}
   {include file="CRM/Contribute/Form/Contribution/PreviewHeader.tpl"}
 {/if}
@@ -66,7 +67,7 @@
           {/if}
         </div>
       {/if}
-    {elseif $contributeMode EQ 'notify' OR ($contributeMode EQ 'direct' && $is_recur) }
+    {elseif $isPendingOutcome}
       {if $paymentProcessor.payment_type & 2}
         <div>{ts}That completes the setting up of your Direct Debit Instruction and the confirmation of the Instruction will be sent to you within 3 working days or be received by you no later than 10 working days before the first collection. The company name that will appear on your bank statement against the Direct Debit will be "{$company_address.company_name}". Please print this page for your records.{/ts}</div>
       {else}
@@ -126,7 +127,7 @@
             {if $totalTaxAmount}
               {ts}Tax Amount{/ts}: <strong>{$totalTaxAmount|crmMoney}</strong><br />
             {/if}
-            {if $installments}{ts}Installment Amount{/ts}{else}{ts}Amount{/ts}{/if} : <strong>{$amount|crmMoney} {if $amount_level } - {$amount_level} {/if}</strong>
+            {if $installments}{ts}Installment Amount{/ts}{else}{ts}Amount{/ts}{/if}: <strong>{$amount|crmMoney}{if $amount_level } &ndash; {$amount_level}{/if}</strong>
           {/if}
         {/if}
         {if $receive_date}

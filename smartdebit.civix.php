@@ -190,7 +190,7 @@ function _smartdebit_civix_civicrm_managed(&$entities) {
     $es = include $file;
     foreach ($es as $e) {
       if (empty($e['module'])) {
-        $e['module'] = 'uk.co.vedaconsulting.smartdebit';
+        $e['module'] = 'org.civicrm.smartdebit';
       }
       $entities[] = $e;
       if (empty($e['params']['version'])) {
@@ -222,7 +222,7 @@ function _smartdebit_civix_civicrm_caseTypes(&$caseTypes) {
       // throw new CRM_Core_Exception($errorMessage);
     }
     $caseTypes[$name] = array(
-      'module' => 'uk.co.vedaconsulting.smartdebit',
+      'module' => 'org.civicrm.smartdebit',
       'name' => $name,
       'file' => $file,
     );
@@ -248,7 +248,7 @@ function _smartdebit_civix_civicrm_angularModules(&$angularModules) {
     $name = preg_replace(':\.ang\.php$:', '', basename($file));
     $module = include $file;
     if (empty($module['ext'])) {
-      $module['ext'] = 'uk.co.vedaconsulting.smartdebit';
+      $module['ext'] = 'org.civicrm.smartdebit';
     }
     $angularModules[$name] = $module;
   }

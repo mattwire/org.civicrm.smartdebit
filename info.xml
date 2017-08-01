@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<extension key="uk.co.vedaconsulting.smartdebit" type="module">
+<extension key="org.civicrm.smartdebit" type="module">
   <file>smartdebit</file>
   <name>Smart Debit Payment Processor</name>
   <description>Smart Debit (Direct Debit) Payment Processor</description>
@@ -9,14 +9,14 @@
     <email>mjw@mjwconsult.co.uk</email>
   </maintainer>
   <urls>
-    <url desc="Main Extension Page">https://github.com/mattwire/uk.co.vedaconsulting.smartdebit</url>
-    <url desc="Documentation">https://github.com/mattwire/uk.co.vedaconsulting.smartdebit/wiki</url>
-    <url desc="Support">https://github.com/mattwire/uk.co.vedaconsulting.smartdebit/issues</url>
+    <url desc="Main Extension Page">https://github.com/mattwire/org.civicrm.smartdebit</url>
+    <url desc="Documentation">https://github.com/mattwire/org.civicrm.smartdebit/wiki</url>
+    <url desc="Support">https://github.com/mattwire/org.civicrm.smartdebit/issues</url>
     <url desc="Author">https://www.mjwconsult.co.uk</url>
     <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
   </urls>
-  <releaseDate>2017-07-10</releaseDate>
-  <version>1.0</version>
+  <releaseDate>2017-08-01</releaseDate>
+  <version>1.1</version>
   <develStage>stable</develStage>
   <compatibility>
     <ver>4.7</ver>
