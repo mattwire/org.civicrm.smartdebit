@@ -23,7 +23,7 @@
 +-------------------------------------------------------------------*}
 
 <div class="help">
-<div class="direct-debit-logo"><span style="float: right;margin: 25px;"><img src="{crmResURL ext=uk.co.vedaconsulting.smartdebit file=images/direct_debit_small.png}" alt="Direct Debit Logo" border="0"></span></div>
+<div class="direct-debit-logo"><span style="float: right;margin: 25px;"><img src="{crmResURL ext=org.civicrm.smartdebit file=images/direct_debit_small.png}" alt="Direct Debit Logo" border="0"></span></div>
 {ts}<p>All the normal Direct Debit safeguards and guarantees apply.
   No changes in the amount, date or frequency to be debited can be made without notifying you at least 10 working days in advance of your account being debited.
   In the event of any error, you are entitled to an immediate refund from your bank or building society.

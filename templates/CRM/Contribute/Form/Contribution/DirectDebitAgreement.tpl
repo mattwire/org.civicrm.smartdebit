@@ -27,7 +27,7 @@
     {ts}Direct Debit Information{/ts}
   </div>
   <div class="display-block">
-    <div><span style="float: right;margin: 25px;"><img src="{crmResURL ext=uk.co.vedaconsulting.smartdebit file=images/direct_debit_small.png}" alt="Direct Debit Logo" border="0"></span></div>
+    <div><span style="float: right;margin: 25px;"><img src="{crmResURL ext=org.civicrm.smartdebit file=images/direct_debit_small.png}" alt="Direct Debit Logo" border="0"></span></div>
     <div class="clear"></div>
     <table>
       <tr><td>{ts}Account Holder{/ts}:</td><td>{$dd_details.account_holder}</td></tr>

@@ -28,7 +28,7 @@
  *
  * This class implements hooks for direct debit functions
  *
- * FIXME: It has not been tested since the migration to a separate (uk.co.vedaconsulting.smartdebit) extension
+ * FIXME: It has not been tested since the migration to a separate (org.civicrm.smartdebit) extension
  */
 abstract class CRM_Smartdebit_Utils_Hook {
 

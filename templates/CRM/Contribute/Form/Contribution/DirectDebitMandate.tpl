@@ -34,7 +34,7 @@
     {* Start of DDI *}
     <div style="border: 3px solid #000000;background-color: #ffffff;width: 95%; padding: 15px">
       <div style="text-align: center;">
-        <div><span style="float: right; margin: 25px;"><img src="{crmResURL ext=uk.co.vedaconsulting.smartdebit file=images/direct_debit_small.png}" alt="Direct Debit Logo" border="0"></span></div>
+        <div><span style="float: right; margin: 25px;"><img src="{crmResURL ext=org.civicrm.smartdebit file=images/direct_debit_small.png}" alt="Direct Debit Logo" border="0"></span></div>
         <div style="clear: both;"></div>
       </div>
       <div style="float: left;margin-left: 5px;margin-right: 10px;width: 305px;">
@@ -128,7 +128,7 @@
     <div class="clear" style="padding: 10px"></div>
     <div style="border: 3px solid #000000;background-color: #ffffff;width: 95%; padding: 15px">
       <div style="font-family: Arial,Helvetica,Monaco; font-size: 28px; line-height: 35px">
-        <span style="float: right; width: 107px; vertical-align: top"><img src="{crmResURL ext=uk.co.vedaconsulting.smartdebit file=images/direct_debit_small.png}" alt="Direct Debit Logo" border="0"></span>
+        <span style="float: right; width: 107px; vertical-align: top"><img src="{crmResURL ext=org.civicrm.smartdebit file=images/direct_debit_small.png}" alt="Direct Debit Logo" border="0"></span>
         <strong>The Direct Debit Guarantee</strong>
       </div>
       <div class="clear"></div>

@@ -1,4 +1,4 @@
-Package: uk.co.vedaconsulting.smartdebit
+Package: org.civicrm.smartdebit
 Copyright (C) 2017, Matthew Wire <mjw@mjwconsult.co.uk>
 Licensed under the GNU Affero Public License 3.0 (below).
 

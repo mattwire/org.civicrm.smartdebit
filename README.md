@@ -1,4 +1,4 @@
-# uk.co.vedaconsulting.smartdebit
+# org.civicrm.smartdebit
 
 Integrates the Smart Debit Direct Debit processor into CiviCRM so you can use CiviCRM to sign-up and administrator your direct debit payments.
 
