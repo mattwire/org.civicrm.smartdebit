@@ -39,6 +39,11 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
   function buildQuickForm() {
     parent::buildQuickForm();
 
+    $sdStatus = CRM_Smartdebit_Api::getSystemStatus(FALSE);
+    $sdStatusTest = CRM_Smartdebit_Api::getSystemStatus(TRUE);
+    $this->assign('sdStatus', $sdStatus);
+    $this->assign('sdStatusTest', $sdStatusTest);
+
     CRM_Utils_System::setTitle(ts('Smart Debit - Settings'));
 
     $settings = $this->getFormSettings();

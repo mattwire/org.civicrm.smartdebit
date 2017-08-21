@@ -51,7 +51,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
     $counts['auddis_amount'] = 0;
     if (!empty($auddisIDs)) {
       foreach ($auddisIDs as $auddisID) {
-        $auddisFile = CRM_Smartdebit_Auddis::getSmartdebitAuddisFile($auddisID);
+        $auddisFile = CRM_Smartdebit_Api::getAuddisFile($auddisID);
         unset($auddisFile['auddis_date']);
         foreach ($auddisFile as $inside => $value) {
           $sql = "
@@ -98,7 +98,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
     $counts['arudd_amount'] = 0;
     if (!empty($aruddIDs)) {
       foreach ($aruddIDs as $aruddID) {
-        $aruddFile = CRM_Smartdebit_Auddis::getSmartdebitAruddFile($aruddID);
+        $aruddFile = CRM_Smartdebit_Api::getAruddFile($aruddID);
         unset($aruddFile['arudd_date']);
         foreach ($aruddFile as $inside => $value) {
           $sql = "

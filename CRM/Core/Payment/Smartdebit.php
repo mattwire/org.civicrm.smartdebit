@@ -104,6 +104,41 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   }
 
   /**
+   * Get Smart Debit User Details
+   *
+   * @param null $id
+   * @param bool $test
+   * @param bool $isActive
+   *
+   * @return array|bool
+   */
+  public static function getProcessorDetails($id = NULL, $test = FALSE, $isActive = TRUE) {
+    $params = array(
+      'is_test' => $test,
+      'is_active' => $isActive,
+      'domain_id' => CRM_Core_Config::domainID(),
+    );
+    if (!empty($id)) {
+      $params['id'] = $id;
+    }
+    else {
+      $paymentProcessorTypeId = CRM_Core_PseudoConstant::getKey('CRM_Financial_BAO_PaymentProcessor', 'payment_processor_type_id', 'Smart_Debit');
+      $params['payment_processor_type_id'] = $paymentProcessorTypeId;
+      $params['options'] = array('sort' => "id DESC", 'limit' => 1);
+    }
+
+    try {
+      $paymentProcessorDetails = civicrm_api3('PaymentProcessor', 'getsingle', $params);
+    }
+    catch (Exception $e) {
+      CRM_Core_Session::setStatus(ts('Smart Debit API User Details Missing, Please check the Smart Debit Payment Processor is configured Properly'), 'Smart Debit', 'error');
+      return FALSE;
+    }
+
+    return $paymentProcessorDetails;
+  }
+
+  /**
    * @param CRM_Core_Form $form
    * @return bool|void
    */
@@ -467,7 +502,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     $url = $this->_paymentProcessor['url_api'];
     $request_path = 'api/ddi/variable/validate';
 
-    $response = CRM_Smartdebit_Base::requestPost($url, $post, $username, $password, $request_path);
+    $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
 
     $direct_debit_response = array();
     $direct_debit_response['data_type'] = 'recurring';
@@ -547,7 +582,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     $url = $this->_paymentProcessor['url_api'];
     $request_path = 'api/ddi/variable/create';
 
-    $response = CRM_Smartdebit_Base::requestPost($url, $post, $username, $password, $request_path);
+    $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
 
     // Take action based upon the response status
     switch (strtoupper($response["Status"])) {
@@ -799,7 +834,7 @@ EOF;
           $post .= ($key != 'variable_ddi[service_user][pslid]' ? '&' : '') . $key . '=' . ($key != 'variable_ddi[service_user][pslid]' ? urlencode($value) : $serviceUserId);
       }
 
-      $response = CRM_Smartdebit_Base::requestPost($url, $post, $username, $password, $request_path);
+      $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
       if (strtoupper($response["Status"]) != 'OK') {
         $msg = self::formatResponseError(isset($response['error']) ? $response['error'] : '');
         $msg .= '<br />Update Subscription Failed.';
@@ -847,7 +882,7 @@ EOF;
         $post .= ($key != 'variable_ddi[service_user][pslid]' ? '&' : '') . $key . '=' . ($key != 'variable_ddi[service_user][pslid]' ? urlencode($value) : $serviceUserId);
       }
 
-      $response = CRM_Smartdebit_Base::requestPost($url, $post, $username, $password, $request_path);
+      $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
       if (strtoupper($response["Status"]) != 'OK') {
         $msg = self::formatResponseError(isset($response['error']) ? $response['error'] : '');
         $msg .= '<br />Cancel Subscription Failed.';
@@ -897,7 +932,7 @@ EOF;
         $post .= ($key != 'variable_ddi[service_user][pslid]' ? '&' : '') . $key . '=' . ($key != 'variable_ddi[service_user][pslid]' ? urlencode($value) : $serviceUserId);
       }
 
-      $response = CRM_Smartdebit_Base::requestPost($url, $post, $username, $password, $request_path);
+      $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
       if (strtoupper($response["Status"]) != 'OK') {
         $msg = self::formatResponseError(isset($response['error']) ? $response['error'] : '');
         $msg .= '<br />Please double check your billing address and try again.';
@@ -972,4 +1007,5 @@ EOF;
     }
     return $paymentProcessorName;
   }
+
 }

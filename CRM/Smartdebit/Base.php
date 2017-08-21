@@ -30,23 +30,13 @@
  */
 class CRM_Smartdebit_Base
 {
-  protected static $_apiUrl = 'https://secure.ddprocessing.co.uk';
-
-  /**
-   * Return API URL with base prepended
-   * @param string $path
-   * @param string $request
-   * @return string
-   */
-  public static function getApiUrl($path = '', $request = '') {
-    return self::$_apiUrl.$path.'?'.$request;
-  }
   /**
    * Generate a Direct Debit Reference (BACS reference)
    * @return string
    */
+
   public static function getDDIReference() {
-    $tempDDIReference = self::rand_str(16);
+    $tempDDIReference = CRM_Utils_String::createRandom(16, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
 
     CRM_Core_DAO::executeQuery("
         INSERT INTO civicrm_direct_debit
@@ -171,66 +161,6 @@ WHERE  ddi_reference = %0";
 
     CRM_Core_DAO::executeQuery($sql, array(array((string)$params['trxn_id'], 'String'))
     );
-  }
-
-  /**
-   *   Send a post request with cURL
-   *
-   * @param $url URL to send request to
-   * @param $data POST data to send (in URL encoded Key=value pairs)
-   * @param $username
-   * @param $password
-   * @param $path
-   * @return mixed
-   */
-  public static function requestPost($url, $data, $username, $password, $path){
-    // Set a one-minute timeout for this script
-    set_time_limit(160);
-
-    $options = array(
-      CURLOPT_RETURNTRANSFER => true, // return web page
-      CURLOPT_HEADER => false, // don't return headers
-      CURLOPT_POST => true,
-      CURLOPT_USERPWD => $username . ':' . $password,
-      CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
-      CURLOPT_HTTPHEADER => array("Accept: application/xml"),
-      CURLOPT_USERAGENT => "CiviCRM PHP DD Client", // Let Smartdebit see who we are
-      CURLOPT_SSL_VERIFYHOST => false,
-      CURLOPT_SSL_VERIFYPEER => false,
-    );
-
-    $session = curl_init( $url . $path);
-    curl_setopt_array( $session, $options );
-
-    // Tell curl that this is the body of the POST
-    curl_setopt ($session, CURLOPT_POSTFIELDS, $data );
-
-    // $output contains the output string
-    $output = curl_exec($session);
-    $header = curl_getinfo($session);
-
-    //Store the raw response for later as it's useful to see for integration and understanding
-    $_SESSION["rawresponse"] = $output;
-
-    if(curl_errno($session)) {
-      $resultsArray["Status"] = "FAIL";
-      $resultsArray['StatusDetail'] = curl_error($session);
-    }
-    else {
-      // Results are XML so turn this into a PHP Array
-      $resultsArray = json_decode(json_encode((array) simplexml_load_string($output)),1);
-
-      // Determine if the call failed or not
-      switch ($header["http_code"]) {
-        case 200:
-          $resultsArray["Status"] = "OK";
-          break;
-        default:
-          $resultsArray["Status"] = "INVALID";
-      }
-    }
-    // Return the output
-    return $resultsArray;
   }
 
   /**
@@ -376,22 +306,6 @@ WHERE  ddi_reference = %0";
     $activityID = $result['id'];
 
     return $activityID;
-  }
-
-  private static function rand_str( $len )
-  {
-    // The alphabet the random string consists of
-    $abc = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-
-    // The default length the random key should have
-    $defaultLength = 3;
-
-    // Ensure $len is a valid number
-    // Should be less than or equal to strlen( $abc ) but at least $defaultLength
-    $len = max( min( intval( $len ), strlen( $abc )), $defaultLength );
-
-    // Return snippet of random string as random string
-    return substr( str_shuffle( $abc ), 0, $len );
   }
 
   static function getCompanyName() {

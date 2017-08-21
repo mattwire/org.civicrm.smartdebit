@@ -22,11 +22,58 @@
 | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
 +-------------------------------------------------------------------*}
 
-<div class="crm-block crm-form-block crm-directdebit-settings-form-block">
+<div class="crm-block crm-form-block crm-smartdebit-settings-form-block">
   <div class="crm-submit-buttons">
-  {include file="CRM/common/formButtons.tpl" location="top"}
+    {include file="CRM/common/formButtons.tpl" location="top"}
   </div>
 
+  {if $sdStatus}
+    <div class="crm-block crm-smartdebit-apistatus-block">
+      <div class="crm-section">
+        <h3>Smart Debit API Status</h3>
+        <div class="label">Response</div>
+        <div class="content">{$sdStatus.Status}</div>
+      </div>
+      <div class="crm-section">
+        <div class="label">API Version</div>
+        <div class="content">{$sdStatus.api_version}&nbsp;</div>
+      </div>
+      <div class="crm-section">
+        <div class="label">Service Users</div>
+        <div class="content">
+          {foreach from=$sdStatus.user.assigned_service_users.service_user item=pslid}
+            {$pslid}
+          {/foreach}
+        </div>
+      </div>
+    </div>
+    <div class="clear"></div>
+  {/if}
+
+  {if $sdStatusTest}
+    <div class="crm-block crm-smartdebit-apistatustest-block">
+      <div class="crm-section">
+        <h3>Smart Debit Test API Status</h3>
+        <div class="label">Response</div>
+        <div class="content">{$sdStatusTest.Status}</div>
+      </div>
+      <div class="crm-section">
+        <div class="label">API Version</div>
+        <div class="content">{$sdStatusTest.api_version}</div>
+      </div>
+      <div class="crm-section">
+        <div class="label">Service Users</div>
+        <div class="content">
+          {foreach from=$sdStatusTest.user.assigned_service_users.service_user item=pslid}
+            {$pslid}
+          {/foreach}
+        </div>
+      </div>
+    </div>
+    <div class="clear"></div>
+  {/if}
+
+  <h3>Configuration</h3>
   {foreach from=$elementNames item=elementName}
     <div class="crm-section">
       <div class="label">{$form.$elementName.label} {help id=$elementName title=$form.$elementName.label}</div>
@@ -37,6 +84,6 @@
 
   {* FOOTER *}
   <div class="crm-submit-buttons">
-  {include file="CRM/common/formButtons.tpl" location="bottom"}
+    {include file="CRM/common/formButtons.tpl" location="bottom"}
   </div>
 </div>

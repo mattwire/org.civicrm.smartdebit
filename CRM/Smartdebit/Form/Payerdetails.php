@@ -38,7 +38,7 @@ class CRM_Smartdebit_Form_Payerdetails extends CRM_Core_Form {
       return;
     }
 
-    $smartDebitResponse = CRM_Smartdebit_Sync::getSmartdebitPayerContactDetails($reference_number);
+    $smartDebitResponse = CRM_Smartdebit_Api::getPayerContactDetails($reference_number);
 
     foreach ($smartDebitResponse[0] as $key => $item) {
       $smartDebitDetails[] = array('label' => $key, 'text' => $item);

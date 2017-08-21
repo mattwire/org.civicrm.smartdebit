@@ -63,7 +63,7 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     $sync = CRM_Utils_Array::value('sync', $_GET, '');
     if ($sync) {
       // Do a sync
-      $mandatesList = CRM_Smartdebit_Sync::getSmartdebitPayerContactDetails();
+      $mandatesList = CRM_Smartdebit_Api::getPayerContactDetails();
       CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($mandatesList);
 
       // Redirect back to this form
@@ -419,7 +419,7 @@ AND   csd.id IS NULL LIMIT 100";
     }
 
     // Get the Smart Debit details for the payer
-    $smartDebitResponse = CRM_Smartdebit_Sync::getSmartdebitPayerContactDetails($params['payer_reference']);
+    $smartDebitResponse = CRM_Smartdebit_Api::getPayerContactDetails($params['payer_reference']);
 
     foreach ($smartDebitResponse as $key => $smartDebitRecord) {
       // Setup params for the relevant record
@@ -432,7 +432,7 @@ AND   csd.id IS NULL LIMIT 100";
       $recurParams['next_sched_contribution'] = $smartDebitRecord['start_date'].' 00:00:00';
       $recurParams['trxn_id'] = $params['payer_reference'];
 
-      $auditlog = CRM_Smartdebit_Sync::getSmartdebitAuditLog($params['payer_reference']);
+      $auditlog = CRM_Smartdebit_Api::getAuditLog($params['payer_reference']);
       if (isset($auditlog[0]['description'])) {
         if (strpos($auditlog[0]['description'], 'Created') !== FALSE) {
           if (isset($auditlog[0]['timestamp'])) {

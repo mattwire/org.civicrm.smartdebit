@@ -44,6 +44,9 @@ return array(
       'url_site_default' => 'https://secure.ddprocessing.co.uk/',
       'url_api_default' => 'https://secure.ddprocessing.co.uk/',
       'url_recur_default' => 'https://secure.ddprocessing.co.uk/',
+      'url_site_test_default' => 'https://sandbox.ddprocessing.co.uk/',
+      'url_api_test_default' => 'https://sandbox.ddprocessing.co.uk/',
+      'url_recur_test_default' => 'https://sandbox.ddprocessing.co.uk/',
       'billing_mode' => 1, // 1=form
       'payment_type' => 1, // 1=Credit Card
       'is_recur' => 1,

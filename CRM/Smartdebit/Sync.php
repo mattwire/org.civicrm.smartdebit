@@ -59,7 +59,7 @@ class CRM_Smartdebit_Sync
     // Get collection report for today
     CRM_Core_Error::debug_log_message('Smartdebit cron: Retrieving Daily Collection Report.');
     $date = new DateTime();
-    $collections = CRM_Smartdebit_Auddis::getSmartdebitCollectionReport($date->format('Y-m-d'));
+    $collections = CRM_Smartdebit_Api::getCollectionReport($date->format('Y-m-d'));
     if (!isset($collections['error'])) {
       CRM_Smartdebit_Auddis::saveSmartdebitCollectionReport($collections);
     }
@@ -67,7 +67,7 @@ class CRM_Smartdebit_Sync
 
     CRM_Core_Error::debug_log_message('Smartdebit Sync: Retrieving Smart Debit Payer Contact Details.');
     // Get list of payers from Smartdebit
-    $smartDebitPayerContacts = CRM_Smartdebit_Sync::getSmartdebitPayerContactDetails();
+    $smartDebitPayerContacts = CRM_Smartdebit_Api::getPayerContactDetails();
 
     // Update mandates table for reconciliation functions
     CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($smartDebitPayerContacts);
@@ -201,7 +201,7 @@ class CRM_Smartdebit_Sync
       // Find the relevant auddis file
       foreach ($smartDebitAuddisIds as $auddisId) {
         // Process AUDDIS files
-        $auddisFile = CRM_Smartdebit_Auddis::getSmartdebitAuddisFile($auddisId);
+        $auddisFile = CRM_Smartdebit_Api::getAuddisFile($auddisId);
         $auddisDate = $auddisFile['auddis_date'];
         unset($auddisFile['auddis_date']);
         $refKey = 'reference';
@@ -231,7 +231,7 @@ class CRM_Smartdebit_Sync
     if($smartDebitAruddIds) {
       foreach ($smartDebitAruddIds as $aruddId) {
         // Process ARUDD files
-        $aruddFile = CRM_Smartdebit_Auddis::getSmartdebitAruddFile($aruddId);
+        $aruddFile = CRM_Smartdebit_Api::getAruddFile($aruddId);
         $aruddDate = $aruddFile['arudd_date'];
         unset($aruddFile['arudd_date']);
         $refKey = 'ref';
@@ -554,107 +554,10 @@ class CRM_Smartdebit_Sync
   }
 
   /**
-   * Retrieve Payer Contact Details from Smartdebit
-   * Called during daily sync job
-   * @param null $referenceNumber
-   * @return array|bool
-   */
-  static function getSmartdebitPayerContactDetails($referenceNumber = NULL)
-  {
-    $userDetails = CRM_Smartdebit_Auddis::getSmartdebitUserDetails();
-    $username = CRM_Utils_Array::value('user_name', $userDetails);
-    $password = CRM_Utils_Array::value('password', $userDetails);
-    $pslid = CRM_Utils_Array::value('signature', $userDetails);
-
-    // Send payment POST to the target URL
-    $url = CRM_Smartdebit_Base::getApiUrl('/api/data/dump', "query[service_user][pslid]="
-      .urlencode($pslid)."&query[report_format]=XML");
-
-    // Restrict to a single payer if we have a reference
-    if ($referenceNumber) {
-      $url .= "&query[reference_number]=".urlencode($referenceNumber);
-    }
-    $response = CRM_Smartdebit_Base::requestPost($url, '', $username, $password, '');
-
-    // Take action based upon the response status
-    switch (strtoupper($response["Status"])) {
-      case 'OK':
-        $smartDebitArray = array();
-
-        // Cater for a single response
-        if (isset($response['Data']['PayerDetails']['@attributes'])) {
-          $smartDebitArray[] = $response['Data']['PayerDetails']['@attributes'];
-        } else {
-          foreach ($response['Data']['PayerDetails'] as $key => $value) {
-            $smartDebitArray[] = $value['@attributes'];
-          }
-        }
-        return $smartDebitArray;
-      default:
-        if (isset($response['error'])) {
-          $msg = $response['error'];
-        }
-        $msg .= 'Invalid reference number: ' . $referenceNumber;
-        CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
-        CRM_Core_Error::debug_log_message('Smart Debit: getSmartdebitPayments Error: ' . $msg);
-        return false;
-    }
-  }
-
-  /**
-   * Retrieve Audit Log from Smartdebit
-   * Called during daily sync job
-   * @param null $referenceNumber
-   * @return array|bool
-   */
-  static function getSmartdebitAuditLog($referenceNumber = NULL)
-  {
-    $userDetails = CRM_Smartdebit_Auddis::getSmartdebitUserDetails();
-    $username = CRM_Utils_Array::value('user_name', $userDetails);
-    $password = CRM_Utils_Array::value('password', $userDetails);
-    $pslid = CRM_Utils_Array::value('signature', $userDetails);
-
-    // Send payment POST to the target URL
-    $url = CRM_Smartdebit_Base::getApiUrl('/api/data/auditlog', "query[service_user][pslid]="
-      .urlencode($pslid)."&query[report_format]=XML");
-
-    // Restrict to a single payer if we have a reference
-    if ($referenceNumber) {
-      $url .= "&query[reference_number]=".urlencode($referenceNumber);
-    }
-    $response = CRM_Smartdebit_Base::requestPost($url, '', $username, $password, '');
-
-    // Take action based upon the response status
-    switch (strtoupper($response["Status"])) {
-      case 'OK':
-        $smartDebitArray = array();
-
-        if (isset($response['Data']['AuditDetails']['@attributes'])) {
-          // Cater for a single response
-          $smartDebitArray[] = $response['Data']['AuditDetails']['@attributes'];
-        } else {
-          // Multiple records
-          foreach ($response['Data']['AuditDetails'] as $key => $value) {
-            $smartDebitArray[] = $value['@attributes'];
-          }
-        }
-        return $smartDebitArray;
-      default:
-        if (isset($response['error'])) {
-          $msg = $response['error'];
-        }
-        $msg .= 'Invalid reference number: ' . $referenceNumber;
-        CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
-        CRM_Core_Error::debug_log_message('Smart Debit: getSmartdebitAuditLog Error: ' . $msg);
-        return false;
-    }
-  }
-
-  /**
    * Update Smartdebit Mandates in table veda_smartdebit_mandates for further analysis
    * This table is only used by Reconciliation functions
    *
-   * @param $smartDebitPayerContactDetails (array of smart debit contact details : call CRM_Smartdebit_Sync::getSmartdebitPayerContactDetails())
+   * @param $smartDebitPayerContactDetails (array of smart debit contact details : call CRM_Smartdebit_Api::getPayerContactDetails())
    * @return bool|int
    */
   static function updateSmartDebitMandatesTable($smartDebitPayerContactDetails) {

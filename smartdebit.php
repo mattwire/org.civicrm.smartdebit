@@ -98,7 +98,7 @@ function smartdebit_civicrm_install()
     CRM_Core_DAO::executeQuery($createSql);
   }
 
-  // Create a table to store imported collection reports (CRM_Smartdebit_Auddis::getSmartDebitCollectionReport())
+  // Create a table to store imported collection reports (CRM_Smartdebit_Api::getCollectionReport())
   if (!CRM_Core_DAO::checkTableExists('veda_smartdebit_collectionreports')) {
     $createSql = "CREATE TABLE `veda_smartdebit_collectionreports` (
                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT, 
@@ -415,7 +415,7 @@ function smartdebit_civicrm_pageRun(&$page)
 
       $contributionRecurDetails = array();
       if (!empty($recurRef['trxn_id'])) {
-        $smartDebitResponse = CRM_Smartdebit_Sync::getSmartDebitPayerContactDetails($recurRef['trxn_id']);
+        $smartDebitResponse = CRM_Smartdebit_Api::getPayerContactDetails($recurRef['trxn_id']);
         foreach ($smartDebitResponse[0] as $key => $value) {
           $contributionRecurDetails[$key] = $value;
         }
