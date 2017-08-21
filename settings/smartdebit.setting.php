@@ -92,7 +92,7 @@ return array(
     'name' => 'smartdebit_collection_interval',
     'type' => 'String',
     'html_type' => 'String',
-    'default' => 15,
+    'default' => 10,
     'add' => '4.7',
     'is_domain' => 1,
     'is_contact' => 0,
@@ -112,7 +112,7 @@ return array(
     'add' => '4.7',
     'is_domain' => 1,
     'is_contact' => 0,
-    'default' => '1,8,22',
+    'default' => '1,20',
     'description' => 'Smart Debit Collection Days',
     'html_type' => 'Text',
     'html_attributes' => array(
