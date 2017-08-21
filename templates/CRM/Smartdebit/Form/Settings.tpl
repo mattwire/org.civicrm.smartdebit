@@ -32,7 +32,7 @@
       <div class="crm-section">
         <h3>Smart Debit API Status</h3>
         <div class="label">Response</div>
-        <div class="content">{$sdStatus.Status}</div>
+        <div class="content">{$sdStatus.statuscode} {$sdStatus.message} {$sdStatus.error}&nbsp;</div>
       </div>
       <div class="crm-section">
         <div class="label">API Version</div>
@@ -55,11 +55,11 @@
       <div class="crm-section">
         <h3>Smart Debit Test API Status</h3>
         <div class="label">Response</div>
-        <div class="content">{$sdStatusTest.Status}</div>
+        <div class="content">{$sdStatusTest.statuscode} {$sdStatusTest.message} {$sdStatusTest.error}&nbsp;</div>
       </div>
       <div class="crm-section">
         <div class="label">API Version</div>
-        <div class="content">{$sdStatusTest.api_version}</div>
+        <div class="content">{$sdStatusTest.api_version}&nbsp;</div>
       </div>
       <div class="crm-section">
         <div class="label">Service Users</div>

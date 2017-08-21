@@ -23,7 +23,7 @@
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
 *}
-// FIXME: This overrides the core template (at L53-55, L71-75, L137-141 to refer to direct debit)
+{* FIXME: This overrides the core template (at L53-55, L71-75, L137-141 to refer to direct debit) *}
 {if $action & 1024}
   {include file="CRM/Contribute/Form/Contribution/PreviewHeader.tpl"}
 {/if}

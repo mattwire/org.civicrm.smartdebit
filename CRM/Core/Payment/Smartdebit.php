@@ -167,7 +167,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    * @param array $errors
    */
   public function validatePaymentInstrument($values, &$errors) {
-    // first: call parent's implementation
     parent::validatePaymentInstrument($values, $errors);
 
     $smartDebitParams = self::preparePostArray($values);
@@ -184,7 +183,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
     // Send payment POST to the target URL
     $url = $this->_paymentProcessor['url_api'];
-    // FIXME: Do we have $this->_paymentProcessor['is_test'] set here?
 
     $request_path = 'api/ddi/variable/validate';
 
@@ -223,10 +221,37 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       $direct_debit_response['county'] = $response['success'][2]["@attributes"]["county"];
       $direct_debit_response['postcode'] = $response['success'][2]["@attributes"]["postcode"];
       self::recordSmartDebitResponse($direct_debit_response);
-      return;
     }
     else {
-      $errors[$response['message']] = CRM_Smartdebit_Api::formatResponseError($response['error']);
+      self::formatErrorsForContributionForm($response['error'], $errors);
+    }
+  }
+
+  public static function formatErrorsForContributionForm($responseErrors, &$errors) {
+    if (!is_array($responseErrors)) {
+      $responseErrors = array($responseErrors);
+    }
+    foreach ($responseErrors as $error) {
+      $shortErr = substr($error, 0, 14);
+      switch ($shortErr) {
+        case 'Sort code is i': // Sort code ..
+          $errors['bank_identification_number'] = CRM_Utils_Array::value('bank_identification_number', $errors) . $error . '. ';
+          break;
+        case 'Account number': // Account number ..
+          $errors['bank_account_number'] = CRM_Utils_Array::value('bank_account_number', $errors) . $error . '. ';
+          break;
+        case 'Account name i': // Account name ..
+          $errors['account_holder'] = CRM_Utils_Array::value('account_holder', $errors) . $error . '. ';
+          break;
+        case 'Start date mus': // Start date ..
+          $errors['preferred_collection_day'] = CRM_Utils_Array::value('preferred_collection_day', $errors) . $error . '. ';
+          break;
+          default:
+            $errors['unknown'] = CRM_Utils_Array::value('unknown', $errors) . $error . '. ';
+      }
+    }
+    if (isset($errors['unknown'])) {
+      CRM_Core_Session::setStatus($errors['unknown'], 'Payment validation error', 'error');
     }
   }
 

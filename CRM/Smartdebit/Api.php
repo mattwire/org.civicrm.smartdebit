@@ -78,8 +78,8 @@ class CRM_Smartdebit_Api {
       $resultsArray['error'] = curl_error($session);
     }
     else {
-      // Results are XML so turn this into a PHP Array
-      $resultsArray = (array) simplexml_load_string($output);
+      // Results are XML so turn this into a PHP Array (simplexml_load_string returns an object)
+      $resultsArray = json_decode(json_encode( (array) simplexml_load_string($output)),1);
       if (!isset($resultsArray['error'])) {
         $resultsArray['error'] = NULL;
       }
@@ -92,11 +92,14 @@ class CRM_Smartdebit_Api {
           $resultsArray['success'] = TRUE;
           break;
         case 400:
-          $resultsArray['message'] = 'Bad Request';
+          $resultsArray['message'] = 'BAD REQUEST';
           $resultsArray['success'] = FALSE;
           break;
+        case 401:
+          $resultsArray['message'] = 'UNAUTHORIZED';
+          $resultsArray['success'] = FALSE;
         case 422:
-          $resultsArray['message'] = 'Unprocessable Entity';
+          $resultsArray['message'] = 'UNPROCESSABLE ENTITY';
           $resultsArray['success'] = FALSE;
           break;
         default:
@@ -120,18 +123,15 @@ class CRM_Smartdebit_Api {
       return NULL;
     }
 
-    $message = '';
+    $message = NULL;
     if (!is_array($responseErrors)) {
-      $message = $responseErrors . '<br />';
-      $message .= '<br />';
+      $message = $responseErrors . '.';
     }
     else {
       foreach ($responseErrors as $error) {
-        $message .= $error . '<br />';
+        $message .= $error . '. ';
       }
-      $message .= '<br />';
     }
-    $message .= ts('Please correct the errors and try again');
     return $message;
   }
 
