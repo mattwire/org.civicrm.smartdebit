@@ -97,16 +97,6 @@ class CRM_Smartdebit_Base
 
   static function getDDFormDetails($params) {
     $ddDetails = array();
-    $ddDetails['account_holder'] = CRM_Utils_Array::value('account_holder', $params);
-    $ddDetails['bank_account_number'] = CRM_Utils_Array::value('bank_account_number', $params);
-    $ddDetails['bank_identification_number'] = CRM_Utils_Array::value('bank_identification_number', $params);
-    $ddDetails['bank_name'] = CRM_Utils_Array::value('bank_name', $params);
-
-    $ddDetails['sun'] = CRM_Smartdebit_Base::getSUN();
-
-    // Format as array of characters for display
-    $ddDetails['sunParts'] = str_split($ddDetails['sun']);
-    $ddDetails['binParts'] = str_split($ddDetails['bank_identification_number']);
 
     if (!empty($params['ddi_reference'])) {
       $sql = "
@@ -131,6 +121,17 @@ WHERE ddi_reference = '{$params['ddi_reference']}'
         $ddDetails['ddi_reference'] = $dao->ddi_reference;
       }
     }
+
+    $ddDetails['account_holder'] = CRM_Utils_Array::value('account_holder', $params);
+    $ddDetails['bank_account_number'] = CRM_Utils_Array::value('bank_account_number', $params);
+    $ddDetails['bank_identification_number'] = CRM_Utils_Array::value('bank_identification_number', $params);
+    $ddDetails['bank_name'] = CRM_Utils_Array::value('bank_name', $params);
+
+    $ddDetails['sun'] = CRM_Smartdebit_Base::getSUN();
+
+    // Format as array of characters for display
+    $ddDetails['sunParts'] = str_split($ddDetails['sun']);
+    $ddDetails['binParts'] = str_split($ddDetails['bank_identification_number']);
 
     $ddDetails['company_address'] = CRM_Smartdebit_Base::getCompanyAddress();
     $date = new DateTime();

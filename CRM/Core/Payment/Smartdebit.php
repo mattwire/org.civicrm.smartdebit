@@ -196,30 +196,10 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     $direct_debit_response['confirmation_method'] = $values['confirmation_method'];
     $direct_debit_response['ddi_reference'] = $values['ddi_reference'];
     $direct_debit_response['response_status'] = $response['message'];
-    $direct_debit_response['response_raw'] = NULL;
-    $direct_debit_response['entity_id'] = NULL;
-    $direct_debit_response['bank_name'] = NULL;
-    $direct_debit_response['branch'] = NULL;
-    $direct_debit_response['address1'] = NULL;
-    $direct_debit_response['address2'] = NULL;
-    $direct_debit_response['address3'] = NULL;
-    $direct_debit_response['address4'] = NULL;
-    $direct_debit_response['town'] = NULL;
-    $direct_debit_response['county'] = NULL;
-    $direct_debit_response['postcode'] = NULL;
 
     // Take action based upon the response status
     if ($response['success']) {
       $direct_debit_response['entity_id'] = isset($values['entity_id']) ? $values['entity_id'] : 0;
-      $direct_debit_response['bank_name'] = $response['success'][2]["@attributes"]["bank_name"];
-      $direct_debit_response['branch'] = $response['success'][2]["@attributes"]["branch"];
-      $direct_debit_response['address1'] = $response['success'][2]["@attributes"]["address1"];
-      $direct_debit_response['address2'] = $response['success'][2]["@attributes"]["address2"];
-      $direct_debit_response['address3'] = $response['success'][2]["@attributes"]["address3"];
-      $direct_debit_response['address4'] = $response['success'][2]["@attributes"]["address4"];
-      $direct_debit_response['town'] = $response['success'][2]["@attributes"]["town"];
-      $direct_debit_response['county'] = $response['success'][2]["@attributes"]["county"];
-      $direct_debit_response['postcode'] = $response['success'][2]["@attributes"]["postcode"];
       self::recordSmartDebitResponse($direct_debit_response);
     }
     else {
@@ -658,51 +638,31 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    */
   static function recordSmartDebitResponse($direct_debit_response)
   {
-    $sql = <<<EOF
-            UPDATE civicrm_direct_debit
-            SET    created                  = NOW()
-            ,      data_type                = %0
-            ,      entity_type              = %1
-            ,      entity_id                = %2
-            ,      bank_name                = %3
-            ,      branch                   = %4
-            ,      address1                 = %5
-            ,      address2                 = %6
-            ,      address3                 = %7
-            ,      address4                 = %8
-            ,      town                     = %9
-            ,      county                   = %10
-            ,      postcode                 = %11
-            ,      first_collection_date    = %12
-            ,      preferred_collection_day = %13
-            ,      confirmation_method      = %14
-            ,      response_status          = %15
-            ,      response_raw             = %16
-            ,      request_counter          = request_counter + 1
-            WHERE  ddi_reference            = %17
-EOF;
+    $sql = "
+UPDATE civicrm_direct_debit SET
+                 created                  = NOW()
+          ,      request_counter          = request_counter + 1
+    ";
+    isset($direct_debit_response['data_type']) ? $sql .= ", data_type                = \"{$direct_debit_response['data_type']}\"" : NULL;
+    isset($direct_debit_response['entity_type']) ? $sql .= ", entity_type              = \"{$direct_debit_response['entity_type']}\"" : NULL;
+    isset($direct_debit_response['entity_id']) ? $sql .= "  , entity_id                = {$direct_debit_response['entity_id']}" : NULL;
+    isset($direct_debit_response['bank_name']) ? $sql .= "  , bank_name                = \"{$direct_debit_response['bank_name']}\"" : NULL;
+    isset($direct_debit_response['branch']) ? $sql .= "     , branch                   = \"{$direct_debit_response['branch']}\"" : NULL;
+    isset($direct_debit_response['address1']) ? $sql .= "   , address1                 = \"{$direct_debit_response['address1']}\"" : NULL;
+    isset($direct_debit_response['address2']) ? $sql .= "   , address2                 = \"{$direct_debit_response['address2']}\"" : NULL;
+    isset($direct_debit_response['address3']) ? $sql .= "   , address3                 = \"{$direct_debit_response['address3']}\"" : NULL;
+    isset($direct_debit_response['address4']) ? $sql .= "   , address4                 = \"{$direct_debit_response['address4']}\"" : NULL;
+    isset($direct_debit_response['town']) ? $sql .= "       , town                     = \"{$direct_debit_response['town']}\"" : NULL;
+    isset($direct_debit_response['county']) ? $sql .= "     , county                   = \"{$direct_debit_response['county']}\"" : NULL;
+    isset($direct_debit_response['postcode']) ? $sql .= "   , postcode                 = \"{$direct_debit_response['postcode']}\"" : NULL;
+    isset($direct_debit_response['first_collection_date']) ? $sql .= "   , first_collection_date    = \"{$direct_debit_response['first_collection_date']}\"" : NULL;
+    isset($direct_debit_response['preferred_collection_day']) ? $sql .= ", preferred_collection_day = \"{$direct_debit_response['preferred_collection_day']}\"" : NULL;
+    isset($direct_debit_response['confirmation_method']) ? $sql .= "     , confirmation_method      = \"{$direct_debit_response['confirmation_method']}\"" : NULL;
+    isset($direct_debit_response['response_status']) ? $sql .= "         , response_status          = \"{$direct_debit_response['response_status']}\"" : NULL;
+    isset($direct_debit_response['response_raw']) ? $sql .= "            , response_raw             = \"{$direct_debit_response['response_raw']}\"" : NULL;
+    $sql .= " WHERE  ddi_reference           = \"{$direct_debit_response['ddi_reference']}\"";
 
-    CRM_Core_DAO::executeQuery($sql, array(
-        array((string)$direct_debit_response['data_type'], 'String'),
-        array((string)$direct_debit_response['entity_type'], 'String'),
-        array((integer)$direct_debit_response['entity_id'], 'Integer'),
-        array((string)$direct_debit_response['bank_name'], 'String'),
-        array((string)$direct_debit_response['branch'], 'String'),
-        array((string)$direct_debit_response['address1'], 'String'),
-        array((string)$direct_debit_response['address2'], 'String'),
-        array((string)$direct_debit_response['address3'], 'String'),
-        array((string)$direct_debit_response['address4'], 'String'),
-        array((string)$direct_debit_response['town'], 'String'),
-        array((string)$direct_debit_response['county'], 'String'),
-        array((string)$direct_debit_response['postcode'], 'String'),
-        array((string)$direct_debit_response['first_collection_date'], 'String'),
-        array((string)$direct_debit_response['preferred_collection_day'], 'String'),
-        array((string)$direct_debit_response['confirmation_method'], 'String'),
-        array((string)$direct_debit_response['response_status'], 'String'),
-        array((string)$direct_debit_response['response_raw'], 'String'),
-        array((string)$direct_debit_response['ddi_reference'], 'String')
-      )
-    );
+    CRM_Core_DAO::executeQuery($sql);
   }
 
   /**
