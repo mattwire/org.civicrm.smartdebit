@@ -47,8 +47,8 @@ class CRM_Smartdebit_Api {
       CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
       CURLOPT_HTTPHEADER => array("Accept: application/xml"),
       CURLOPT_USERAGENT => "CiviCRM PHP DD Client", // Let Smartdebit see who we are
-      CURLOPT_SSL_VERIFYHOST => TRUE,
-      CURLOPT_SSL_VERIFYPEER => TRUE,
+      CURLOPT_SSL_VERIFYHOST => 2,
+      CURLOPT_SSL_VERIFYPEER => 1,
     );
 
     $session = curl_init( $url . $path);
