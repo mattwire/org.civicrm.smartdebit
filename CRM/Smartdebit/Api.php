@@ -28,16 +28,16 @@ class CRM_Smartdebit_Api {
   /**
    *   Send a post request with cURL
    *
-   * @param $url URL to send request to
-   * @param $data POST data to send (in URL encoded Key=value pairs)
-   * @param $username
-   * @param $password
-   * @param $path
-   * @return mixed
+   * @param string $url URL to send request to
+   * @param string $data POST data to send (in URL encoded Key=value pairs)
+   * @param string $username
+   * @param string $password
+   * @param string $path
+   * @return array
    */
   public static function requestPost($url, $data, $username, $password, $path){
     // Set a one-minute timeout for this script
-    set_time_limit(160);
+    set_time_limit(60);
 
     $options = array(
       CURLOPT_RETURNTRANSFER => true, // return web page
@@ -47,8 +47,8 @@ class CRM_Smartdebit_Api {
       CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
       CURLOPT_HTTPHEADER => array("Accept: application/xml"),
       CURLOPT_USERAGENT => "CiviCRM PHP DD Client", // Let Smartdebit see who we are
-      CURLOPT_SSL_VERIFYHOST => false,
-      CURLOPT_SSL_VERIFYPEER => false,
+      CURLOPT_SSL_VERIFYHOST => TRUE,
+      CURLOPT_SSL_VERIFYPEER => TRUE,
     );
 
     $session = curl_init( $url . $path);
@@ -64,25 +64,75 @@ class CRM_Smartdebit_Api {
     //Store the raw response for later as it's useful to see for integration and understanding
     $_SESSION["rawresponse"] = $output;
 
+    // Set return values
+    if (isset($header['http_code'])) {
+      $resultsArray['statuscode'] = $header['http_code'];
+    }
+    else {
+      $resultsArray['statuscode'] = -1;
+    }
+
     if(curl_errno($session)) {
-      $resultsArray["Status"] = "FAIL";
-      $resultsArray['StatusDetail'] = curl_error($session);
+      $resultsArray['success'] = FALSE;
+      $resultsArray['message'] = 'cURL Error';
+      $resultsArray['error'] = curl_error($session);
     }
     else {
       // Results are XML so turn this into a PHP Array
-      $resultsArray = json_decode(json_encode((array) simplexml_load_string($output)),1);
+      $resultsArray = (array) simplexml_load_string($output);
+      if (!isset($resultsArray['error'])) {
+        $resultsArray['error'] = NULL;
+      }
 
       // Determine if the call failed or not
-      switch ($header["http_code"]) {
+      $resultsArray['statuscode'] = $header['http_code'];
+      switch ($header['http_code']) {
         case 200:
-          $resultsArray["Status"] = "OK";
+          $resultsArray['message'] = 'OK';
+          $resultsArray['success'] = TRUE;
+          break;
+        case 400:
+          $resultsArray['message'] = 'Bad Request';
+          $resultsArray['success'] = FALSE;
+          break;
+        case 422:
+          $resultsArray['message'] = 'Unprocessable Entity';
+          $resultsArray['success'] = FALSE;
           break;
         default:
-          $resultsArray["Status"] = "INVALID";
+          $resultsArray['message'] = 'Unknown Error';
+          $resultsArray['success'] = FALSE;
       }
     }
     // Return the output
     return $resultsArray;
+  }
+
+  /**
+   * Format response error for display to user
+   *
+   * @param array $responseErrors Array or string of errors
+   * @return string
+   */
+  static function formatResponseError($responseErrors)
+  {
+    if (!$responseErrors) {
+      return NULL;
+    }
+
+    $message = '';
+    if (!is_array($responseErrors)) {
+      $message = $responseErrors . '<br />';
+      $message .= '<br />';
+    }
+    else {
+      foreach ($responseErrors as $error) {
+        $message .= $error . '<br />';
+      }
+      $message .= '<br />';
+    }
+    $message .= ts('Please correct the errors and try again');
+    return $message;
   }
 
   /**
@@ -126,8 +176,7 @@ class CRM_Smartdebit_Api {
    * @param null $referenceNumber
    * @return array|bool
    */
-  static function getAuditLog($referenceNumber = NULL)
-  {
+  static function getAuditLog($referenceNumber = NULL) {
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
     $username = CRM_Utils_Array::value('user_name', $userDetails);
     $password = CRM_Utils_Array::value('password', $userDetails);
@@ -135,37 +184,33 @@ class CRM_Smartdebit_Api {
 
     // Send payment POST to the target URL
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/data/auditlog', "query[service_user][pslid]="
-      .urlencode($pslid)."&query[report_format]=XML");
+      . urlencode($pslid) . "&query[report_format]=XML");
 
     // Restrict to a single payer if we have a reference
     if ($referenceNumber) {
-      $url .= "&query[reference_number]=".urlencode($referenceNumber);
+      $url .= "&query[reference_number]=" . urlencode($referenceNumber);
     }
     $response = CRM_Smartdebit_Api::requestPost($url, '', $username, $password, '');
 
     // Take action based upon the response status
-    switch (strtoupper($response["Status"])) {
-      case 'OK':
-        $smartDebitArray = array();
-
-        if (isset($response['Data']['AuditDetails']['@attributes'])) {
-          // Cater for a single response
-          $smartDebitArray[] = $response['Data']['AuditDetails']['@attributes'];
-        } else {
-          // Multiple records
-          foreach ($response['Data']['AuditDetails'] as $key => $value) {
-            $smartDebitArray[] = $value['@attributes'];
-          }
+    if ($response['success']) {
+      $smartDebitArray = array();
+      if (isset($response['Data']['AuditDetails']['@attributes'])) {
+        // Cater for a single response
+        $smartDebitArray[] = $response['Data']['AuditDetails']['@attributes'];
+      }
+      else {
+        // Multiple records
+        foreach ($response['Data']['AuditDetails'] as $key => $value) {
+          $smartDebitArray[] = $value['@attributes'];
         }
-        return $smartDebitArray;
-      default:
-        if (isset($response['error'])) {
-          $msg = $response['error'];
-        }
-        $msg .= 'Invalid reference number: ' . $referenceNumber;
-        CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
-        CRM_Core_Error::debug_log_message('Smart Debit: getSmartdebitAuditLog Error: ' . $msg);
-        return false;
+      }
+      return $smartDebitArray;
+    }
+    else {
+      $msg = $response['error'];
+      CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
+      return false;
     }
   }
 
@@ -193,27 +238,23 @@ class CRM_Smartdebit_Api {
     $response = CRM_Smartdebit_Api::requestPost($url, '', $username, $password, '');
 
     // Take action based upon the response status
-    switch (strtoupper($response["Status"])) {
-      case 'OK':
-        $smartDebitArray = array();
-
-        // Cater for a single response
-        if (isset($response['Data']['PayerDetails']['@attributes'])) {
-          $smartDebitArray[] = $response['Data']['PayerDetails']['@attributes'];
-        } else {
-          foreach ($response['Data']['PayerDetails'] as $key => $value) {
-            $smartDebitArray[] = $value['@attributes'];
-          }
+    if ($response['success']) {
+      $smartDebitArray = array();
+      // Cater for a single response
+      if (isset($response['Data']['PayerDetails']['@attributes'])) {
+        $smartDebitArray[] = $response['Data']['PayerDetails']['@attributes'];
+      }
+      else {
+        foreach ($response['Data']['PayerDetails'] as $key => $value) {
+          $smartDebitArray[] = $value['@attributes'];
         }
-        return $smartDebitArray;
-      default:
-        if (isset($response['error'])) {
-          $msg = $response['error'];
-        }
-        $msg .= 'Invalid reference number: ' . $referenceNumber;
-        CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
-        CRM_Core_Error::debug_log_message('Smart Debit: getSmartdebitPayments Error: ' . $msg);
-        return false;
+      }
+      return $smartDebitArray;
+    }
+    else {
+      $msg = $response['error'];
+      CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
+      return false;
     }
   }
 
@@ -238,30 +279,26 @@ class CRM_Smartdebit_Api {
     $response    = CRM_Smartdebit_Api::requestPost($url, '', $username, $password, '');
 
     // Take action based upon the response status
-    switch ( strtoupper( $response["Status"] ) ) {
-      case 'OK':
-        if (!isset($response['Successes']['Success']) || !isset($response['Rejects'])) {
-          $collections['error'] = $response['Summary'];
-          return $collections;
+    if ($response['success']) {
+      if (!isset($response['Successes']['Success']) || !isset($response['Rejects'])) {
+        $collections['error'] = $response['Summary'];
+        return $collections;
+      }
+      // Cater for a single response
+      if (isset($response['Successes']['Success']['@attributes'])) {
+        $collections[] = $response['Successes']['Success']['@attributes'];
+      }
+      else {
+        foreach ($response['Successes']['Success'] as $key => $value) {
+          $collections[] = $value['@attributes'];
         }
-        // Cater for a single response
-        if (isset($response['Successes']['Success']['@attributes'])) {
-          $collections[] = $response['Successes']['Success']['@attributes'];
-        } else {
-          foreach ($response['Successes']['Success'] as $key => $value) {
-            $collections[] = $value['@attributes'];
-          }
-        }
-        return $collections;
-      case 'INVALID':
-        $url = CRM_Utils_System::url('civicrm/smartdebit/syncsd', 'reset=1'); // DataSource Form
-        CRM_Core_Session::setStatus($response['error'], ts('Smart Debit'), 'error');
-        CRM_Utils_System::redirect($url);
-        $collections['error'] = $response['error'];
-        return $collections;
-      default:
-        $collections['error'] = $response['error'];
-        return $collections;
+      }
+      return $collections;
+    }
+    else {
+      $url = CRM_Utils_System::url('civicrm/smartdebit/syncsd', 'reset=1'); // DataSource Form
+      CRM_Core_Session::setStatus($response['error'], ts('Smart Debit'), 'error');
+      CRM_Utils_System::redirect($url);
     }
   }
 

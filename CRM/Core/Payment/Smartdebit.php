@@ -161,6 +161,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   /**
    * Override custom PI validation
    *  to validate payment details with SmartDebit
+   * Sets appropriate parameters and calls Smart Debit API to validate a payment (does not setup the payment)
    *
    * @param array $values
    * @param array $errors
@@ -168,7 +169,65 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   public function validatePaymentInstrument($values, &$errors) {
     // first: call parent's implementation
     parent::validatePaymentInstrument($values, $errors);
-    $this->validatePayment($values, $errors);
+
+    $smartDebitParams = self::preparePostArray($values);
+
+    // Construct post string
+    $post = '';
+    foreach ($smartDebitParams as $key => $value) {
+      $post .= ($key != 'variable_ddi[service_user][pslid]' ? '&' : '') . $key . '=' . urlencode($value);
+    }
+
+    // Get the API Username and Password
+    $username = $this->_paymentProcessor['user_name'];
+    $password = $this->_paymentProcessor['password'];
+
+    // Send payment POST to the target URL
+    $url = $this->_paymentProcessor['url_api'];
+    // FIXME: Do we have $this->_paymentProcessor['is_test'] set here?
+
+    $request_path = 'api/ddi/variable/validate';
+
+    $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
+
+    $direct_debit_response = array();
+    $direct_debit_response['data_type'] = 'recurring';
+    $direct_debit_response['entity_type'] = 'contribution_recur';
+    $direct_debit_response['first_collection_date'] = $smartDebitParams['variable_ddi[start_date]'];
+    $direct_debit_response['preferred_collection_day'] = $values['preferred_collection_day'];
+    $direct_debit_response['confirmation_method'] = $values['confirmation_method'];
+    $direct_debit_response['ddi_reference'] = $values['ddi_reference'];
+    $direct_debit_response['response_status'] = $response['message'];
+    $direct_debit_response['response_raw'] = NULL;
+    $direct_debit_response['entity_id'] = NULL;
+    $direct_debit_response['bank_name'] = NULL;
+    $direct_debit_response['branch'] = NULL;
+    $direct_debit_response['address1'] = NULL;
+    $direct_debit_response['address2'] = NULL;
+    $direct_debit_response['address3'] = NULL;
+    $direct_debit_response['address4'] = NULL;
+    $direct_debit_response['town'] = NULL;
+    $direct_debit_response['county'] = NULL;
+    $direct_debit_response['postcode'] = NULL;
+
+    // Take action based upon the response status
+    if ($response['success']) {
+      $direct_debit_response['entity_id'] = isset($values['entity_id']) ? $values['entity_id'] : 0;
+      $direct_debit_response['bank_name'] = $response['success'][2]["@attributes"]["bank_name"];
+      $direct_debit_response['branch'] = $response['success'][2]["@attributes"]["branch"];
+      $direct_debit_response['address1'] = $response['success'][2]["@attributes"]["address1"];
+      $direct_debit_response['address2'] = $response['success'][2]["@attributes"]["address2"];
+      $direct_debit_response['address3'] = $response['success'][2]["@attributes"]["address3"];
+      $direct_debit_response['address4'] = $response['success'][2]["@attributes"]["address4"];
+      $direct_debit_response['town'] = $response['success'][2]["@attributes"]["town"];
+      $direct_debit_response['county'] = $response['success'][2]["@attributes"]["county"];
+      $direct_debit_response['postcode'] = $response['success'][2]["@attributes"]["postcode"];
+      self::recordSmartDebitResponse($direct_debit_response);
+      return;
+    }
+    else {
+      $errors[$response['message']] = CRM_Smartdebit_Api::formatResponseError($response['error']);
+    }
   }
 
   /**
@@ -477,85 +536,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   }
 
   /**
-   * Sets appropriate parameters and calls Smart Debit API to validate a payment (does not setup the payment)
-   *
-   * @param array $params name value pair of contribution data
-   *
-   * @return array $result
-   * @access public
-   *
-   */
-  public function validatePayment($fields, $errors) {
-    $smartDebitParams = self::preparePostArray($fields);
-
-    // Construct post string
-    $post = '';
-    foreach ($smartDebitParams as $key => $value) {
-      $post .= ($key != 'variable_ddi[service_user][pslid]' ? '&' : '') . $key . '=' . urlencode($value);
-    }
-
-    // Get the API Username and Password
-    $username = $this->_paymentProcessor['user_name'];
-    $password = $this->_paymentProcessor['password'];
-
-    // Send payment POST to the target URL
-    $url = $this->_paymentProcessor['url_api'];
-    $request_path = 'api/ddi/variable/validate';
-
-    $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
-
-    $direct_debit_response = array();
-    $direct_debit_response['data_type'] = 'recurring';
-    $direct_debit_response['entity_type'] = 'contribution_recur';
-    $direct_debit_response['first_collection_date'] = $smartDebitParams['variable_ddi[start_date]'];
-    $direct_debit_response['preferred_collection_day'] = $fields['preferred_collection_day'];
-    $direct_debit_response['confirmation_method'] = $fields['confirmation_method'];
-    $direct_debit_response['ddi_reference'] = $fields['ddi_reference'];
-    $direct_debit_response['response_status'] = $response['Status'];
-    $direct_debit_response['response_raw'] = NULL;
-    $direct_debit_response['entity_id'] = NULL;
-    $direct_debit_response['bank_name'] = NULL;
-    $direct_debit_response['branch'] = NULL;
-    $direct_debit_response['address1'] = NULL;
-    $direct_debit_response['address2'] = NULL;
-    $direct_debit_response['address3'] = NULL;
-    $direct_debit_response['address4'] = NULL;
-    $direct_debit_response['town'] = NULL;
-    $direct_debit_response['county'] = NULL;
-    $direct_debit_response['postcode'] = NULL;
-
-    if (!empty($response['error'])) {
-      $direct_debit_response['response_raw'] = $response['error'];
-    }
-
-    // Take action based upon the response status
-    switch (strtoupper($response["Status"])) {
-      case 'OK':
-        $direct_debit_response['entity_id'] = isset($fields['entity_id']) ? $fields['entity_id'] : 0;
-        $direct_debit_response['bank_name'] = $response['success'][2]["@attributes"]["bank_name"];
-        $direct_debit_response['branch'] = $response['success'][2]["@attributes"]["branch"];
-        $direct_debit_response['address1'] = $response['success'][2]["@attributes"]["address1"];
-        $direct_debit_response['address2'] = $response['success'][2]["@attributes"]["address2"];
-        $direct_debit_response['address3'] = $response['success'][2]["@attributes"]["address3"];
-        $direct_debit_response['address4'] = $response['success'][2]["@attributes"]["address4"];
-        $direct_debit_response['town'] = $response['success'][2]["@attributes"]["town"];
-        $direct_debit_response['county'] = $response['success'][2]["@attributes"]["county"];
-        $direct_debit_response['postcode'] = $response['success'][2]["@attributes"]["postcode"];
-        self::recordSmartDebitResponse($direct_debit_response);
-        return TRUE;
-      case 'REJECTED':
-        $_SESSION['contribution_attempt'] = 'failed';
-        return self::rejected($response, $fields);
-      case 'INVALID':
-        $_SESSION['contribution_attempt'] = 'failed';
-        return self::invalid($response, $fields);
-      default:
-        $_SESSION['contribution_attempt'] = 'failed';
-        return self::error($response, $fields);
-    }
-  }
-
-  /**
    * Sets appropriate parameters and calls Smart Debit API to create a payment
    *
    * @param array $params name value pair of contribution data
@@ -564,8 +544,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    * @access public
    *
    */
-  function doDirectPayment(&$params)
-  {
+  function doDirectPayment(&$params) {
     $smartDebitParams = self::preparePostArray($params);
     $serviceUserId = $this->_paymentProcessor['signature'];
 
@@ -585,21 +564,14 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
 
     // Take action based upon the response status
-    switch (strtoupper($response["Status"])) {
-      case 'OK':
-        $params['trxn_id'] = $response['reference_number'];
-        self::setRecurTransactionId($params);
-        CRM_Smartdebit_Base::completeDirectDebitSetup($params);
-        return $params;
-      case 'REJECTED':
-        $_SESSION['contribution_attempt'] = 'failed';
-        return self::rejected($response, $params);
-      case 'INVALID':
-        $_SESSION['contribution_attempt'] = 'failed';
-        return self::invalid($response, $params);
-      default:
-        $_SESSION['contribution_attempt'] = 'failed';
-        return self::error($response, $params);
+    if ($response['success']) {
+      $params['trxn_id'] = $response['reference_number'];
+      self::setRecurTransactionId($params);
+      CRM_Smartdebit_Base::completeDirectDebitSetup($params);
+      return $params;
+    }
+    else {
+      throw new Exception($response['message'] . ': ' . CRM_Smartdebit_Api::formatResponseError($response['error']));
     }
   }
 
@@ -709,63 +681,6 @@ EOF;
   }
 
   /**
-   * SmartDebit payment has failed
-   * @param $response
-   * @param $params
-   * @return array
-   */
-  private static function invalid($response, $params)
-  {
-    $msg = "Unfortunately, it seems the details provided are invalid – please double check your billing address and direct debit details and try again.";
-    $msg .= "<ul>";
-
-    foreach ($response as $key => $value) {
-      if (is_array($value)) {
-        foreach ($value as $errorItem) {
-          $msg .= "<li>";
-          $msg .= $errorItem;
-          $msg .= "</li>";
-        }
-      } else {
-        if ($key == 'error') {
-          $msg .= "<li>";
-          $msg .= $value;
-          $msg .= "</li>";
-        }
-      }
-    }
-    $msg .= "</ul>";
-    CRM_Core_Session::setStatus($msg, ts('Direct Debit'));
-    return CRM_Core_Error::createAPIError($msg, $response);
-  }
-
-  /**
-   * SmartDebit payment has returned a status we do not understand
-   * @param $response
-   * @param $params
-   * @return array
-   */
-  private static function error($response, $params)
-  {
-    $msg = "Unfortunately, it seems there was a problem with your direct debit details – please double check your billing address and card details and try again";
-    CRM_Core_Session::setStatus($msg, ts('Direct Debit'));
-    return CRM_Core_Error::createAPIError($msg, $response);
-  }
-
-  /**
-   * SmartDebit payment has failed
-   * @param $response
-   * @param $params
-   * @return array
-   */
-  private static function rejected($response, $params)
-  {
-    $msg = "Unfortunately, it seems the authorisation was rejected – please double check your billing address and card details and try again.";
-    CRM_Core_Session::setStatus($msg, ts('Direct Debit'));
-    return CRM_Core_Error::createAPIError($msg, $response);
-  }
-
-  /**
    * Sets appropriate parameters for checking out to UCM Payment Collection
    *
    * @param array $params name value pair of contribution datat
@@ -835,8 +750,8 @@ EOF;
       }
 
       $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
-      if (strtoupper($response["Status"]) != 'OK') {
-        $msg = self::formatResponseError(isset($response['error']) ? $response['error'] : '');
+      if (!$response['success']) {
+        $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
         $msg .= '<br />Update Subscription Failed.';
         CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
         return FALSE;
@@ -883,8 +798,8 @@ EOF;
       }
 
       $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
-      if (strtoupper($response["Status"]) != 'OK') {
-        $msg = self::formatResponseError(isset($response['error']) ? $response['error'] : '');
+      if (!$response['success']) {
+        $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
         $msg .= '<br />Cancel Subscription Failed.';
         CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
         return FALSE;
@@ -902,7 +817,7 @@ EOF;
   function updateSubscriptionBillingInfo(&$message = '', $params = array())
   {
     if ($this->_paymentProcessor['payment_processor_type'] == 'Smart_Debit') {
-      $post = '';
+      $postData = '';
       $serviceUserId = $this->_paymentProcessor['signature'];
       $username = $this->_paymentProcessor['user_name'];
       $password = $this->_paymentProcessor['password'];
@@ -929,13 +844,12 @@ EOF;
         'variable_ddi[country]' => $country,
       );
       foreach ($smartDebitParams as $key => $value) {
-        $post .= ($key != 'variable_ddi[service_user][pslid]' ? '&' : '') . $key . '=' . ($key != 'variable_ddi[service_user][pslid]' ? urlencode($value) : $serviceUserId);
+        $postData .= ($key != 'variable_ddi[service_user][pslid]' ? '&' : '') . $key . '=' . ($key != 'variable_ddi[service_user][pslid]' ? urlencode($value) : $serviceUserId);
       }
 
-      $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
-      if (strtoupper($response["Status"]) != 'OK') {
-        $msg = self::formatResponseError(isset($response['error']) ? $response['error'] : '');
-        $msg .= '<br />Please double check your billing address and try again.';
+      $response = CRM_Smartdebit_Api::requestPost($url, $postData, $username, $password, $request_path);
+      if (!$response['success']) {
+        $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
         CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
         return FALSE;
       }

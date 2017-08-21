@@ -81,12 +81,12 @@ class CRM_Smartdebit_Auddis
       "query[service_user][pslid]=$pslid&query[from_date]=$dateOfCollectionStart&query[till_date]=$dateOfCollectionEnd");
     $responseAuddis = CRM_Smartdebit_Api::requestPost($urlAuddis, '', $username, $password, '');
     // Take action based upon the response status
-    switch (strtoupper($responseAuddis['Status'])) {
-      case 'OK':
-        $this->_auddisList = $responseAuddis;
-        return true;
-      default:
-        return false;
+    if ($responseAuddis['success']) {
+      $this->_auddisList = $responseAuddis;
+      return TRUE;
+    }
+    else {
+      return FALSE;
     }
   }
 
@@ -116,17 +116,17 @@ class CRM_Smartdebit_Auddis
     $responseArudd = CRM_Smartdebit_Api::requestPost($urlArudd, '', $username, $password, '');
 
     // Take action based upon the response status
-    switch (strtoupper($responseArudd["Status"])) {
-      case 'OK':
-        $aruddArray = array();
-        // Cater for a single response
-        if (isset($responseArudd['arudd'])) {
-          $aruddArray = $responseArudd['arudd'];
-        }
-        $this->_aruddList = $aruddArray;
-        return true;
-      default:
-        return false;
+    if ($responseArudd['success']) {
+      $aruddArray = array();
+      // Cater for a single response
+      if (isset($responseArudd['arudd'])) {
+        $aruddArray = $responseArudd['arudd'];
+      }
+      $this->_aruddList = $aruddArray;
+      return TRUE;
+    }
+    else {
+      return false;
     }
   }
 
