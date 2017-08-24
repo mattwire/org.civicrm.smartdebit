@@ -176,7 +176,7 @@ WHERE  ddi_reference = %0";
     $collectionDateThisMonth  = new DateTime();
     $collectionDateNextMonth  = new DateTime();
     $collectionDateMonthAfter = new DateTime();
-    $collectionInterval = smartdebit_civicrm_getSetting('collection_interval');
+    $collectionInterval = (int) smartdebit_civicrm_getSetting('collection_interval');
 
     // Calculate earliest possible collection date
     $earliestCollectionDate->add(new DateInterval( 'P'.$collectionInterval.'D' ));
@@ -236,7 +236,7 @@ WHERE  ddi_reference = %0";
    */
   static function getCollectionDaysOptions() {
     $intervalDate = new DateTime();
-    $interval     = smartdebit_civicrm_getSetting('collection_interval');
+    $interval     = (int) smartdebit_civicrm_getSetting('collection_interval');
 
     $intervalDate->modify( "+$interval day" );
     $intervalDay = $intervalDate->format( 'd' );
@@ -341,11 +341,11 @@ WHERE  ddi_reference = %0";
   }
 
   static function getActivityType() {
-    return smartdebit_civicrm_getSetting('activity_type');
+    return (int) smartdebit_civicrm_getSetting('activity_type');
   }
 
   static function getActivityTypeLetter() {
-    return smartdebit_civicrm_getSetting('activity_type_letter');
+    return (int) smartdebit_civicrm_getSetting('activity_type_letter');
   }
 
   static function getTransactionPrefix() {
@@ -356,21 +356,21 @@ WHERE  ddi_reference = %0";
    * Function will return the SUN number broken down into individual characters passed as an array
    */
   static function getSUN() {
-    return smartdebit_civicrm_getSetting('service_user_number');
+    return (int) smartdebit_civicrm_getSetting('service_user_number');
   }
 
   /**
    * Function will return the Payment instrument to be used by DD payment processor
    */
   static function getDefaultPaymentInstrumentID() {
-    return smartdebit_civicrm_getSetting('payment_instrument_id');
+    return (int) smartdebit_civicrm_getSetting('payment_instrument_id');
   }
 
   /**
    * Function will return the default Financial Type to be used by DD payment processor
    */
   static function getDefaultFinancialTypeID() {
-    return smartdebit_civicrm_getSetting('financial_type');
+    return (int) smartdebit_civicrm_getSetting('financial_type');
   }
 
   /**

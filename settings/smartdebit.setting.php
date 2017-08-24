@@ -153,4 +153,31 @@ return array(
       'size' => 50,
     ),
   ),
+
+  // Internal settings for stats
+  //transaction_prefix
+  'smartdebit_rejected_auddis' => array(
+  'group_name' => 'Smart Debit Settings',
+  'group' => 'smartdebit',
+  'name' => 'smartdebit_rejected_auddis',
+  'type' => 'Array',
+  'add' => '4.7',
+  'is_domain' => 1,
+  'is_contact' => 0,
+  'default' => '',
+  'html_type' => 'Hidden',
+  'html_attributes' => array(),
+  ),
+  'smartdebit_rejected_arudd' => array(
+  'group_name' => 'Smart Debit Settings',
+  'group' => 'smartdebit',
+  'name' => 'smartdebit_rejected_arudd',
+  'type' => 'Array',
+  'add' => '4.7',
+  'is_domain' => 1,
+  'is_contact' => 0,
+  'default' => '',
+  'html_type' => 'Hidden',
+  'html_attributes' => array(),
+  )
 );

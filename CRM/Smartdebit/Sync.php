@@ -49,6 +49,10 @@ class CRM_Smartdebit_Sync
    * @return bool|CRM_Queue_Runner
    */
   static function getRunner($interactive=TRUE, $auddisIDs = NULL, $aruddIDs = NULL) {
+    // Reset stats
+    smartdebit_civicrm_saveSetting('rejected_auddis', NULL);
+    smartdebit_civicrm_saveSetting('rejected_arudd', NULL);
+
     // Setup the Queue
     $queue = CRM_Queue_Service::singleton()->create(array(
       'name'  => self::QUEUE_NAME,
