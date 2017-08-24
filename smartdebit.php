@@ -588,16 +588,16 @@ function smartdebit_civicrm_links( $op, $objectName, $objectId, &$links, &$mask,
       // Do nothing, $recurId won't be set
     }
     if(!empty($recurId)) {
-      $name   = ts('View Direct Debit');
-      $title  = ts('View Direct Debit');
-      $url    = 'civicrm/contact/view/contributionrecur';
-      $qs   	= "reset=1&id=$recurId&cid=$cid";
+      $name = ts('View Direct Debit');
+      $title = ts('View Direct Debit');
+      $url = 'civicrm/contact/view/contributionrecur';
+      $qs = "reset=1&id=$recurId&cid=$cid";
+      $links[] = array(
+        'name' => $name,
+        'title' => $title,
+        'url' => $url,
+        'qs' => $qs
+      );
     }
-    $links[] = array(
-      'name' => $name,
-      'title' => $title,
-      'url' => $url,
-      'qs' => $qs
-    );
   }
 }

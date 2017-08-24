@@ -15,6 +15,14 @@ class CRM_Smartdebit_Api {
     }
     $baseUrl = $processorDetails['url_api'];
 
+    // Smartdebit API is picky about double // in URL path so make sure we remove it
+    if (substr($baseUrl, -1) != '/') {
+      $baseUrl .= '/';
+    }
+    if (substr($path,0,1) == '/') {
+      $path = substr($path,1);
+    }
+
     $url = $baseUrl . $path;
     if (!empty($request)) {
       if ($request[0] != '?') {
@@ -98,6 +106,11 @@ class CRM_Smartdebit_Api {
         case 401:
           $resultsArray['message'] = 'UNAUTHORIZED';
           $resultsArray['success'] = FALSE;
+          break;
+        case 404:
+          $resultsArray['message'] = 'NOT FOUND';
+          $resultsArray['success'] = FALSE;
+          break;
         case 422:
           $resultsArray['message'] = 'UNPROCESSABLE ENTITY';
           $resultsArray['success'] = FALSE;
@@ -109,6 +122,17 @@ class CRM_Smartdebit_Api {
     }
     // Return the output
     return $resultsArray;
+  }
+
+  public static function reportError($response) {
+    if (isset($response['head']['title'])) {
+      $msg = $response['head']['title'];
+    }
+    else {
+      $msg = $response['statuscode'] . ': ' . $response['message'];
+    }
+    CRM_Core_Session::setStatus($msg, 'Smart Debit', 'error');
+    Civi::log()->error('Smart Debit: ' . $msg);
   }
 
   /**
@@ -208,8 +232,7 @@ class CRM_Smartdebit_Api {
       return $smartDebitArray;
     }
     else {
-      $msg = $response['error'];
-      CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
+      self::reportError($response);
       return false;
     }
   }
@@ -252,8 +275,7 @@ class CRM_Smartdebit_Api {
       return $smartDebitArray;
     }
     else {
-      $msg = $response['error'];
-      CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
+      self::reportError($response);
       return false;
     }
   }
@@ -297,7 +319,7 @@ class CRM_Smartdebit_Api {
     }
     else {
       $url = CRM_Utils_System::url('civicrm/smartdebit/syncsd', 'reset=1'); // DataSource Form
-      CRM_Core_Session::setStatus($response['error'], ts('Smart Debit'), 'error');
+      self::reportError($response);
       CRM_Utils_System::redirect($url);
     }
   }
