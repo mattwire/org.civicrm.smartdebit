@@ -181,16 +181,29 @@ class CRM_Smartdebit_Api {
     Array (
       [api_version] => 1.1
       [user] => Array (
-        [login] => londoncycapitest
+        [login] => testuserapitest
         [assigned_service_users] => Array (
           [service_user] => Array (
-            [pslid] => londoncyctest
+            [pslid] => testusertest
           )
-        )
+    OR
+            0 => Array (1)
+              pslid => "testusertest"
+            1 => Array (1)
+              pslid => "otherusertest"
+            )
       )
       [Status] => OK
     )
     */
+    // As we're just displaying this onscreen, convert pslid array to a string and return it
+    if (isset($response['user']['assigned_service_users']['service_user'][0]['pslid'])) {
+      $pslIds = '';
+      foreach ($response['user']['assigned_service_users']['service_user'] as $key => $value) {
+        $pslIds .= $value['pslid'] . '; ';
+      }
+      $response['user']['assigned_service_users']['service_user'] = array('pslid' => $pslIds);
+    }
     return $response;
   }
 
