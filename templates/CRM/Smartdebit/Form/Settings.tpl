@@ -27,6 +27,16 @@
     {include file="CRM/common/formButtons.tpl" location="top"}
   </div>
 
+  {if $apiStatus}
+    <div class="crm-block crm-smartdebit-apistatus-block">
+      <div class="crm-section">
+        <h3>Smart Debit API Connection</h3>
+        <div>{$apiStatus}</div>
+      </div>
+    </div>
+    <div class="clear"></div>
+  {/if}
+
   {if $sdStatus}
     <div class="crm-block crm-smartdebit-apistatus-block">
       <div class="crm-section">
