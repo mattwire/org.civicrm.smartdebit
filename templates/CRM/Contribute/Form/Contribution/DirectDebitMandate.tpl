@@ -27,8 +27,8 @@
     {ts}Direct Debit Information{/ts}
   </div>
   <div>
-    {ts}Thank you very much for your Direct Debit Instruction details. Below is the Direct Debit Guarantee for your information.
-      Please print this page for your records{/ts}
+    {ts}Thank you very much for your Direct Debit Instruction details. Below is the Direct Debit Guarantee for your information.{/ts}
+    <strong> {ts}Please print this page for your records{/ts}</strong>
   </div>
   <div class="display-block">
     {* Start of DDI *}
