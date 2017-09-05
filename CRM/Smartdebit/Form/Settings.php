@@ -104,7 +104,10 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
   }
 
   function postProcess() {
-    $this->_submittedValues = $this->exportValues();
+    $changed = $this->_submitValues;
+    $elements = $this->getRenderableElementNames(TRUE);
+    // Make sure we have all settings elements set (boolean settings will be unset by default and wouldn't be saved)
+    $this->_submittedValues = array_merge($elements, array_intersect_key($changed, $elements));
     $this->saveSettings();
     parent::postProcess();
     CRM_Core_Session::singleton()->setStatus('Configuration Updated', 'Smart Debit', 'success');
@@ -113,9 +116,10 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
   /**
    * Get the fields/elements defined in this form.
    *
+   * @param keys (boolean) True will return array with keys set instead of values
    * @return array (string)
    */
-  function getRenderableElementNames() {
+  function getRenderableElementNames($keys = FALSE) {
     // The _elements list includes some items which should not be
     // auto-rendered in the loop -- such as "qfKey" and "buttons". These
     // items don't have labels. We'll identify renderable by filtering on
@@ -124,7 +128,12 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
     foreach ($this->_elements as $element) {
       $label = $element->getLabel();
       if (!empty($label)) {
-        $elementNames[] = $element->getName();
+        if ($keys) {
+          $elementNames[$element->getName()] = NULL;
+        }
+        else {
+          $elementNames[] = $element->getName();
+        }
       }
     }
     return $elementNames;
