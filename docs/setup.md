@@ -13,6 +13,7 @@ Install this extension!
 The following menu options will then be available:
 
 * Administer->Smart Debit
+
   * Settings
   * Manual Sync
   * Run Sync Task
