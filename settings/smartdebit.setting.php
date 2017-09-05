@@ -36,7 +36,7 @@ return array(
     'add' => '4.7',
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => 'Smart Debit Payment Method',
+    'description' => 'Payment Method',
     'html_attributes' => array(),
   ),
 
@@ -51,7 +51,7 @@ return array(
     'add' => '4.7',
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => 'Smart Debit Financial Type',
+    'description' => 'Default Financial Type',
     'html_attributes' => array(),
   ),
 
@@ -66,7 +66,7 @@ return array(
     'add' => '4.7',
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => 'Smart Debit Activity Type (Sign Up)',
+    'description' => 'Activity Type (Sign Up)',
     'html_attributes' => array(),
   ),
 
@@ -81,7 +81,7 @@ return array(
     'add' => '4.7',
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => 'Smart Debit Activity Type (Letter)',
+    'description' => 'Activity Type (Letter)',
     'html_attributes' => array(),
   ),
 
@@ -96,7 +96,7 @@ return array(
     'add' => '4.7',
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => 'Smart Debit Collection Interval',
+    'description' => 'Collection Interval',
     'html_type' => 'Text',
     'html_attributes' => array(
       'size' => 50,
@@ -113,7 +113,7 @@ return array(
     'is_domain' => 1,
     'is_contact' => 0,
     'default' => '1,20',
-    'description' => 'Smart Debit Collection Days',
+    'description' => 'Collection Days',
     'html_type' => 'Text',
     'html_attributes' => array(
       'size' => 50,
@@ -130,7 +130,7 @@ return array(
     'add' => '4.7',
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => 'Smart Debit Service User Number (SUN)',
+    'description' => 'Service User Number (SUN)',
     'html_type' => 'Text',
     'html_attributes' => array(
       'size' => 50,
@@ -147,10 +147,26 @@ return array(
     'is_domain' => 1,
     'is_contact' => 0,
     'default' => '',
-    'description' => 'Smart Debit Transaction Prefix',
+    'description' => 'Transaction Prefix',
     'html_type' => 'Text',
     'html_attributes' => array(
       'size' => 50,
+    ),
+  ),
+
+  //initial_completed
+  'smartdebit_initial_completed' => array(
+    'group_name' => 'Smart Debit Settings',
+    'group' => 'smartdebit',
+    'name' => 'smartdebit_initial_completed',
+    'type' => 'Boolean',
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'default' => '',
+    'description' => 'Mark initial contribution as completed (instead of pending)',
+    'html_type' => 'Checkbox',
+    'html_attributes' => array(
     ),
   ),
 
