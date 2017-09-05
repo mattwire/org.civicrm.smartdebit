@@ -592,9 +592,14 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         $recurParams = array (
           'id' => $params['contributionRecurID'],
           'trxn_id' => $params['trxn_id'],
+          'contribution_status_id' => self::getInitialContributionStatus(TRUE),
         );
         // Update the recurring payment
         $result = civicrm_api3('ContributionRecur', 'create', $recurParams);
+        // Update the contribution status
+        $contributionParams['id'] = $params['contributionID'];
+        $contributionParams['contribution_status_id'] = self::getInitialContributionStatus(FALSE);
+        $contribution = civicrm_api3('Contribution', 'create', $contributionParams);
       }
       else {
         // No recurring transaction, assume this is a non-recurring payment (so create a recurring contribution with a single installment
@@ -617,18 +622,67 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
           'currency' => $params['currencyID'],
           'invoice_id' => $params['invoiceID'],
           'installments' => 1,
-          'contribution_status_id' => CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending'),
+          'contribution_status_id' => self::getInitialContributionStatus(TRUE),
         );
         $recur = CRM_Smartdebit_Base::createRecurContribution($recurParams);
         $params['contributionRecurID'] = $recur['id'];
         $params['contribution_recur_id'] = $recur['id'];
         // We need to link the recurring contribution and contribution record, as Civi won't do it for us (4.7.21)
-        $addRecurId['id'] = $params['contributionID'];
-        $addRecurId['contribution_recur_id'] = $params['contribution_recur_id'];
-        $addRecurId['contact_id'] = $params['contactID'];
-        $contribution = civicrm_api3('Contribution', 'create', $addRecurId);
+        $contributionParams['id'] = $params['contributionID'];
+        $contributionParams['contribution_recur_id'] = $params['contribution_recur_id'];
+        $contributionParams['contact_id'] = $params['contactID'];
+        $contributionParams['contribution_status_id'] = self::getInitialContributionStatus(FALSE);
+        $contribution = civicrm_api3('Contribution', 'create', $contributionParams);
         $params['is_recur'] = 1; // Required for CRM_Core_Payment to set contribution status = Pending
       }
+
+      // Check and update membership
+      if (!empty($params['membershipID'])) {
+        self::updateMembershipStatus($params['membershipID']);
+      }
+    }
+  }
+
+  /**
+   * Get the initial (recur) contribution status based on the desired configuration.
+   * If initial_completed=TRUE we need to set initial contribution to completed.
+   *
+   * @param bool $isRecur TRUE if we should return status of recurring contribution instead.
+   *
+   * @return bool|int|null|string
+   */
+  static function getInitialContributionStatus($isRecur = FALSE) {
+    $initialCompleted = (boolean) smartdebit_civicrm_getSetting('initial_completed');
+
+    if ($initialCompleted) {
+      if ($isRecur) {
+        return CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
+      }
+      return CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed');
+    }
+    return CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
+  }
+
+  /**
+   * If we are forcing initial payment status to completed we have to update the membership status as well or it will stay in pending
+   * @param $membershipId
+   */
+  static function updateMembershipStatus($membershipId) {
+    $initialCompleted = (boolean) smartdebit_civicrm_getSetting('initial_completed');
+
+    if ($initialCompleted) {
+      // Force an update of the membership status
+      $membership = civicrm_api3('Membership', 'getsingle', array('membership_id' => $membershipId));
+      $dates = CRM_Member_BAO_MembershipType::getDatesForMembershipType($membership['membership_type_id']);
+
+      $membershipParams = array(
+        'membership_id' => $membershipId,
+        'start_date' => $dates['start_date'],
+        'end_date' => $dates['end_date'],
+        'join_date' => $dates['join_date'],
+        'skipStatusCal' => 0,
+      );
+      $membership = civicrm_api3('Membership', 'create', $membershipParams);
     }
   }
 
