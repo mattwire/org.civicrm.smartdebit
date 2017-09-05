@@ -1,0 +1,26 @@
+site_name: Smart Debit (Direct Debit provider in the UK)
+repo_url: https://github.com/mattwire/org.civicrm.smartdebit
+theme: material
+markdown_extensions:
+  - attr_list
+  - admonition
+  - def_list
+  - codehilite
+  - toc(permalink=true)
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.tilde
+  - pymdownx.betterem
+  - pymdownx.mark
+
+pages:
+- Introduction: index.md
+- Setup and Configuration: setup.md
+- Upgrading from older versions: upgrade.md
+- Usage:
+  - Signup: signup.md
+  - Transaction Lifecycle: lifecycle.md
+  - Synchronisation: sync.md
+- Advanced:
+  - Manual Sync: sync_manual.md
+  - Reconciling Transactions: reconcile.md
