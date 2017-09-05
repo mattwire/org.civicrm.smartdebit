@@ -1,8 +1,18 @@
 ## Initial sign-up (online or offline)
+A direct debit is not confirmed for at least 10 days which means that, by default, the transactions 
+will remain in _Pending_ state until the payment has actually been taken. 
+But this can mean that memberships are not activated for quite a long time so there is an option to 
+override this behaviour.
+
+#### Mark initial contribution as completed: Disabled (default)
 * Recurring Contribution is created with status: _Pending_
 * Contribution is created with status: _Pending_
+* Membership is created with status: _Pending_
 
-_Note that a direct debit is not confirmed for at least 10 days meaning the payment will remain pending.  This will impact any associated membership which will also remain in the pending state until the payment is marked as Completed._
+#### Mark initial contribution as completed: Enabled
+* Recurring Contribution is created with status: _In Progress_
+* Contribution is created with status: _Completed_
+* Membership is created with status: _New_
 
 ## Reconciliation
 * Recurring Contribution is created with status: _Pending_
