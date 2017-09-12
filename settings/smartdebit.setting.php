@@ -25,7 +25,7 @@
 
 return array(
 
-//payment_instrument_id
+  //payment_instrument_id
   'smartdebit_payment_instrument_id' => array(
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -40,7 +40,7 @@ return array(
     'html_attributes' => array(),
   ),
 
-//financial_type
+  //financial_type
   'smartdebit_financial_type' => array(
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -55,7 +55,7 @@ return array(
     'html_attributes' => array(),
   ),
 
-//activity_type
+  //activity_type
   'smartdebit_activity_type' => array(
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -70,7 +70,7 @@ return array(
     'html_attributes' => array(),
   ),
 
-//activity_type_letter
+  //activity_type_letter
   'smartdebit_activity_type_letter' => array(
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -85,7 +85,7 @@ return array(
     'html_attributes' => array(),
   ),
 
-//collection_interval
+  //collection_interval
   'smartdebit_collection_interval' => array(
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -102,7 +102,7 @@ return array(
     ),
   ),
 
-//collection_days
+  //collection_days
   'smartdebit_collection_days' => array(
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -119,7 +119,7 @@ return array(
     ),
   ),
 
-//service_user_number
+  //service_user_number
   'smartdebit_service_user_number' => array(
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -136,7 +136,7 @@ return array(
     ),
   ),
 
-//transaction_prefix
+  //transaction_prefix
   'smartdebit_transaction_prefix' => array(
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -172,27 +172,39 @@ return array(
   // Internal settings for stats
   //transaction_prefix
   'smartdebit_rejected_auddis' => array(
-  'group_name' => 'Smart Debit Settings',
-  'group' => 'smartdebit',
-  'name' => 'smartdebit_rejected_auddis',
-  'type' => 'Array',
-  'add' => '4.7',
-  'is_domain' => 1,
-  'is_contact' => 0,
-  'default' => '',
-  'html_type' => 'Hidden',
-  'html_attributes' => array(),
+    'group_name' => 'Smart Debit Settings',
+    'group' => 'smartdebit',
+    'name' => 'smartdebit_rejected_auddis',
+    'type' => 'Array',
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'default' => '',
+    'html_type' => 'Hidden',
+    'html_attributes' => array(),
   ),
   'smartdebit_rejected_arudd' => array(
-  'group_name' => 'Smart Debit Settings',
-  'group' => 'smartdebit',
-  'name' => 'smartdebit_rejected_arudd',
-  'type' => 'Array',
-  'add' => '4.7',
-  'is_domain' => 1,
-  'is_contact' => 0,
-  'default' => '',
-  'html_type' => 'Hidden',
-  'html_attributes' => array(),
+    'group_name' => 'Smart Debit Settings',
+    'group' => 'smartdebit',
+    'name' => 'smartdebit_rejected_arudd',
+    'type' => 'Array',
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'default' => '',
+    'html_type' => 'Hidden',
+    'html_attributes' => array(),
+  ),
+  'smartdebit_result_ids' => array(
+    'group_name' => 'Smart Debit Settings',
+    'group' => 'smartdebit',
+    'name' => 'smartdebit_result_ids',
+    'type' => 'Array',
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'default' => '',
+    'html_type' => 'Hidden',
+    'html_attributes' => array(),
   )
 );
