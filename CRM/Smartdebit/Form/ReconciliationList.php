@@ -382,11 +382,6 @@ AND   csd.id IS NULL LIMIT 100";
       $query = "SELECT FOUND_ROWS()";
       $totalRows = CRM_Core_DAO::singleValueQuery($query);
     }
-    if ($checkMissingFromCivi || $checkMissingFromSD) {
-      $title = 'Showing '.count($listArray).' of '.$totalRows.' Difference(s)';
-    } else {
-      $title = 'Found '.count($listArray).' Difference(s)';
-    }
 
     $this->assign('totalRows', $totalRows);
     $this->assign('listArray', $listArray);
@@ -449,7 +444,6 @@ AND   csd.id IS NULL LIMIT 100";
         $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Cancelled');
       }
 
-      $recurId = 0;
       $membershipId = 0;
 
       // Create / Update recurring contribution

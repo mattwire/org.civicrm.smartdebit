@@ -595,11 +595,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
           'contribution_status_id' => self::getInitialContributionStatus(TRUE),
         );
         // Update the recurring payment
-        $result = civicrm_api3('ContributionRecur', 'create', $recurParams);
+        civicrm_api3('ContributionRecur', 'create', $recurParams);
         // Update the contribution status
         $contributionParams['id'] = $params['contributionID'];
         $contributionParams['contribution_status_id'] = self::getInitialContributionStatus(FALSE);
-        $contribution = civicrm_api3('Contribution', 'create', $contributionParams);
+        civicrm_api3('Contribution', 'create', $contributionParams);
       }
       else {
         // No recurring transaction, assume this is a non-recurring payment (so create a recurring contribution with a single installment
@@ -632,7 +632,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         $contributionParams['contribution_recur_id'] = $params['contribution_recur_id'];
         $contributionParams['contact_id'] = $params['contactID'];
         $contributionParams['contribution_status_id'] = self::getInitialContributionStatus(FALSE);
-        $contribution = civicrm_api3('Contribution', 'create', $contributionParams);
+        civicrm_api3('Contribution', 'create', $contributionParams);
         $params['is_recur'] = 1; // Required for CRM_Core_Payment to set contribution status = Pending
       }
 
@@ -682,7 +682,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         'join_date' => $dates['join_date'],
         'skipStatusCal' => 0,
       );
-      $membership = civicrm_api3('Membership', 'create', $membershipParams);
+      civicrm_api3('Membership', 'create', $membershipParams);
     }
   }
 
@@ -749,7 +749,6 @@ UPDATE civicrm_direct_debit SET
       $accountHolder = $params['account_holder'];
       $accountNumber = $params['bank_account_number'];
       $sortcode = $params['bank_identification_number'];
-      $bankName = $params['bank_name'];
       $amount = $params['amount'];
       $amount = $amount * 100;
       $reference = $params['subscriptionId'];

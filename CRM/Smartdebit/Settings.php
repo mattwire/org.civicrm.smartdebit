@@ -24,6 +24,7 @@ class CRM_Smartdebit_Settings {
    * Get name of setting
    * @param: setting name
    * @prefix: Boolean
+   * @return: string
    */
   public static function getName($name, $prefix = false) {
     $ret = str_replace(self::getPrefix(),'',$name);

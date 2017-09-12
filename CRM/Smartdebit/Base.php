@@ -152,7 +152,7 @@ WHERE ddi_reference = '{$params['ddi_reference']}'
    */
   static function completeDirectDebitSetup( $params )  {
     // Create an activity to indicate Direct Debit Sign up
-    $activityID = CRM_Smartdebit_Base::createDDSignUpActivity($params);
+    CRM_Smartdebit_Base::createDDSignUpActivity($params);
 
     // Set the DD Record to be complete
     $sql = "
@@ -286,10 +286,7 @@ WHERE  ddi_reference = %0";
         'version'            => 3
       );
 
-      $resultLetter = civicrm_api( 'activity'
-        , 'create'
-        , $activityLetterParams
-      );
+      civicrm_api( 'activity', 'create', $activityLetterParams);
     }
 
     $activityTypeID = CRM_Smartdebit_Base::getActivityType();

@@ -85,7 +85,7 @@ class CRM_Smartdebit_Form_ReconciliationFixConfirm extends CRM_Core_Form {
    *
    * @access public
    *
-   * @return None
+   * @return array
    */
   public function setDefaultValues() {
     if ($this->_flagSubmitted) return;

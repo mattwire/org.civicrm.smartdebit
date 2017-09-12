@@ -90,7 +90,7 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
       $groupSizeArudd = 10;
     }
 
-    $inG = &$this->addElement('advmultiselect', 'includeAuddisDate',
+    $this->addElement('advmultiselect', 'includeAuddisDate',
       ts('Include Auddis Date(s)') . ' ',
       $auddisDates,
       array(
@@ -100,7 +100,7 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
       )
     );
 
-    $inGarudd = &$this->addElement('advmultiselect', 'includeAruddDate',
+    $this->addElement('advmultiselect', 'includeAruddDate',
       ts('Include Arudd Date(s)') . ' ',
       $aruddDates,
       array(

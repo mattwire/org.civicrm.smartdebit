@@ -170,7 +170,6 @@ class CRM_Smartdebit_Api {
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails(NULL, $test);
     $username = CRM_Utils_Array::value('user_name', $userDetails);
     $password = CRM_Utils_Array::value('password', $userDetails);
-    $pslid = CRM_Utils_Array::value('signature', $userDetails);
 
     // Send payment POST to the target URL
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, 'api/system_status');

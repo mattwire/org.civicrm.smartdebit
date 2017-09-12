@@ -206,7 +206,6 @@ class CRM_Smartdebit_Sync
       foreach ($smartDebitAuddisIds as $auddisId) {
         // Process AUDDIS files
         $auddisFile = CRM_Smartdebit_Api::getAuddisFile($auddisId);
-        $auddisDate = $auddisFile['auddis_date'];
         unset($auddisFile['auddis_date']);
         $refKey = 'reference';
         $dateKey = 'effective-date';
@@ -236,7 +235,6 @@ class CRM_Smartdebit_Sync
       foreach ($smartDebitAruddIds as $aruddId) {
         // Process ARUDD files
         $aruddFile = CRM_Smartdebit_Api::getAruddFile($aruddId);
-        $aruddDate = $aruddFile['arudd_date'];
         unset($aruddFile['arudd_date']);
         $refKey = 'ref';
         $dateKey = 'originalProcessingDate';

@@ -414,10 +414,9 @@ class CRM_Smartdebit_Auddis
     }
     else {
       $sql = "UPDATE `veda_smartdebit_auddis` SET processed={$processed} WHERE id={$auddisId}";
-      $auddisRecord = CRM_Core_DAO::executeQuery($sql);
+      CRM_Core_DAO::executeQuery($sql);
       return TRUE;
     }
-    return false;
   }
 
   /**
@@ -460,7 +459,7 @@ VALUES (%1,%2,%3,%4)";
           3 => array(0, 'Integer'),
           4 => array(0, 'Boolean'),
         );
-        $dao = CRM_Core_DAO::executeQuery($sql, $params);
+        CRM_Core_DAO::executeQuery($sql, $params);
         return true;
       }
 
@@ -497,7 +496,7 @@ VALUES (%1,%2,%3,%4)";
           3 => array(1, 'Integer'),
           4 => array(0, 'Boolean'),
         );
-        $dao = CRM_Core_DAO::executeQuery($sql, $params);
+        CRM_Core_DAO::executeQuery($sql, $params);
         return true;
       }
 
