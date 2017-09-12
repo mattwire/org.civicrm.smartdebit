@@ -2,6 +2,7 @@
 You will need an account at Smartdebit with API access.
 
 It will need at least the following parameters configured:
+
 * Supply payer reference via API: Yes
 * Support Variable DDI: Yes
 * Support Frequency Factor: Yes (if you want anything other than 1 month or 1 year intervals).
@@ -10,7 +11,9 @@ It will need at least the following parameters configured:
 Install this extension!
 
 The following menu options will then be available:
+
 * Administer->Smart Debit
+
   * Settings
   * Manual Sync
   * Run Sync Task
@@ -21,6 +24,7 @@ In addition, a scheduled job is installed.  This performs automatic sync of succ
 ## Settings
 Each setting has a help icon associated with it - click it for more information.
 ![settings](/images/smartdebit_settings.png)
+
 ## Manual Sync
 This allows you to manually sync collection reports, AUDDIS and ARUDD records from Smart Debit.  Useful if you need to sync for a different period (the default is the last 3 months).
 

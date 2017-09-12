@@ -1,6 +1,7 @@
 # Signup for Direct Debit payments
 ## Configure sign-up page
 Create a contribution page with the smart debit processor enabled.  Make sure the following is set
+
 * Recurring contribution **OR** Membership is configured for auto-renew.
 
 ## Test the contribution page
@@ -22,6 +23,7 @@ Here you see the confirmation and, importantly, the direct debit mandate that th
 
 ## Administration
 The following entities will have been created during sign-up and may need attention:
+
 * New contact (if the contact didn't already exist)
 * Recurring contribution.
 * Contribution.

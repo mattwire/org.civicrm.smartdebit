@@ -1,6 +1,7 @@
 # Synchronisation from Smart Debit
 
 A scheduled job will automatically synchronise the following information from Smart Debit:
+
 * Successful collections (contributions).
 * Failed collections (contributions) via the AUDDIS/ARUDD reports.
 
