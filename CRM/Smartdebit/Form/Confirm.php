@@ -40,8 +40,8 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
 
     if ($state == 'done') {
       $this->status = 1;
-      $rejectedAuddis = smartdebit_civicrm_getSetting('rejected_auddis');
-      $rejectedArudd = smartdebit_civicrm_getSetting('rejected_arudd');
+      $rejectedAuddis = CRM_Smartdebit_Settings::getValue('rejected_auddis');
+      $rejectedArudd = CRM_Smartdebit_Settings::getValue('rejected_arudd');
       $this->assign('rejectedAuddis', $rejectedAuddis);
       $this->assign('rejectedArudd', $rejectedArudd);
       $rejectedids = array_merge(is_array($rejectedAuddis) ? $rejectedAuddis : array(), is_array($rejectedArudd) ? $rejectedArudd : array());

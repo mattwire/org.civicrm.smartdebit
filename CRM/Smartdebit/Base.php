@@ -176,16 +176,16 @@ WHERE  ddi_reference = %0";
     $collectionDateThisMonth  = new DateTime();
     $collectionDateNextMonth  = new DateTime();
     $collectionDateMonthAfter = new DateTime();
-    $collectionInterval = (int) smartdebit_civicrm_getSetting('collection_interval');
+    $collectionInterval = (int) CRM_Smartdebit_Settings::getValue('collection_interval');
 
     // Calculate earliest possible collection date
     $earliestCollectionDate->add(new DateInterval( 'P'.$collectionInterval.'D' ));
 
     // Get the current year, month and next month to create the 2 potential collection dates
-    $todaysMonth = $today->format('m');
-    $nextMonth   = $today->format('m') + 1;
-    $monthAfter  = $today->format('m') + 2;
-    $todaysYear  = $today->format('Y');
+    $todaysMonth = (int) $today->format('m');
+    $nextMonth   = (int) $today->format('m') + 1;
+    $monthAfter  = (int) $today->format('m') + 2;
+    $todaysYear  = (int) $today->format('Y');
 
     $collectionDateThisMonth->setDate($todaysYear, $todaysMonth, $collectionDay);
     $collectionDateNextMonth->setDate($todaysYear, $nextMonth, $collectionDay);
@@ -236,12 +236,12 @@ WHERE  ddi_reference = %0";
    */
   static function getCollectionDaysOptions() {
     $intervalDate = new DateTime();
-    $interval     = (int) smartdebit_civicrm_getSetting('collection_interval');
+    $interval = (int) CRM_Smartdebit_Settings::getValue('collection_interval');
 
     $intervalDate->modify( "+$interval day" );
     $intervalDay = $intervalDate->format( 'd' );
 
-    $collectionDays = smartdebit_civicrm_getSetting('collection_days');
+    $collectionDays = CRM_Smartdebit_Settings::getValue('collection_days');
 
     // Split the array
     $tempCollectionDaysArray  = explode( ',', $collectionDays );
@@ -341,36 +341,36 @@ WHERE  ddi_reference = %0";
   }
 
   static function getActivityType() {
-    return (int) smartdebit_civicrm_getSetting('activity_type');
+    return (int) CRM_Smartdebit_Settings::getValue('activity_type');
   }
 
   static function getActivityTypeLetter() {
-    return (int) smartdebit_civicrm_getSetting('activity_type_letter');
+    return (int) CRM_Smartdebit_Settings::getValue('activity_type_letter');
   }
 
   static function getTransactionPrefix() {
-    return smartdebit_civicrm_getSetting('transaction_prefix');
+    return CRM_Smartdebit_Settings::getValue('transaction_prefix');
   }
 
   /**
    * Function will return the SUN number broken down into individual characters passed as an array
    */
   static function getSUN() {
-    return (int) smartdebit_civicrm_getSetting('service_user_number');
+    return (int) CRM_Smartdebit_Settings::getValue('service_user_number');
   }
 
   /**
    * Function will return the Payment instrument to be used by DD payment processor
    */
   static function getDefaultPaymentInstrumentID() {
-    return (int) smartdebit_civicrm_getSetting('payment_instrument_id');
+    return (int) CRM_Smartdebit_Settings::getValue('payment_instrument_id');
   }
 
   /**
    * Function will return the default Financial Type to be used by DD payment processor
    */
   static function getDefaultFinancialTypeID() {
-    return (int) smartdebit_civicrm_getSetting('financial_type');
+    return (int) CRM_Smartdebit_Settings::getValue('financial_type');
   }
 
   /**

@@ -196,7 +196,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
       }
       //Store the list of matched transaction IDs in settings table for use later
       if (!empty($matchTrxnIds)) {
-        smartdebit_civicrm_saveSetting('result_ids', $matchTrxnIds);
+        CRM_Smartdebit_Settings::save(array('result_ids' => $matchTrxnIds));
       }
     }
 

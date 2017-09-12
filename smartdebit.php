@@ -180,7 +180,7 @@ function smartdebit_civicrm_postInstall() {
     , 'description' => 'Direct Debit Sign Up');
     $activityType = civicrm_api('OptionValue', 'Create', $activityParams);
     $activityTypeId = $activityType['values'][$activityType['id']]['value'];
-    smartdebit_civicrm_saveSetting('activity_type', $activityTypeId);
+    CRM_Smartdebit_Settings::save(array('activity_type' => $activityTypeId));
   }
 
   // See if we already have this type
@@ -196,7 +196,7 @@ function smartdebit_civicrm_postInstall() {
     , 'description' => 'DD Confirmation Letter');
     $activityType = civicrm_api('OptionValue', 'Create', $activityParams);
     $activityTypeId = $activityType['values'][$activityType['id']]['value'];
-    smartdebit_civicrm_saveSetting('activity_type_letter', $activityTypeId);
+    CRM_Smartdebit_Settings::save(array('activity_type_letter' => $activityTypeId));
   }
 
   // Create an Direct Debit Payment Instrument
@@ -213,7 +213,7 @@ function smartdebit_civicrm_postInstall() {
     , 'description' => 'Direct Debit');
     $paymentType = civicrm_api('OptionValue', 'Create', $paymentParams);
     $paymentTypeId = $paymentType['values'][$paymentType['id']]['value'];
-    smartdebit_civicrm_saveSetting('payment_instrument_id', $paymentTypeId);
+    CRM_Smartdebit_Settings::save(array('payment_instrument_id' => $paymentTypeId));
   }
 
   _smartdebit_civix_civicrm_postInstall();
@@ -362,28 +362,6 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
   _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[3]);
 
   _smartdebit_civix_navigationMenu($menu);
-}
-
-/**
- * Save setting with prefix in database
- * @param $name
- * @param $value
- */
-function smartdebit_civicrm_saveSetting($name, $value) {
-  civicrm_api3('setting', 'create', array(CRM_Smartdebit_Form_Settings::getSettingName($name,true) => $value));
-}
-
-/**
- * Read setting that has prefix in database and return single value
- * @param $name
- * @return mixed
- */
-function smartdebit_civicrm_getSetting($name) {
-  $settings = civicrm_api3('setting', 'get', array('return' => CRM_Smartdebit_Form_Settings::getSettingName($name,true)));
-  if (isset($settings['values'][1][CRM_Smartdebit_Form_Settings::getSettingName($name,true)])) {
-    return $settings['values'][1][CRM_Smartdebit_Form_Settings::getSettingName($name, true)];
-  }
-  return '';
 }
 
 /**

@@ -50,8 +50,8 @@ class CRM_Smartdebit_Sync
    */
   static function getRunner($interactive=TRUE, $auddisIDs = NULL, $aruddIDs = NULL) {
     // Reset stats
-    smartdebit_civicrm_saveSetting('rejected_auddis', NULL);
-    smartdebit_civicrm_saveSetting('rejected_arudd', NULL);
+    CRM_Smartdebit_Settings::save(array('rejected_auddis' => NULL));
+    CRM_Smartdebit_Settings::save(array('rejected_arudd' => NULL));
 
     // Setup the Queue
     $queue = CRM_Queue_Service::singleton()->create(array(
@@ -196,7 +196,7 @@ class CRM_Smartdebit_Sync
   {
     // Add contributions for rejected payments with the status of 'failed'
     // Reset the counter when sync starts
-    smartdebit_civicrm_saveSetting('rejected_auddis', NULL);
+    CRM_Smartdebit_Settings::save(array('rejected_auddis' => NULL));
     // Rejected Ids is used to display on confirm form, would be nice to tidy and have it's own table or something
     $rejectedIds = array();
 
@@ -213,7 +213,7 @@ class CRM_Smartdebit_Sync
         $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey, 'AUDDIS report'));
       }
     }
-    smartdebit_civicrm_saveSetting('rejected_auddis', $rejectedIds);
+    CRM_Smartdebit_Settings::save(array('rejected_auddis' => $rejectedIds));
     return CRM_Queue_Task::TASK_SUCCESS;
   }
 
@@ -229,7 +229,7 @@ class CRM_Smartdebit_Sync
     // Add contributions for rejected payments with the status of 'failed'
     $rejectedIds = array();
     // Reset the counter when sync starts
-    smartdebit_civicrm_saveSetting('rejected_arudd', NULL);
+    CRM_Smartdebit_Settings::save(array('rejected_arudd' => NULL));
 
     // Retrieve ARUDD files from Smartdebit
     if($smartDebitAruddIds) {
@@ -243,7 +243,7 @@ class CRM_Smartdebit_Sync
         $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($aruddId, $aruddFile, $refKey, $dateKey, 'ARUDD report'));
       }
     }
-    smartdebit_civicrm_saveSetting('rejected_arudd', $rejectedIds);
+    CRM_Smartdebit_Settings::save(array('rejected_arudd' => $rejectedIds));
 
     CRM_Core_Error::debug_log_message('Smartdebit: Sync Job End.');
     return CRM_Queue_Task::TASK_SUCCESS;
@@ -541,6 +541,7 @@ class CRM_Smartdebit_Sync
     switch ($frequencyUnit) {
       case 'day':
         $days = $frequencyInterval * 1;
+        break;
       case 'month':
         $days = $frequencyInterval * 7;
         break;

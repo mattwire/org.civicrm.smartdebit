@@ -91,7 +91,6 @@ return array(
     'group' => 'smartdebit',
     'name' => 'smartdebit_collection_interval',
     'type' => 'String',
-    'html_type' => 'String',
     'default' => 10,
     'add' => '4.7',
     'is_domain' => 1,

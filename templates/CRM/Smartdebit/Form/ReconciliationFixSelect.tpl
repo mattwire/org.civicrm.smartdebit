@@ -118,7 +118,7 @@
   {literal}
   var memStatusCurrent = {/literal}"{$memStatusCurrent}"{literal}; //MV assigned the membership Status Name 'Current' as constant
   var contactUrl = {/literal}"{crmURL p='civicrm/ajax/rest' q='className=CRM_Contact_Page_AJAX&fnName=getContactList&json=1&context=navigation' h=0 }"{literal};
-  var getTemplateContentUrl = {/literal}"{crmURL p='civicrm/ajax/rest' h=0 q='className=CRM_Smartdebit_Page_AJAX&fnName=getMembershipByContactID&json=1'}"{literal}
+  var getTemplateContentUrl = {/literal}"{crmURL p='civicrm/ajax/rest' h=0 q='className=CRM_Smartdebit_Page_AJAX&fnName=getMembershipByContactID&json=1'}";{literal}
   var $form = cj("form.{/literal}{$form.formClass}{literal}");
   var cid = null;
   cj("#contact_name", $form).change(function() {
@@ -139,7 +139,7 @@
   });
 
   function getMembershipAndRecur(cid) {
-      var getTemplateContentUrl = {/literal}"{crmURL p='civicrm/ajax/rest' h=0 q='className=CRM_Smartdebit_Page_AJAX&fnName=getMembershipByContactID&json=1'}"{literal}
+      var getTemplateContentUrl = {/literal}"{crmURL p='civicrm/ajax/rest' h=0 q='className=CRM_Smartdebit_Page_AJAX&fnName=getMembershipByContactID&json=1'}";{literal}
       cj.ajax({
           url : getTemplateContentUrl,
           type: "POST",
@@ -151,7 +151,7 @@
               cj('#contribution_recur_record').find('option').remove();
               var options = cj.parseJSON(data);
               cj.each(options, function(key, value) {
-                  if(key == "membership"){
+                  if(key === "membership"){
                       var opMem = value;
                       cj.each(opMem, function(memID, text) {
                           cj('#membership_record').append(cj('<option>', {
@@ -160,13 +160,13 @@
                           }));
                           //MV to set the current membership as default
                           var temp = text.split('/');
-                          if( temp[1] == memStatusCurrent ){
+                          if( temp[1] === memStatusCurrent ){
                               cj('#membership_record option[value='+memID+']').attr('selected', true);
                           }
                           //end
                       });
                   }
-                  if(key == "cRecur"){
+                  if(key === "cRecur"){
                       var opRecur = value;
                       cj.each(opRecur, function(crID, Recurtext) {
                           cj('#contribution_recur_record').append(cj('<option>', {
@@ -195,7 +195,7 @@
       // When membership option is changed to 'Donation', show only recurring contributions which are not linked to memberships.
       cj( "#membership_record" ).change(function() {
           var val = cj('#membership_record option:selected').text();
-          var getTemplateContentUrl = {/literal}"{crmURL p='civicrm/ajax/rest' h=0 q='className=CRM_Smartdebit_Page_AJAX&fnName=getNotLinkedRecurringByContactID&json=1'}"{literal}
+          var getTemplateContentUrl = {/literal}"{crmURL p='civicrm/ajax/rest' h=0 q='className=CRM_Smartdebit_Page_AJAX&fnName=getNotLinkedRecurringByContactID&json=1'}";{literal}
           var data = cj( '#contact_name' ).select2('data');
           var cid = null;
           ( data !== null) ? cid = data.id : cid = null;
@@ -209,7 +209,7 @@
                   datatype: "json",
                   success: function (data, status) {
                       var options = cj.parseJSON(data);
-                      if (val == 'Donation') {
+                      if (val === 'Donation') {
                           var opRecur = options.cRecurNotLinked;
                           populateRecur(opRecur);
                       } else {

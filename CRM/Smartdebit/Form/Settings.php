@@ -29,12 +29,6 @@
  * @see http://wiki.civicrm.org/confluence/display/CRMDOC43/QuickForm+Reference
  */
 class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
-  private $_settingFilter = array('group' => 'smartdebit');
-  private $_submittedValues = array();
-
-  public static function getSettingsPrefix() {
-    return 'smartdebit_';
-  }
 
   function buildQuickForm() {
     parent::buildQuickForm();
@@ -70,18 +64,20 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
       )
     );
 
-    $this->addElement('select', 'activity_type', ts('Activity Type (Sign Up)'), array('' => ts('- select -')) + CRM_Core_OptionGroup::values('activity_type'));
-    $this->addElement('select', 'activity_type_letter', ts('Activity Type (Letter)'), array('' => ts('- select -')) + CRM_Core_OptionGroup::values('activity_type'));
+    $activityTypes = CRM_Activity_BAO_Activity::buildOptions('activity_type_id', 'create');
+    $this->addElement('select', 'activity_type', ts('Activity Type (Sign Up)'), array('' => ts('- select -')) + $activityTypes);
+    $this->addElement('select', 'activity_type_letter', ts('Activity Type (Letter)'), array('' => ts('- select -')) + $activityTypes);
 
-    foreach ($settings['values'] as $name => $setting) {
-      if (isset($setting['type'])) {
-        Switch ($setting['type']) {
-          case 'String':
+    foreach ($settings as $name => $setting) {
+      if (isset($setting['html_type'])) {
+        Switch ($setting['html_type']) {
+          case 'Text':
             if ($name != 'smartdebit_activity_type_letter') {
-              $this->addElement('text', self::getSettingName($name), ts($setting['description']), $setting['html_attributes'], array()); }
+              $this->addElement('text', $name, ts($setting['description']), $setting['html_attributes'], array());
+            }
             break;
-          case 'Boolean':
-            $this->addElement('checkbox', self::getSettingName($name), ts($setting['description']), '', '');
+          case 'Checkbox':
+            $this->addElement('checkbox', $name, ts($setting['description']), '', '');
             break;
         }
       }
@@ -105,35 +101,30 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
 
   function postProcess() {
     $changed = $this->_submitValues;
-    $elements = $this->getRenderableElementNames(TRUE);
+    $settings = $this->getFormSettings();
     // Make sure we have all settings elements set (boolean settings will be unset by default and wouldn't be saved)
-    $this->_submittedValues = array_merge($elements, array_intersect_key($changed, $elements));
-    $this->saveSettings();
+    $settingsToSave = array_merge($settings, array_intersect_key($changed, $settings));
+    CRM_Smartdebit_Settings::save($settingsToSave);
     parent::postProcess();
-    CRM_Core_Session::singleton()->setStatus('Configuration Updated', 'Smart Debit', 'success');
+    CRM_Core_Session::singleton()->setStatus('Configuration Updated', CRM_Smartdebit_Settings::TITLE, 'success');
   }
 
   /**
    * Get the fields/elements defined in this form.
    *
-   * @param keys (boolean) True will return array with keys set instead of values
    * @return array (string)
    */
-  function getRenderableElementNames($keys = FALSE) {
+  public function getRenderableElementNames() {
     // The _elements list includes some items which should not be
-    // auto-rendered in the loop -- such as "qfKey" and "buttons". These
-    // items don't have labels. We'll identify renderable by filtering on
+    // auto-rendered in the loop -- such as "qfKey" and "buttons".  These
+    // items don't have labels.  We'll identify renderable by filtering on
     // the 'label'.
     $elementNames = array();
     foreach ($this->_elements as $element) {
+      /** @var HTML_QuickForm_Element $element */
       $label = $element->getLabel();
       if (!empty($label)) {
-        if ($keys) {
-          $elementNames[$element->getName()] = NULL;
-        }
-        else {
-          $elementNames[] = $element->getName();
-        }
+        $elementNames[] = $element->getName();
       }
     }
     return $elementNames;
@@ -145,24 +136,14 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
    * @return array
    */
   function getFormSettings() {
-    $settings = civicrm_api3('setting', 'getfields', array('filters' => $this->_settingFilter));
-    return $settings;
-  }
-
-  /**
-   * Get the settings we are going to allow to be set on this form.
-   *
-   * @return array
-   */
-  function saveSettings() {
-    $settings = $this->getFormSettings();
-
-    $appendedValues=array();
-    foreach ($this->_submittedValues as $key => $value) {
-      $appendedValues[self::getSettingsPrefix().$key] = $value;
+    $unprefixedSettings = array();
+    $settings = civicrm_api3('setting', 'getfields', array('filters' => CRM_Smartdebit_Settings::getFilter()));
+    if (!empty($settings['values'])) {
+      foreach ($settings['values'] as $name => $values) {
+        $unprefixedSettings[CRM_Smartdebit_Settings::getName($name, FALSE)] = $values;
+      }
     }
-    $values = array_intersect_key($appendedValues, $settings['values']);
-    civicrm_api3('setting', 'create', $values);
+    return $unprefixedSettings;
   }
 
   /**
@@ -172,26 +153,12 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
    */
   function setDefaultValues() {
     $settings = $this->getFormSettings();
-    $values = $settings['values'];
-    $existing = civicrm_api3('setting', 'get', array('return' => array_keys($values)));
+    $existing = CRM_Smartdebit_Settings::get($settings);
     $defaults = array();
-    $domainID = CRM_Core_Config::domainID();
-    foreach ($existing['values'][$domainID] as $name => $value) {
-      $defaults[self::getSettingName($name)] = $value;
+    foreach ($existing as $name => $value) {
+      $defaults[$name] = $value;
     }
     return $defaults;
   }
 
-  /**
-   * Get name of setting
-   * @param: setting name
-   * @prefix: Boolean
-   */
-  public static function getSettingName($name, $prefix = false) {
-    $ret = str_replace(self::getSettingsPrefix(),'',$name);
-    if ($prefix) {
-      $ret = self::getSettingsPrefix().$ret;
-    }
-    return $ret;
-  }
 }

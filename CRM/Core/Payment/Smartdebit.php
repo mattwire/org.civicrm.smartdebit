@@ -652,7 +652,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    * @return bool|int|null|string
    */
   static function getInitialContributionStatus($isRecur = FALSE) {
-    $initialCompleted = (boolean) smartdebit_civicrm_getSetting('initial_completed');
+    $initialCompleted = (boolean) CRM_Smartdebit_Settings::getValue('initial_completed');
 
     if ($initialCompleted) {
       if ($isRecur) {
@@ -668,7 +668,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    * @param $membershipId
    */
   static function updateMembershipStatus($membershipId) {
-    $initialCompleted = (boolean) smartdebit_civicrm_getSetting('initial_completed');
+    $initialCompleted = (boolean) CRM_Smartdebit_Settings::getValue('initial_completed');
 
     if ($initialCompleted) {
       // Force an update of the membership status
