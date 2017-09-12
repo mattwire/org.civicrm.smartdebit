@@ -22,78 +22,71 @@
 | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
 +-------------------------------------------------------------------*}
 
-<div class="crm-block crm-form-block crm-smartdebit-settings-form-block">
+<label class="crm-block crm-form-block crm-smartdebit-settings-form-block">
   <div class="crm-submit-buttons">
     {include file="CRM/common/formButtons.tpl" location="top"}
   </div>
 
   {if $apiStatus}
-    <div class="crm-block crm-smartdebit-apistatus-block">
-      <div class="crm-section">
-        <h3>Smart Debit API Connection</h3>
-        <div>{$apiStatus}</div>
-      </div>
-    </div>
+    <h3>Smart Debit API Connection</h3>
+    <div>{$apiStatus}</div>
     <div class="clear"></div>
   {/if}
 
   {if $sdStatus}
-    <div class="crm-block crm-smartdebit-apistatus-block">
-      <div class="crm-section">
-        <h3>Smart Debit API Status</h3>
-        <div class="label">Response</div>
-        <div class="content">{$sdStatus.statuscode} {$sdStatus.message} {$sdStatus.error}&nbsp;</div>
-      </div>
-      <div class="crm-section">
-        <div class="label">API Version</div>
-        <div class="content">{$sdStatus.api_version}&nbsp;</div>
-      </div>
-      <div class="crm-section">
-        <div class="label">Service Users</div>
-        <div class="content">
+    <h3>Smart Debit API Status</h3>
+    <table class="form-layout-compressed"><tbody>
+      <tr><td>
+          <label>Response</label>
+          {$sdStatus.statuscode} {$sdStatus.message} {$sdStatus.error}&nbsp;
+        </td></tr>
+      <tr><td>
+          <label>API Version</label>
+          {$sdStatus.api_version}
+        </td></tr>
+
+      <tr><td>
+          <label>Service Users</label>
           {foreach from=$sdStatus.user.assigned_service_users.service_user item=pslid}
             {$pslid}
           {/foreach}
-        </div>
-      </div>
-    </div>
-    <div class="clear"></div>
+        </td></tr>
+
+      </tbody></table>
   {/if}
 
   {if $sdStatusTest}
-    <div class="crm-block crm-smartdebit-apistatustest-block">
-      <div class="crm-section">
-        <h3>Smart Debit Test API Status</h3>
-        <div class="label">Response</div>
-        <div class="content">{$sdStatusTest.statuscode} {$sdStatusTest.message} {$sdStatusTest.error}&nbsp;</div>
-      </div>
-      <div class="crm-section">
-        <div class="label">API Version</div>
-        <div class="content">{$sdStatusTest.api_version}&nbsp;</div>
-      </div>
-      <div class="crm-section">
-        <div class="label">Service Users</div>
-        <div class="content">
+    <h3>Smart Debit Test API Status</h3>
+    <table class="form-layout-compressed"><tbody>
+      <tr><td>
+          <label>Response</label>
+          {$sdStatusTest.statuscode} {$sdStatusTest.message} {$sdStatusTest.error}
+        </td></tr>
+      <tr><td>
+          <label>API Version</label>
+          {$sdStatusTest.api_version}
+        </td></tr>
+      <tr><td>
+          <label>Service Users</label>
           {foreach from=$sdStatusTest.user.assigned_service_users.service_user item=pslid}
             {$pslid}
           {/foreach}
-        </div>
-      </div>
-    </div>
-    <div class="clear"></div>
+        </td></tr>
+      </tbody></table>
   {/if}
 
   <h3>Configuration</h3>
-  {foreach from=$elementNames item=elementName}
-    <div class="crm-section">
-      <div class="label">{$form.$elementName.label} {help id=$elementName title=$form.$elementName.label}</div>
-      <div class="content">{$form.$elementName.html}</div>
-      <div class="clear"></div>
-    </div>
-  {/foreach}
+  <table class="form-layout-compressed"><tbody>
+    {foreach from=$elementNames item=elementName}
+      <tr><td>
+          <label for="{$elementName}">{$form.$elementName.label} {help id=$elementName title=$form.$elementName.label}</label>
+          {$form.$elementName.html}
+        </td></tr>
+    {/foreach}
+    </tbody></table>
 
   {* FOOTER *}
   <div class="crm-submit-buttons">
     {include file="CRM/common/formButtons.tpl" location="bottom"}
   </div>
-</div>
+  </div>

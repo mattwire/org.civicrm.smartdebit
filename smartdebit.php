@@ -334,7 +334,7 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
   $item[] = array (
     'label' => ts('Settings', array('domain' => 'org.civicrm.smartdebit')),
     'name'       => 'Settings',
-    'url'        => 'civicrm/smartdebit/settings?reset=1',
+    'url'        => 'civicrm/admin/smartdebit/settings?reset=1',
     'permission' => 'administer CiviCRM',
     'operator'   => NULL,
     'separator'  => NULL,
