@@ -1,3 +1,10 @@
+## Release 1.8
+* Styling changes for settings page to work better with shoreditch theme.
+
+## Release 1.7
+* Define another internal setting so we don't get a fatal error in certain circumstances.
+* Code cleanup.
+
 ## Release 1.6
 * Implement setting to control status of initial contribution (whether to leave in pending state 
 or mark as completed immediately). This allows memberships to become active immediately. Implements [#1](https://github.com/mattwire/org.civicrm.smartdebit/issues/1).

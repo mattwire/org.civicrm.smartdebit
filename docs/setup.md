@@ -1,4 +1,5 @@
-# Smartdebit Account
+# Setup and Configuration
+## Setup with Smartdebit
 You will need an account at Smartdebit with API access.
 
 It will need at least the following parameters configured:
@@ -6,8 +7,9 @@ It will need at least the following parameters configured:
 * Supply payer reference via API: Yes
 * Support Variable DDI: Yes
 * Support Frequency Factor: Yes (if you want anything other than 1 month or 1 year intervals).
+* Support Collection days: For flexibility, allow any at Smartdebit and restrict via Smartdebit Settings in CiviCRM.
 
-# CiviCRM
+## CiviCRM Setup
 Install this extension!
 
 The following menu options will then be available:
@@ -16,25 +18,28 @@ The following menu options will then be available:
 
   * Settings
   * Manual Sync
-  * Run Sync Task
   * Reconcile Transactions
 
 In addition, a scheduled job is installed.  This performs automatic sync of successful and failed payments - whilst you are testing you may wish to disable this job and run manually via the menu options above.
+
+## Configure Payment Processor
+Before you use Smart Debit you need to configure it as a payment processor on your site. 
+!!!tip Normally you would put your test API details in the "Live" section until you are ready to go live.
+
+Configure Live and Test Processors according to the details provided by Smartdebit.
+![Payment Processor](/images/payment_processor.png)
 
 ## Settings
 Each setting has a help icon associated with it - click it for more information.
 ![settings](/images/smartdebit_settings.png)
 
+## Testing
+When using the test Smartdebit API you can use the following account details:
+  * Account Number: any 8 digit number.
+  * Sort Code: 00-00-00.
+
 ## Manual Sync
 This allows you to manually sync collection reports, AUDDIS and ARUDD records from Smart Debit.  Useful if you need to sync for a different period (the default is the last 3 months).
-
-## Payment Processor
-You need to configure a Smart Debit payment processor:
-![civicrm payment processor setup](/images/smartdebit_paymentprocessor.png)
-
-## Run Sync Task
-This does exactly the same as the Scheduled Sync Job, but shows the results via the UI.  You will still need to look at the CiviCRM log file to see if anything went wrong!
-![start sync](/images/smartdebit_startsync.png)
 
 ![sync task complete](/images/smartdebit_sync_complete.png)
 
