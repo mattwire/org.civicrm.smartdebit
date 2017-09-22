@@ -373,6 +373,7 @@ class CRM_Smartdebit_Auddis
 
   /**
    * Remove all collection report date from veda_smartdebit_collectionreports that is older than one month
+   * @return bool
    */
   static function removeOldSmartdebitCollectionReports() {
     $date = new DateTime();
@@ -381,6 +382,7 @@ class CRM_Smartdebit_Auddis
     $query = "DELETE FROM `veda_smartdebit_collectionreports` WHERE receive_date < %1";
     $params = array(1 => array($dateString, 'String'));
     CRM_Core_DAO::executeQuery($query, $params);
+    return TRUE;
   }
 
   /**

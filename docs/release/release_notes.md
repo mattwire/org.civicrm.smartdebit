@@ -1,3 +1,6 @@
+## Release 1.9
+* Don't cleanup old collection reports before they have been used!
+
 ## Release 1.8
 * Styling changes for settings page to work better with shoreditch theme.
 

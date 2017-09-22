@@ -67,7 +67,6 @@ class CRM_Smartdebit_Sync
     if (!isset($collections['error'])) {
       CRM_Smartdebit_Auddis::saveSmartdebitCollectionReport($collections);
     }
-    CRM_Smartdebit_Auddis::removeOldSmartdebitCollectionReports();
 
     CRM_Core_Error::debug_log_message('Smartdebit Sync: Retrieving Smart Debit Payer Contact Details.');
     // Get list of payers from Smartdebit
@@ -156,21 +155,25 @@ class CRM_Smartdebit_Sync
       $queue->createItem($task);
     }
 
-    if (!empty($smartDebitPayerContacts)) {
-      // Setup the Runner
-      $runnerParams = array(
-        'title' => ts('Import From Smart Debit'),
-        'queue' => $queue,
-        'errorMode'=> CRM_Queue_Runner::ERROR_ABORT,
-      );
-      if ($interactive) {
-        $runnerParams['onEndUrl'] = CRM_Utils_System::url(self::END_URL, self::END_PARAMS, TRUE, NULL, FALSE);
-      }
-      $runner = new CRM_Queue_Runner($runnerParams);
+    $task = new CRM_Queue_Task(
+      array('CRM_Smartdebit_Auddis', 'removeOldSmartdebitCollectionReports'),
+      array(),
+      'Clean up old collection reports'
+    );
+    $queue->createItem($task);
 
-      return $runner;
+    // Setup the Runner
+    $runnerParams = array(
+      'title' => ts('Import From Smart Debit'),
+      'queue' => $queue,
+      'errorMode'=> CRM_Queue_Runner::ERROR_ABORT,
+    );
+    if ($interactive) {
+      $runnerParams['onEndUrl'] = CRM_Utils_System::url(self::END_URL, self::END_PARAMS, TRUE, NULL, FALSE);
     }
-    return FALSE;
+    $runner = new CRM_Queue_Runner($runnerParams);
+
+    return $runner;
   }
 
   static function runViaWeb($runner) {
@@ -179,7 +182,7 @@ class CRM_Smartdebit_Sync
       $runner->runAllViaWeb();
     }
     else {
-      CRM_Core_Session::setStatus(ts('Nothing to pull. Make sure smart debit settings are correctly configured in the payment processor setting page'));
+      CRM_Core_Session::setStatus(ts('No records were synchronised.'));
       $url = CRM_Utils_System::url(CRM_Smartdebit_Sync::END_URL, CRM_Smartdebit_Sync::END_PARAMS, TRUE, NULL, FALSE);
       CRM_Utils_System::redirect($url);
     }

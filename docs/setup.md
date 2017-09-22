@@ -23,8 +23,10 @@ The following menu options will then be available:
 In addition, a scheduled job is installed.  This performs automatic sync of successful and failed payments - whilst you are testing you may wish to disable this job and run manually via the menu options above.
 
 ## Configure Payment Processor
-Before you use Smart Debit you need to configure it as a payment processor on your site. 
-!!!tip Normally you would put your test API details in the "Live" section until you are ready to go live.
+Before you use Smart Debit you need to configure it as a payment processor on your site.
+ 
+!!! tip "Testing" 
+    Normally you would put your test API details in the "Live" section until you are ready to go live.
 
 Configure Live and Test Processors according to the details provided by Smartdebit.
 ![Payment Processor](/images/payment_processor.png)
@@ -35,6 +37,7 @@ Each setting has a help icon associated with it - click it for more information.
 
 ## Testing
 When using the test Smartdebit API you can use the following account details:
+
   * Account Number: any 8 digit number.
   * Sort Code: 00-00-00.
 

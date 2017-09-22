@@ -38,16 +38,19 @@ function civicrm_api3_smartdebit_sync($params) {
   if ($runner) {
     $result = $runner->runAll();
   }
+  else {
+    return civicrm_api3_create_error('No records to be synchronised.  If you have records in Smartdebit try reconciling them with CiviCRM.');
+  }
 
   if ($result && !isset($result['is_error'])) {
     return civicrm_api3_create_success();
   }
   else {
     $msg = '';
-    if (isset($result)) {
+    if (!empty($result['exception'])) {
       $msg .= $result['exception']->getMessage() . '; ';
     }
-    if (isset($result['last_task_title'])) {
+    if (!empty($result['last_task_title'])) {
       $msg .= $result['last_task_title'] .'; ';
     }
     return civicrm_api3_create_error($msg);
