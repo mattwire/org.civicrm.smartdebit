@@ -537,6 +537,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     $smartDebitParams['variable_ddi[frequency_type]'] = $collectionFrequency;
     $smartDebitParams['variable_ddi[frequency_factor]'] = $collectionInterval;
 
+    CRM_Smartdebit_Hook::alterSmartdebitCreateVariableDDIParams($fields, $smartDebitParams);
+
     return $smartDebitParams;
   }
 

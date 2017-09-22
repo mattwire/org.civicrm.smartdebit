@@ -332,7 +332,7 @@ class CRM_Smartdebit_Sync
     $contributeParams['source'] = 'Smart Debit: ' . $collectionDescription;
 
     // Allow params to be modified via hook
-    CRM_Smartdebit_Utils_Hook::alterSmartdebitContributionParams($contributeParams);
+    CRM_Smartdebit_Hook::alterSmartdebitContributionParams($contributeParams);
 
     $contributeResult = CRM_Smartdebit_Base::createContribution($contributeParams);
 
@@ -424,7 +424,7 @@ class CRM_Smartdebit_Sync
         );
 
         // Allow auddis rejected contribution to be handled by hook
-        CRM_Smartdebit_Utils_Hook::handleAuddisRejectedContribution($contributionId);
+        CRM_Smartdebit_Hook::handleAuddisRejectedContribution($contributionId);
       } else {
         CRM_Core_Error::debug_log_message('Smartdebit processAuddis: ' . $value[$refKey] . ' NOT matched to contribution in CiviCRM - try reconciliation.');
         $errors = TRUE;
