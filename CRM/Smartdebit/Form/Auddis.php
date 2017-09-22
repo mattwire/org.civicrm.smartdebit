@@ -187,9 +187,6 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
           'transaction_id' => $dao->trxn_id,
         );
 
-        // Allow params to be validated via hook
-        CRM_Smartdebit_Utils_Hook::validateSmartdebitContributionParams($params);
-
         $listArray[$counts['contribution_matched']] = $params;
         $counts['contribution_matched']++;
         $counts['contribution_matched_amount'] += $dao->amount;

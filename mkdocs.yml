@@ -24,4 +24,5 @@ pages:
 - Advanced:
   - Manual Sync: sync_manual.md
   - Reconciling Transactions: reconcile.md
+  - Hooks: hooks.md
 - Release Notes: release/release_notes.md
