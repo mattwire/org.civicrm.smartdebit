@@ -1,4 +1,5 @@
 ## Release 1.9
+* Add and document hooks.
 * Don't cleanup old collection reports before they have been used!
 
 ## Release 1.8
