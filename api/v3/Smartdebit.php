@@ -39,7 +39,7 @@ function civicrm_api3_smartdebit_sync($params) {
     $result = $runner->runAll();
   }
   else {
-    return civicrm_api3_create_error('No records to be synchronised.  If you have records in Smartdebit try reconciling them with CiviCRM.');
+    return civicrm_api3_create_error('No records could be matched to collection reports.  If you have collection reports in Smartdebit try a manual sync or reconcile.');
   }
 
   if ($result && !isset($result['is_error'])) {
