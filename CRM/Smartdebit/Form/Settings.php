@@ -153,10 +153,13 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
    */
   function setDefaultValues() {
     $settings = $this->getFormSettings();
-    $existing = CRM_Smartdebit_Settings::get($settings);
     $defaults = array();
-    foreach ($existing as $name => $value) {
-      $defaults[$name] = $value;
+
+    $existing = CRM_Smartdebit_Settings::get($settings);
+    if ($existing) {
+      foreach ($existing as $name => $value) {
+        $defaults[$name] = $value;
+      }
     }
     return $defaults;
   }
