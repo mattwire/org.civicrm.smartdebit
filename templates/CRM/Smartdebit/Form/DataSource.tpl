@@ -25,13 +25,17 @@
 <h3>{ts}Select the date you wish to import data for:{/ts}</h3>
 <div class="crm-block crm-form-block crm-export-form-block">
   <div class="description">
-    <p>{ts}CiviCRM will attempt to retrieve AUDDIS and ARUDD records for a {$period} period ending with the date you specify here.{/ts}</p>
+    <p>{ts}CiviCRM will attempt to retrieve Collection Reports, AUDDIS and ARUDD records from Smartdebit for a {$period} period ending with the date you specify here.{/ts}</p>
   </div>
   <div class="help">
-        <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}This should not normally be necessary as the collection reports are retrieved daily by the SmartDebit scheduled job.
-          <strong>If you specify a date here the collection report data will be refreshed and {$period} of data re-synced from SmartDebit (this will take a few minutes when you submit).</strong>
-        If you don't specify a date the cached data will not be modified.{/ts}<br/>
-      <strong>{ts}If you are importing latest payments (up to {$period} old) you should not need to enter a date here.{/ts}</strong></span>
+        <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}The Smartdebit scheduled job automatically synchronises and caches the latest daily collection report.
+          Collection reports older than {$period} will be removed from the local cache.{/ts}
+          <ul>
+            <li>{ts}If you specify a date here the local cache will be cleared and {$period} up to the specified date will be retrieved (this may take a few minutes).{/ts}</li>
+            <li>{ts}If you don't specify a date the cached data will not be modified and ONLY the latest daily report will be retrieved.{/ts}</li>
+            <li><strong>{ts}If you have recently installed the smartdebit extension you should specify today's date here to force an update of the local cache for the last {$period} period.{/ts}</strong></li>
+          </ul>
+      </span>
   </div>
   <div class="crm-block crm-form-block crm-campaignmonitor-sync-form-block">
     <div class="crm-submit-buttons">
@@ -49,7 +53,7 @@
       {literal}
       // Date picker
       var dateOptions = {
-          dateFormat: 'yy-mm-dd', time: false, allowClear: true,
+        dateFormat: 'yy-mm-dd', time: false, allowClear: true,
       };
       cj('#collection_date').crmDatepicker(dateOptions);
     </script>
