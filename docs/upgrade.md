@@ -32,3 +32,8 @@ If you follow the instructions below the payment processor configuration will be
 
 * Change Payment processor type back to Smart_Debit in CiviCRM UI
 * Configure Smart debit extension (civicrm/smartdebit/settings)
+
+!!! tip "Cached collection reports"
+    If upgrading from a previous version it is likely that you will need to rebuild the collection reports 
+    cache in CiviCRM.  This can be done by running a manual sync and specifying todays date - see 
+    [Manual Sync](/sync_manual.md)
