@@ -36,9 +36,33 @@ class CRM_Smartdebit_Utils {
    */
   static function getContactMemberships($contactId, $membershipId = NULL) {
     // Get memberships for contact
-    $membershipDetails = CRM_Member_BAO_Membership::getAllContactMembership($contactId);
+    $memberParams['contact_id'] = $contactId;
+    if (!empty($membershipId)) {
+      $memberParams['id'] = $membershipId;
+    }
 
-    $membershipOptions = null;
+    $memberships = civicrm_api3('Membership', 'get', array(
+      'contact_id' => $contactId,
+    ));
+
+    $membershipOptions = array();
+
+    // If we want a list of memberships, add the donation (no membership) option
+    if (empty($membershipId)) {
+      $membershipOptions['donation'] = 'Donation';
+    }
+
+    // If no memberships for contact...
+    if (empty($memberships['count'])) {
+      if (!empty($membershipId)) {
+        // We wanted a specific membership but couldn't find it
+        return NULL;
+      }
+      // Return the donation option.
+      return $membershipOptions;
+    }
+
+    $membershipDetails = $memberships['values'];
 
     // Build membershipOptions array
     foreach ($membershipDetails as $mId => $detail) {
@@ -72,15 +96,7 @@ class CRM_Smartdebit_Utils {
         $membershipOptions[$detail['id']] = $type.'/'.$status.'/'.$start_date.'/'.$end_date;
       }
     }
-    if (empty($membershipId)) {
-      // We wanted a list of memberships for the contact
-      $membershipOptions['donation'] = 'Donation';
-      return $membershipOptions;
-    }
-    else {
-      // We wanted a specific membership but couldn't find it
-      return NULL;
-    }
+    return $membershipOptions;
   }
 
   /**

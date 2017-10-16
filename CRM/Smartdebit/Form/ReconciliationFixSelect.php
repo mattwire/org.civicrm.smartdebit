@@ -59,7 +59,6 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
       , array( '' => ts('Loading...'))
     );
 
-    //$this->addElement('text', 'contact_name', 'Contact', array('size' => 50, 'maxlength' => 255));
     $this->addEntityRef('contact_name', ts('Contact'), array(
       'create' => FALSE,
       'api' => array('extra' => array('email')),
