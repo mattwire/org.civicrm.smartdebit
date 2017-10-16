@@ -32,13 +32,10 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
   CONST c_current_membership_status = "Current"; // MV, to set current membership as default 
 
   public function preProcess() {
-    if ($this->_flagSubmitted) return;
     parent::preProcess();
   }
 
   public function buildQuickForm() {
-    if ($this->_flagSubmitted) return;
-
     // Don't try and load form if no reference number is specified!
     $reference_number = CRM_Utils_Request::retrieve('reference_number', 'String');
     if (empty($reference_number)) {
@@ -67,7 +64,8 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
       'create' => FALSE,
       'api' => array('extra' => array('email')),
     ));
-    $this->addElement('hidden', 'cid', 'cid');
+
+    $this->addElement('hidden', 'cid', $cid);
     $this->addElement('text', 'reference_number', 'Smart Debit Reference', array('size' => 50, 'maxlength' => 255));
     $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/list', 'reset=1');
     $buttons[] = array(
@@ -127,8 +125,6 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
    * @return array
    */
   public function setDefaultValues() {
-    if ($this->_flagSubmitted) return;
-
     $defaults = array();
     $defaults['reference_number'] = CRM_Utils_Array::value('reference_number', $_GET);
     $defaults['cid']              = CRM_Utils_Array::value('cid', $_GET);

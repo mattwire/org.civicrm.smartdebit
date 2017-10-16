@@ -32,18 +32,16 @@
 class CRM_Smartdebit_Form_ReconciliationFixConfirm extends CRM_Core_Form {
 
   public function buildQuickForm() {
-    if ($this->_flagSubmitted) return;
-
     // Get parameters
     $cid = CRM_Utils_Array::value('cid', $_GET);
     $mid = CRM_Utils_Array::value('mid', $_GET);
     $cr_id = CRM_Utils_Array::value('cr_id', $_GET);
     $reference_number = CRM_Utils_Array::value('reference_number', $_GET);
-    $this->addElement('hidden', 'cid', 'cid');
-    $this->addElement('hidden', 'mid');
-    $this->addElement('hidden', 'cr_id');
-    $this->addElement('hidden', 'reference_number');
-    //$this->assign('elementNames', $this->getRenderableElementNames());
+    $this->addElement('hidden', 'cid', $cid);
+    $this->addElement('hidden', 'mid', $mid);
+    $this->addElement('hidden', 'cr_id', $cr_id);
+    $this->addElement('hidden', 'reference_number', $reference_number);
+
     $this->assign('reference_number', $reference_number);
     // Get contact details if set
     if(!empty($cid)){
@@ -78,24 +76,6 @@ class CRM_Smartdebit_Form_ReconciliationFixConfirm extends CRM_Core_Form {
 
     CRM_Utils_System::setTitle('Confirm changes to Contact');
     parent::buildQuickForm();
-  }
-
-  /**
-   * This function sets the default values for the form.
-   *
-   * @access public
-   *
-   * @return array
-   */
-  public function setDefaultValues() {
-    if ($this->_flagSubmitted) return;
-
-    $defaults = array();
-    $defaults['reference_number'] = CRM_Utils_Array::value('reference_number', $_GET);
-    $defaults['cid']              = CRM_Utils_Array::value('cid', $_GET);
-    $defaults['mid']              = CRM_Utils_Array::value('mid', $_GET);
-    $defaults['cr_id']              = CRM_Utils_Array::value('cr_id', $_GET);
-    return $defaults;
   }
 
   public function postProcess()
