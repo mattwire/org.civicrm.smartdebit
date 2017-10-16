@@ -1,3 +1,6 @@
+## Release 1.10
+* Fixes to reconciliation wizard.
+
 ## Release 1.9
 * Add and document hooks.
 * Don't cleanup old collection reports before they have been used!
