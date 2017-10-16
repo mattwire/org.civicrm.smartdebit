@@ -43,12 +43,19 @@ class CRM_Smartdebit_Form_ReconciliationFixConfirm extends CRM_Core_Form {
     $this->addElement('hidden', 'reference_number', $reference_number);
 
     $this->assign('reference_number', $reference_number);
+
+    // Get the smart Debit mandate details
+    if (CRM_Utils_Array::value('reference_number', $_GET)) {
+      $smartDebitResponse = CRM_Smartdebit_Api::getPayerContactDetails(CRM_Utils_Array::value('reference_number', $_GET));
+      $smartDebitMandate = $smartDebitResponse[0];
+      $this->assign('SDMandateArray', $smartDebitMandate);
+    }
+
     // Get contact details if set
     if(!empty($cid)){
       $contact = CRM_Smartdebit_Utils::getContactDetails($cid);
       $address = CRM_Smartdebit_Utils::getContactAddress($cid);
       $this->assign('aContact', $contact);
-      $this->assign('aAddress', $address);
     }
     // If 'Donation' option is chosen for membership, don't process
     if(!empty($mid) && $mid != 'donation') {

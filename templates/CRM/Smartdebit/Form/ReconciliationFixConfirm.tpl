@@ -51,17 +51,17 @@
       {/if}
     </tr>
     <tr>
-      {if !empty($aAddress) }
         <td>
           <strong>Address:</strong>
         </td>
         <td>
-          {$aAddress.street_address} <br />
-          {$aAddress.city} <br />
-          {$aAddress.country_id} <br />
-          {$aAddress.postal_code} <br />
+          <span>{$SDMandateArray.address_1}</span><br>
+          {if $SDMandateArray.address_2}<span>{$SDMandateArray.address_2}</span><br>{/if}
+          {if $SDMandateArray.address_3}<span>{$SDMandateArray.address_3}</span><br>{/if}
+          <span>{$SDMandateArray.town}</span><br>
+          {if $SDMandateArray.county}<span>{$SDMandateArray.county}</span><br>{/if}
+          <span>{$SDMandateArray.postcode}</span><br>
         </td>
-      {/if}
     </tr>
     {if !empty($aMembership)}
       <tr>

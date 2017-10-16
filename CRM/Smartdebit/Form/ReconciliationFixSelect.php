@@ -143,6 +143,5 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
     $params = sprintf('cid=%d&mid=%d&cr_id=%d&reference_number=%s', $cid, $mid, $cr_id, $reference_number);
     $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/fix/confirm', $params);
     CRM_Core_Session::singleton()->pushUserContext($url);
-    parent::postProcess();
   }
 }

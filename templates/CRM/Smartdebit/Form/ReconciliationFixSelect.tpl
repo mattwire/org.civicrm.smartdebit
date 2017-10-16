@@ -63,7 +63,6 @@
         <span>{$SDMandateArray.town}</span><br>
         {if $SDMandateArray.county}<span>{$SDMandateArray.county}</span><br>{/if}
         <span>{$SDMandateArray.postcode}</span><br>
-
       </td>
     </tr>
     <tr>
@@ -197,9 +196,7 @@
           var val = cj('#membership_record option:selected').text();
           var getTemplateContentUrl = {/literal}"{crmURL p='civicrm/ajax/rest' h=0 q='className=CRM_Smartdebit_Page_AJAX&fnName=getNotLinkedRecurringByContactID&json=1'}";{literal}
           var data = cj( '#contact_name' ).select2('data');
-          var cid = null;
-          ( data !== null) ? cid = data.id : cid = null;
-          cj('input[name=cid]').val(cid);
+          var cid = cj('input[name=cid]').val();
           if (cid !== null) {
               cj.ajax({
                   url: getTemplateContentUrl,
