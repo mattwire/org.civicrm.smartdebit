@@ -381,11 +381,28 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    */
   static function getUserEmail(&$params)
   {
+    $useremail = NULL;
     // Set email
     if (!empty($params['email-Primary'])) {
       $useremail = $params['email-Primary'];
-    } else {
+    }
+    elseif (!empty($params['email-5'])) {
       $useremail = $params['email-5'];
+    }
+    else {
+      // Get email from contact ID
+      $contactId = CRM_Utils_Array::value('cid', $_REQUEST);
+      try {
+        $emailResult = civicrm_api3('Email', 'getsingle', array(
+          'contact_id' => $contactId,
+          'options' => array('limit' => 1, 'sort' => "is_primary DESC"),
+        ));
+        $useremail = $emailResult['email'];
+      }
+      catch (CiviCRM_API3_Exception $e) {
+        // No email found!
+        Civi::log()->warning('Smartdebit getUserEmail: Contact '. $contactId . ' has no email address!');
+      }
     }
     return $useremail;
   }
