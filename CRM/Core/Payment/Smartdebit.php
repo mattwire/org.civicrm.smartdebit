@@ -149,6 +149,17 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     // Set ddi_reference
     $defaults = array();
     $defaults['ddi_reference'] = CRM_Smartdebit_Base::getDDIReference();
+    // Set preferred collection day default to the first choice.
+    $collectionDaysArray = CRM_Smartdebit_Base::getCollectionDaysOptions();
+    if (count($collectionDaysArray) > 0) {
+      $defaults['preferred_collection_day'] = reset(array_keys($collectionDaysArray));
+    }
+
+    // Set default confirmby option
+    $confirmBy = CRM_Smartdebit_Base::getConfirmByOptions();
+    if (count($confirmBy) > 0) {
+      $defaults['confirmation_method'] = reset(array_keys($confirmBy));
+    }
     $form->setDefaults($defaults);
 
     // Add help and javascript
@@ -276,6 +287,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   public function getPaymentFormFieldsMetadata() {
     // Get the collection days options
     $collectionDaysArray = CRM_Smartdebit_Base::getCollectionDaysOptions();
+    $confirmBy = CRM_Smartdebit_Base::getConfirmByOptions();
 
     return array(
       'account_holder' => array(
@@ -325,7 +337,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         'is_required' => TRUE
       ),
       'preferred_collection_day' => array(
-        'htmlType' => 'select',
+        'htmlType' => (count($collectionDaysArray) > 1) ? 'select' : 'hidden',
         'name' => 'preferred_collection_day',
         'title' => ts('Preferred Collection Day'),
         'cc_field' => TRUE,
@@ -333,13 +345,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         'is_required' => TRUE
       ),
       'confirmation_method' => array(
-        'htmlType' => 'select',
+        'htmlType' => (count($confirmBy) > 1) ? 'select' : 'hidden',
         'name' => 'confirmation_method',
         'title' => ts('Confirm By'),
         'cc_field' => TRUE,
-        'attributes' => array('EMAIL' => 'Email'
-        , 'POST' => 'Post'
-        ),
+        'attributes' => $confirmBy,
         'is_required' => TRUE
       ),
       'payer_confirmation' => array(

@@ -101,7 +101,15 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
 
   function postProcess() {
     $changed = $this->_submitValues;
-    $settings = $this->getFormSettings(FALSE);
+    $settings = $this->getFormSettings(TRUE);
+    foreach ($settings as &$setting) {
+      if ($setting['html_type'] == 'Checkbox') {
+        $setting = false;
+      }
+      else {
+        $setting = NULL;
+      }
+    }
     // Make sure we have all settings elements set (boolean settings will be unset by default and wouldn't be saved)
     $settingsToSave = array_merge($settings, array_intersect_key($changed, $settings));
     CRM_Smartdebit_Settings::save($settingsToSave);

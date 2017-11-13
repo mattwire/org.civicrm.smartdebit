@@ -268,6 +268,28 @@ WHERE  ddi_reference = %0";
   }
 
   /**
+   * Function will return the possible confirm by options
+   * @return mixed
+   */
+  static function getConfirmByOptions() {
+    $confirmBy['EMAIL'] = (boolean) CRM_Smartdebit_Settings::getValue('confirmby_email');
+    $confirmBy['POST'] = (boolean) CRM_Smartdebit_Settings::getValue('confirmby_post');
+    if (!empty($confirmBy['EMAIL'])) {
+      $confirmBy['EMAIL'] = 'Email';
+    }
+    else {
+      unset($confirmBy['EMAIL']);
+    }
+    if (!empty($confirmBy['POST'])) {
+      $confirmBy['POST'] = 'Post';
+    }
+    else {
+      unset($confirmBy['POST']);
+    }
+    return $confirmBy;
+  }
+
+  /**
    * Create a Direct Debit Sign Up Activity for contact
    *
    * @param $params

@@ -169,6 +169,38 @@ return array(
     ),
   ),
 
+  //Confirm by
+  'smartdebit_confirmby_post' => array(
+    'group_name' => 'Smart Debit Settings',
+    'group' => 'smartdebit',
+    'name' => 'smartdebit_confirmby_post',
+    'type' => 'Boolean',
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'default' => 1,
+    'description' => 'Allow payer to receive direct debit confirmation by post',
+    'html_type' => 'Checkbox',
+    'html_attributes' => array(
+    ),
+  ),
+
+  //Confirm by
+  'smartdebit_confirmby_email' => array(
+    'group_name' => 'Smart Debit Settings',
+    'group' => 'smartdebit',
+    'name' => 'smartdebit_confirmby_email',
+    'type' => 'Boolean',
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'default' => 1,
+    'description' => 'Allow payer to receive direct debit confirmation by email',
+    'html_type' => 'Checkbox',
+    'html_attributes' => array(
+    ),
+  ),
+
   // Internal settings for stats
   //transaction_prefix
   'smartdebit_rejected_auddis' => array(
