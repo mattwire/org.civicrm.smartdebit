@@ -644,8 +644,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
           'amount' => $params['amount'],
           'frequency_unit' => 'year',
           'frequency_interval' => '1',
-          'trxn_id'	=> $params['trxn_id'],
-          'financial_type_id'	=> $financialType->id,
+          'trxn_id' => $params['trxn_id'],
+          'financial_type_id' => $financialType->id,
           'auto_renew' => '0', // Make auto renew
           'cycle_day' => $params['preferred_collection_day'],
           'currency' => $params['currencyID'],
@@ -657,12 +657,27 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         $params['contributionRecurID'] = $recur['id'];
         $params['contribution_recur_id'] = $recur['id'];
         // We need to link the recurring contribution and contribution record, as Civi won't do it for us (4.7.21)
-        $contributionParams['id'] = $params['contributionID'];
-        $contributionParams['contribution_recur_id'] = $params['contribution_recur_id'];
-        $contributionParams['contact_id'] = $params['contactID'];
-        $contributionParams['contribution_status_id'] = self::getInitialContributionStatus(FALSE);
-        civicrm_api3('Contribution', 'create', $contributionParams);
-        $params['is_recur'] = 1; // Required for CRM_Core_Payment to set contribution status = Pending
+        $contributionParams = array(
+          'contribution_recur_id' => $params['contribution_recur_id'],
+          'contact_id' => $params['contactID'],
+          'contribution_status_id' => self::getInitialContributionStatus(FALSE),
+        );
+        if (empty($params['contributionID'])) {
+          Civi::log()->debug('Smartdebit: No contribution ID specified.  Is this a non-recur transaction?');
+        }
+        else {
+          $contributionParams['id'] = $params['contributionID'];
+          civicrm_api3('Contribution', 'create', $contributionParams);
+        }
+        if ($contributionParams['contribution_status_id'] ==
+          CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending')) {
+          $params['is_recur'] = 1; // Required for CRM_Core_Payment to set contribution status = Pending
+        }
+      }
+
+      // We need to set this to ensure that contributions are set to the correct status
+      if (!empty($contributionParams['contribution_status_id'])) {
+        $params['payment_status_id'] = $contributionParams['contribution_status_id'];
       }
 
       // Check and update membership
