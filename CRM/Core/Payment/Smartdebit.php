@@ -182,22 +182,12 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
     $smartDebitParams = self::preparePostArray($values);
 
-    // Construct post string
-    $post = '';
-    foreach ($smartDebitParams as $key => $value) {
-      $post .= ($key != 'variable_ddi[service_user][pslid]' ? '&' : '') . $key . '=' . urlencode($value);
-    }
-
     // Get the API Username and Password
     $username = $this->_paymentProcessor['user_name'];
     $password = $this->_paymentProcessor['password'];
 
-    // Send payment POST to the target URL
-    $url = $this->_paymentProcessor['url_api'];
-
-    $request_path = 'api/ddi/variable/validate';
-
-    $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
+    $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/validate');
+    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
 
     $direct_debit_response = array();
     $direct_debit_response['data_type'] = 'recurring';
@@ -426,7 +416,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    *
    * @return array (string Y,Q,M,W,O; int frequencyInterval)
    */
-  static function getCollectionFrequency(&$params)
+  static function getCollectionFrequency($params)
   {
     // Smart Debit supports Y, Q, M, W parameters
     // We return 'O' if the payment is not recurring.  You should then supply an end date to smart debit
@@ -488,6 +478,20 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     return array($collectionFrequency, $frequencyInterval);
   }
 
+  static function getCollectionFrequencyPostParams($params) {
+    $collectionDate = self::getCollectionStartDate($params);
+    list($collectionFrequency, $collectionInterval) = self::getCollectionFrequency($params);
+    if ($collectionFrequency == 'O') {
+      $collectionFrequency = 'Y';
+      // Set end date 6 days after start date (min DD freq with Smart Debit is 1 week/7days)
+      $endDate = $collectionDate->add(new DateInterval('P6D'));
+      $smartDebitParams['variable_ddi[end_date]'] = $endDate->format("Y-m-d");
+    }
+    $smartDebitParams['variable_ddi[frequency_type]'] = $collectionFrequency;
+    $smartDebitParams['variable_ddi[frequency_factor]'] = $collectionInterval;
+    return $smartDebitParams;
+  }
+
   /**
    * Replace comma with space
    * @param $pString
@@ -500,71 +504,76 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
   /**
    * Prepare Post Array for POSTing to Smart Debit APi
-   * @param $fields
+   *
+   * @param $params
    * @param null $self
+   *
    * @return array
    */
-  private function preparePostArray($fields)
+  private function preparePostArray($params)
   {
-    $collectionDate = self::getCollectionStartDate($fields);
-    $amount = 0;
-    $serviceUserId = NULL;
-    if (isset($fields['amount'])) {
-      // Set amount in pence if not already set that way.
-      $amount = $fields['amount'];
-      // $amount might be a string (?) e.g. £12.00, so try just in case
-      try {
-        $amount = $amount * 100;
-      } catch (Exception $e) {
-        //Leave amount as it was
-        $amount = $fields['amount'];
+    // When passed in from backend forms via AJAX (ie. select from multiple payprocs
+    //  $params is not fully set for doDirectPayment, but $_REQUEST has the missing info
+    foreach ($_REQUEST as $key => $value) {
+      if (!isset($params[$key])) {
+        $params[$key] = CRM_Utils_Array::value($key, $_REQUEST);
       }
     }
+
+    $collectionDate = self::getCollectionStartDate($params);
+    $serviceUserId = NULL;
+    if (!empty($params['amount'])) {
+      $amount = $params['amount'];
+    }
+    elseif (!empty($params['total_amount'])) {
+      $amount = $params['total_amount'];
+    }
+    else {
+      $amount = 0;
+    }
+    $amount = CRM_Smartdebit_Api::encodeAmount($amount);
 
     if (isset($this->_paymentProcessor['signature'])) {
       $serviceUserId = $this->_paymentProcessor['signature'];
     }
 
-    if (isset($fields['contactID'])) {
-      $payerReference = $fields['contactID'];
-    } elseif (isset($fields['cms_contactID'])) {
-      $payerReference = $fields['cms_contactID'];
-    } else {
+    if (isset($params['contactID'])) {
+      $payerReference = $params['contactID'];
+    }
+    elseif (isset($params['cms_contactID'])) {
+      $payerReference = $params['cms_contactID'];
+    }
+    elseif (isset($_REQUEST['cid'])) {
+      $payerReference = CRM_Utils_Array::value('cid', $_REQUEST);
+    }
+    else {
       $payerReference = 'CIVICRMEXT';
     }
 
     // Construct params list to send to Smart Debit ...
     $smartDebitParams = array(
       'variable_ddi[service_user][pslid]' => $serviceUserId,
-      'variable_ddi[reference_number]' => $fields['ddi_reference'],
+      'variable_ddi[reference_number]' => $params['ddi_reference'],
       'variable_ddi[payer_reference]' => $payerReference,
-      'variable_ddi[first_name]' => $fields['billing_first_name'],
-      'variable_ddi[last_name]' => $fields['billing_last_name'],
-      'variable_ddi[address_1]' => self::replaceCommaWithSpace($fields['billing_street_address-5']),
-      'variable_ddi[town]' => self::replaceCommaWithSpace($fields['billing_city-5']),
-      'variable_ddi[postcode]' => $fields['billing_postal_code-5'],
-      'variable_ddi[country]' => $fields['billing_country_id-5'],
-      'variable_ddi[account_name]' => $fields['account_holder'],
-      'variable_ddi[sort_code]' => $fields['bank_identification_number'],
-      'variable_ddi[account_number]' => $fields['bank_account_number'],
+      'variable_ddi[first_name]' => $params['billing_first_name'],
+      'variable_ddi[last_name]' => $params['billing_last_name'],
+      'variable_ddi[address_1]' => self::replaceCommaWithSpace($params['billing_street_address-5']),
+      'variable_ddi[town]' => self::replaceCommaWithSpace($params['billing_city-5']),
+      'variable_ddi[postcode]' => $params['billing_postal_code-5'],
+      'variable_ddi[country]' => $params['billing_country_id-5'],
+      'variable_ddi[account_name]' => $params['account_holder'],
+      'variable_ddi[sort_code]' => $params['bank_identification_number'],
+      'variable_ddi[account_number]' => $params['bank_account_number'],
       'variable_ddi[regular_amount]' => $amount,
       'variable_ddi[first_amount]' => $amount,
       'variable_ddi[default_amount]' => $amount,
       'variable_ddi[start_date]' => $collectionDate->format("Y-m-d"),
-      'variable_ddi[email_address]' => self::getUserEmail($fields),
+      'variable_ddi[email_address]' => self::getUserEmail($params),
     );
 
-    list($collectionFrequency, $collectionInterval) = self::getCollectionFrequency($fields);
-    if ($collectionFrequency == 'O') {
-      $collectionFrequency = 'Y';
-      // Set end date 6 days after start date (min DD freq with Smart Debit is 1 week/7days)
-      $endDate = $collectionDate->add(new DateInterval('P6D'));
-      $smartDebitParams['variable_ddi[end_date]'] = $endDate->format("Y-m-d");
-    }
-    $smartDebitParams['variable_ddi[frequency_type]'] = $collectionFrequency;
-    $smartDebitParams['variable_ddi[frequency_factor]'] = $collectionInterval;
+    $smartDebitParams = array_merge((array)$smartDebitParams, (array)self::getCollectionFrequencyPostParams($params));
 
-    CRM_Smartdebit_Hook::alterSmartdebitCreateVariableDDIParams($fields, $smartDebitParams);
+    CRM_Smartdebit_Hook::alterSmartdebitCreateVariableDDIParams($params, $smartDebitParams);
 
     return $smartDebitParams;
   }
@@ -582,20 +591,12 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     $smartDebitParams = self::preparePostArray($params);
     $serviceUserId = $this->_paymentProcessor['signature'];
 
-    // Construct post string
-    $post = '';
-    foreach ($smartDebitParams as $key => $value) {
-      $post .= ($key != 'variable_ddi[service_user][pslid]' ? '&' : '') . $key . '=' . ($key != 'variable_ddi[service_user][pslid]' ? urlencode($value) : $serviceUserId);
-    }
     // Get the API Username and Password
     $username = $this->_paymentProcessor['user_name'];
     $password = $this->_paymentProcessor['password'];
 
-    // Send payment POST to the target URL
-    $url = $this->_paymentProcessor['url_api'];
-    $request_path = 'api/ddi/variable/create';
-
-    $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
+    $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/create');
+    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
 
     // Take action based upon the response status
     if ($response['success']) {
@@ -626,9 +627,12 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         // Update the recurring payment
         civicrm_api3('ContributionRecur', 'create', $recurParams);
         // Update the contribution status
-        $contributionParams['id'] = $params['contributionID'];
-        $contributionParams['contribution_status_id'] = self::getInitialContributionStatus(FALSE);
-        civicrm_api3('Contribution', 'create', $contributionParams);
+        if (!empty($params['contributionID'])) {
+          // contributionID not set if we're creating a pledge
+          $contributionParams['id'] = $params['contributionID'];
+          $contributionParams['contribution_status_id'] = self::getInitialContributionStatus(FALSE);
+          civicrm_api3('Contribution', 'create', $contributionParams);
+        }
       }
       else {
         // No recurring transaction, assume this is a non-recurring payment (so create a recurring contribution with a single installment
@@ -780,66 +784,77 @@ UPDATE civicrm_direct_debit SET
    * Change the subscription amount using the Smart Debit API
    * @param string $message
    * @param array $params
-   * @return bool
+   *
+   * @return array|bool|object
    */
-  function changeSubscriptionAmount(&$message = '', $params = array())
+  public function changeSubscriptionAmount(&$message = '', $params = array())
   {
-    if ($this->_paymentProcessor['payment_processor_type'] == 'Smart_Debit') {
-      $post = '';
-      $serviceUserId = $this->_paymentProcessor['signature'];
-      $username = $this->_paymentProcessor['user_name'];
-      $password = $this->_paymentProcessor['password'];
-      $url = $this->_paymentProcessor['url_api'];
-      $accountHolder = $params['account_holder'];
-      $accountNumber = $params['bank_account_number'];
-      $sortcode = $params['bank_identification_number'];
-      $amount = $params['amount'];
-      $amount = $amount * 100;
-      $reference = $params['subscriptionId'];
-      $frequencyType = $params['frequency_unit'];
-      $eDate = $params['end_date'];
-      $sDate = $params['start_date'];
-
-      if (!empty($eDate)) {
-        $endDate = strtotime($eDate);
-        $endDate = date("Y-m-d", $endDate);
-      }
-
-      if (!empty($sDate)) {
-        $startDate = strtotime($sDate);
-        $startDate = date("Y-m-d", $startDate);
-      }
-
-      $request_path = 'api/ddi/variable/' . $reference . '/update';
-
-      $smartDebitParams = array(
-        'variable_ddi[service_user][pslid]' => $serviceUserId,
-        'variable_ddi[reference_number]' => $reference,
-        'variable_ddi[regular_amount]' => $amount,
-        'variable_ddi[first_amount]' => $amount,
-        'variable_ddi[default_amount]' => $amount,
-        'variable_ddi[start_date]' => $startDate,
-        'variable_ddi[end_date]' => $endDate,
-        'variable_ddi[account_name]' => $accountHolder,
-        'variable_ddi[sort_code]' => $sortcode,
-        'variable_ddi[account_number]' => $accountNumber,
-        'variable_ddi[frequency_type]' => $frequencyType
-      );
-
-      foreach ($smartDebitParams as $key => $value) {
-        if (!empty($value))
-          $post .= ($key != 'variable_ddi[service_user][pslid]' ? '&' : '') . $key . '=' . ($key != 'variable_ddi[service_user][pslid]' ? urlencode($value) : $serviceUserId);
-      }
-
-      $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
-      if (!$response['success']) {
-        $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
-        $msg .= '<br />Update Subscription Failed.';
-        CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
-        return FALSE;
-      }
-      return TRUE;
+    try {
+      $recurRecord = civicrm_api3('ContributionRecur', 'getsingle', array(
+        'id' => $params['id'],
+        'options' => array('limit' => 1),
+      ));
     }
+    catch (CiviCRM_API3_Exception $e) {
+      CRM_Core_Error::statusBounce('No recurring record! ' . $e->getMessage());
+      return FALSE;
+    }
+
+    $serviceUserId = $this->_paymentProcessor['signature'];
+    $username = $this->_paymentProcessor['user_name'];
+    $password = $this->_paymentProcessor['password'];
+
+    $amount = CRM_Smartdebit_Api::encodeAmount(isset($params['amount']) ? $params['amount'] : 0);
+    if (!empty($params['end_date'])) {
+      $eDate = $params['end_date'];
+    }
+    else {
+      $eDate = $recurRecord['end_date'];
+    }
+
+    if (empty($params['preferred_collection_day'])) {
+      $params['preferred_collection_day'] = $recurRecord['cycle_day'];
+    }
+    $endDate = $startDate = NULL;
+    $sDate = self::getCollectionStartDate($params);
+    if (!empty($eDate)) {
+      $endDate = strtotime($eDate);
+      $endDate = date("Y-m-d", $endDate);
+    }
+    if (!empty($sDate)) {
+      $startDate = $sDate->format("Y-m-d");
+    }
+
+    $smartDebitParams = array(
+      'variable_ddi[service_user][pslid]' => $serviceUserId,
+      'variable_ddi[first_amount]' => $amount,
+      'variable_ddi[default_amount]' => $amount,
+    );
+    if (!empty($startDate)) {
+      $smartDebitParams['variable_ddi[start_date]'] = $startDate;
+    }
+    if (!empty($endDate)) {
+      $smartDebitParams['variable_ddi[end_date]'] = $endDate;
+    }
+    if (!isset($params['frequency_unit'])) {
+      $params['frequency_unit'] = $recurRecord['frequency_unit'];
+    }
+    if (!isset($params['frequency_interval'])) {
+      $params['frequency_interval'] = $recurRecord['frequency_interval'];
+    }
+    if (isset($params['frequency_unit']) || isset($params['frequency_interval'])) {
+      $smartDebitParams = array_merge($smartDebitParams, self::getCollectionFrequencyPostParams($params));
+    }
+
+    $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/' . $recurRecord['trxn_id'] . '/update');
+    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
+    if (!$response['success']) {
+      $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
+      $msg .= '<br />Update Subscription Failed.';
+      CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
+      return FALSE;
+    }
+    return TRUE;
   }
 
   /**
@@ -850,44 +865,38 @@ UPDATE civicrm_direct_debit SET
    */
   function cancelSubscription($params = array())
   {
-    if ($this->_processorName == 'Smart Debit Processor') {
-      $post = '';
-      $serviceUserId = $this->_paymentProcessor['signature'];
-      $username = $this->_paymentProcessor['user_name'];
-      $password = $this->_paymentProcessor['password'];
-      $url = $this->_paymentProcessor['url_api'];
-      try {
-        $contributionRecur = civicrm_api3('ContributionRecur', 'getsingle', array(
-          'sequential' => 1,
-          'id' => $_GET['crid'],
-        ));
-      }
-      catch (Exception $e) {
-        return FALSE;
-      }
-      if (empty($contributionRecur['trxn_id'])) {
-        CRM_Core_Session::setStatus(ts('The recurring contribution cannot be cancelled (No reference (trxn_id) found).'), 'Smart Debit', 'error');
-        return FALSE;
-      }
-      $reference = $contributionRecur['trxn_id'];
-      $request_path = 'api/ddi/variable/' . $reference . '/cancel';
-      $smartDebitParams = array(
-        'variable_ddi[service_user][pslid]' => $serviceUserId,
-        'variable_ddi[reference_number]' => $reference,
-      );
-      foreach ($smartDebitParams as $key => $value) {
-        $post .= ($key != 'variable_ddi[service_user][pslid]' ? '&' : '') . $key . '=' . ($key != 'variable_ddi[service_user][pslid]' ? urlencode($value) : $serviceUserId);
-      }
+    $serviceUserId = $this->_paymentProcessor['signature'];
+    $username = $this->_paymentProcessor['user_name'];
+    $password = $this->_paymentProcessor['password'];
 
-      $response = CRM_Smartdebit_Api::requestPost($url, $post, $username, $password, $request_path);
-      if (!$response['success']) {
-        $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
-        $msg .= '<br />Cancel Subscription Failed.';
-        CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
-        return FALSE;
-      }
-      return TRUE;
+    try {
+      $contributionRecur = civicrm_api3('ContributionRecur', 'getsingle', array(
+        'sequential' => 1,
+        'id' => $_GET['crid'],
+      ));
     }
+    catch (Exception $e) {
+      return FALSE;
+    }
+    if (empty($contributionRecur['trxn_id'])) {
+      CRM_Core_Session::setStatus(ts('The recurring contribution cannot be cancelled (No reference (trxn_id) found).'), 'Smart Debit', 'error');
+      return FALSE;
+    }
+    $reference = $contributionRecur['trxn_id'];
+    $smartDebitParams = array(
+      'variable_ddi[service_user][pslid]' => $serviceUserId,
+      'variable_ddi[reference_number]' => $reference,
+    );
+
+    $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/' . $reference . '/cancel');
+    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
+    if (!$response['success']) {
+      $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
+      $msg .= '<br />Cancel Subscription Failed.';
+      CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
+      return FALSE;
+    }
+    return TRUE;
   }
 
   /**
@@ -898,45 +907,38 @@ UPDATE civicrm_direct_debit SET
    */
   function updateSubscriptionBillingInfo(&$message = '', $params = array())
   {
-    if ($this->_paymentProcessor['payment_processor_type'] == 'Smart_Debit') {
-      $postData = '';
-      $serviceUserId = $this->_paymentProcessor['signature'];
-      $username = $this->_paymentProcessor['user_name'];
-      $password = $this->_paymentProcessor['password'];
-      $url = $this->_paymentProcessor['url_api'];
-      $reference = $params['subscriptionId'];
-      $firstName = $params['first_name'];
-      $lastName = $params['last_name'];
-      $streetAddress = $params['street_address'];
-      $city = $params['city'];
-      $postcode = $params['postal_code'];
-      $state = $params['state_province'];
-      $country = $params['country'];
+    $serviceUserId = $this->_paymentProcessor['signature'];
+    $username = $this->_paymentProcessor['user_name'];
+    $password = $this->_paymentProcessor['password'];
+    $reference = $params['subscriptionId'];
+    $firstName = $params['first_name'];
+    $lastName = $params['last_name'];
+    $streetAddress = $params['street_address'];
+    $city = $params['city'];
+    $postcode = $params['postal_code'];
+    $state = $params['state_province'];
+    $country = $params['country'];
 
-      $request_path = 'api/ddi/variable/' . $reference . '/update';
-      $smartDebitParams = array(
-        'variable_ddi[service_user][pslid]' => $serviceUserId,
-        'variable_ddi[reference_number]' => $reference,
-        'variable_ddi[first_name]' => $firstName,
-        'variable_ddi[last_name]' => $lastName,
-        'variable_ddi[address_1]' => self::replaceCommaWithSpace($streetAddress),
-        'variable_ddi[town]' => $city,
-        'variable_ddi[postcode]' => $postcode,
-        'variable_ddi[county]' => $state,
-        'variable_ddi[country]' => $country,
-      );
-      foreach ($smartDebitParams as $key => $value) {
-        $postData .= ($key != 'variable_ddi[service_user][pslid]' ? '&' : '') . $key . '=' . ($key != 'variable_ddi[service_user][pslid]' ? urlencode($value) : $serviceUserId);
-      }
+    $smartDebitParams = array(
+      'variable_ddi[service_user][pslid]' => $serviceUserId,
+      'variable_ddi[reference_number]' => $reference,
+      'variable_ddi[first_name]' => $firstName,
+      'variable_ddi[last_name]' => $lastName,
+      'variable_ddi[address_1]' => self::replaceCommaWithSpace($streetAddress),
+      'variable_ddi[town]' => $city,
+      'variable_ddi[postcode]' => $postcode,
+      'variable_ddi[county]' => $state,
+      'variable_ddi[country]' => $country,
+    );
 
-      $response = CRM_Smartdebit_Api::requestPost($url, $postData, $username, $password, $request_path);
-      if (!$response['success']) {
-        $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
-        CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
-        return FALSE;
-      }
-      return TRUE;
+    $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/' . $reference . '/update');
+    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
+    if (!$response['success']) {
+      $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
+      CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
+      return FALSE;
     }
+    return TRUE;
   }
 
   /**

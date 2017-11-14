@@ -37,13 +37,16 @@ class CRM_Smartdebit_Api {
    *   Send a post request with cURL
    *
    * @param string $url URL to send request to
-   * @param string $data POST data to send (in URL encoded Key=value pairs)
+   * @param array $data POST data to send
    * @param string $username
    * @param string $password
    * @param string $path
    * @return array
    */
   public static function requestPost($url, $data, $username, $password, $path){
+    // Prepare data
+    $data = self::encodePostParams($data);
+
     // Set a one-minute timeout for this script
     set_time_limit(60);
 
@@ -174,7 +177,7 @@ class CRM_Smartdebit_Api {
     // Send payment POST to the target URL
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, 'api/system_status');
 
-    $response = CRM_Smartdebit_Api::requestPost($url, '', $username, $password, '');
+    $response = CRM_Smartdebit_Api::requestPost($url, '', $username, $password);
 
     /* Expected Response:
     Array (
@@ -226,7 +229,7 @@ class CRM_Smartdebit_Api {
     if ($referenceNumber) {
       $url .= "&query[reference_number]=" . urlencode($referenceNumber);
     }
-    $response = CRM_Smartdebit_Api::requestPost($url, '', $username, $password, '');
+    $response = CRM_Smartdebit_Api::requestPost($url, '', $username, $password);
 
     // Take action based upon the response status
     if ($response['success']) {
@@ -270,7 +273,7 @@ class CRM_Smartdebit_Api {
     if ($referenceNumber) {
       $url .= "&query[reference_number]=".urlencode($referenceNumber);
     }
-    $response = CRM_Smartdebit_Api::requestPost($url, '', $username, $password, '');
+    $response = CRM_Smartdebit_Api::requestPost($url, '', $username, $password);
 
     // Take action based upon the response status
     if ($response['success']) {
@@ -310,7 +313,7 @@ class CRM_Smartdebit_Api {
 
     $collections = array();
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/get_successful_collection_report', "query[service_user][pslid]=$pslid&query[collection_date]=$dateOfCollection");
-    $response    = CRM_Smartdebit_Api::requestPost($url, '', $username, $password, '');
+    $response    = CRM_Smartdebit_Api::requestPost($url, '', $username, $password);
 
     // Take action based upon the response status
     if ($response['success']) {
@@ -354,7 +357,7 @@ class CRM_Smartdebit_Api {
     }
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, "/api/auddis/$fileId",
       "query[service_user][pslid]=$pslid");
-    $responseAuddis = CRM_Smartdebit_Api::requestPost($url, '', $username, $password, '');
+    $responseAuddis = CRM_Smartdebit_Api::requestPost($url, '', $username, $password);
     $scrambled = str_replace(" ", "+", $responseAuddis['file']);
     $outputafterencode = base64_decode($scrambled);
     $auddisArray = json_decode(json_encode((array)simplexml_load_string($outputafterencode)), 1);
@@ -392,7 +395,7 @@ class CRM_Smartdebit_Api {
 
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, "/api/arudd/$fileId",
       "query[service_user][pslid]=$pslid");
-    $responseArudd = CRM_Smartdebit_Api::requestPost($url, '', $username, $password, '');
+    $responseArudd = CRM_Smartdebit_Api::requestPost($url, '', $username, $password);
     $scrambled = str_replace(" ", "+", $responseArudd['file']);
     $outputafterencode = base64_decode($scrambled);
     $aruddArray = json_decode(json_encode((array)simplexml_load_string($outputafterencode)), 1);
@@ -409,6 +412,44 @@ class CRM_Smartdebit_Api {
     }
     $result['arudd_date'] = $aruddArray['Data']['ARUDD']['Header']['@attributes']['currentProcessingDate'];
     return $result;
+  }
+
+  /**
+   * Encode POST params HTTP POST to Smartdebit
+   * @param $params
+   *
+   * @return null|string
+   */
+  static function encodePostParams($params) {
+    $post = NULL;
+    foreach ($params as $key => $value) {
+      if (!empty($value)) {
+        if (!empty($post)) {
+          $post .= '&';
+        }
+        $post .= $key . '=' . urlencode($value);
+      }
+    }
+    return $post;
+  }
+
+  /**
+   * Smartdebit API requires amount in pence.
+   * @param $amount
+   *
+   * @return int|string
+   */
+  static function encodeAmount($amount) {
+    if (empty($amount)) {
+      return 0;
+    }
+    else {
+      // Set amount in pence if not already set that way.
+      // Format amount
+      $amount = number_format($amount, 2, '.', '');
+      $amount = (int) preg_replace('/[^\d]/', '', strval($amount));
+      return $amount;
+    }
   }
 
 }

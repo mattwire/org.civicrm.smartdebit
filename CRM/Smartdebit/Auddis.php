@@ -79,7 +79,7 @@ class CRM_Smartdebit_Auddis
 
     $urlAuddis = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/auddis/list',
       "query[service_user][pslid]=$pslid&query[from_date]=$dateOfCollectionStart&query[till_date]=$dateOfCollectionEnd");
-    $responseAuddis = CRM_Smartdebit_Api::requestPost($urlAuddis, '', $username, $password, '');
+    $responseAuddis = CRM_Smartdebit_Api::requestPost($urlAuddis, '', $username, $password);
     // Take action based upon the response status
     if ($responseAuddis['success']) {
       $this->_auddisList = $responseAuddis;
@@ -113,7 +113,7 @@ class CRM_Smartdebit_Auddis
 
     // Send payment POST to the target URL
     $urlArudd = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/arudd/list', "query[service_user][pslid]=$pslid&query[from_date]=$dateOfCollectionStart&query[till_date]=$dateOfCollectionEnd");
-    $responseArudd = CRM_Smartdebit_Api::requestPost($urlArudd, '', $username, $password, '');
+    $responseArudd = CRM_Smartdebit_Api::requestPost($urlArudd, '', $username, $password);
 
     // Take action based upon the response status
     if ($responseArudd['success']) {

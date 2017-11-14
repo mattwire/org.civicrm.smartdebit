@@ -445,13 +445,27 @@ function smartdebit_civicrm_buildForm( $formName, &$form )
       if (isset($paymentProcessor['payment_processor_type']) && ($paymentProcessor['payment_processor_type'] == 'Smart_Debit')) {
         $recurID = $form->getVar('contributionRecurID');
         $linkedMembership = FALSE;
-        $membershipRecord = civicrm_api3('Membership', 'get', array(
-          'sequential' => 1,
-          'return' => array("id"),
-          'contribution_recur_id' => $recurID,
-        ));
-        if (isset($membershipRecord['id'])) {
-          $linkedMembership = TRUE;
+        try {
+          $membershipRecord = civicrm_api3('Membership', 'getsingle', array(
+            'return' => array('id'),
+            'contribution_recur_id' => $recurID,
+            'options' => array('limit' => 1),
+          ));
+          if (isset($membershipRecord['id'])) {
+            $linkedMembership = TRUE;
+          }
+        }
+        catch (CiviCRM_API3_Exception $e) {
+          // No membership record
+        }
+        try {
+          $recurRecord = civicrm_api3('ContributionRecur', 'getsingle', array(
+            'id' => $recurID,
+            'options' => array('limit' => 1),
+          ));
+        }
+        catch (CiviCRM_API3_Exception $e) {
+          CRM_Core_Error::statusBounce('No recurring record! ' . $e->getMessage());
         }
 
         $form->removeElement('installments');
@@ -472,25 +486,23 @@ function smartdebit_civicrm_buildForm( $formName, &$form )
         $form->add('text', 'bank_identification_number', ts('Sort Code'), array('size' => 20, 'maxlength' => 6, 'autocomplete' => 'off'));
         $form->add('text', 'bank_name', ts('Bank Name'), array('size' => 20, 'maxlength' => 64, 'autocomplete' => 'off'));
         $form->add('hidden', 'payment_processor_type', 'Smart_Debit');
-        $subscriptionDetails = $form->getVar('_subscriptionDetails');
-        $reference = $subscriptionDetails->subscription_id;
-        $frequencyUnit = $subscriptionDetails->frequency_unit;
-        $frequencyInterval = $subscriptionDetails->frequency_interval;
+
+        $reference = $recurRecord['trxn_id'];
         $recur = new CRM_Contribute_BAO_ContributionRecur();
         $recur->trxn_id = $reference;
         $recur->find(TRUE);
         $startDate = $recur->start_date;
         list($defaults['start_date'], $defaults['start_date_time']) = CRM_Utils_Date::setDateDefaults($startDate, NULL);
-        $defaults['frequency_unit'] = array_search($frequencyUnit, $frequencyUnits);
-        $defaults['frequency_interval'] = array_search($frequencyInterval, $frequencyIntervals);
+        $defaults['frequency_unit'] = array_search($recurRecord['frequency_unit'], $frequencyUnits);
+        $defaults['frequency_interval'] = array_search($recurRecord['frequency_interval'], $frequencyIntervals);
         $form->setDefaults($defaults);
         if ($linkedMembership) {
           $form->assign('membership', TRUE);
-          $e =& $form->getElement('frequency_unit');
+          $e = &$form->getElement('frequency_unit');
           $e->freeze();
-          $e =& $form->getElement('frequency_interval');
+          $e = &$form->getElement('frequency_interval');
           $e->freeze();
-          $e =& $form->getElement('start_date');
+          $e = &$form->getElement('start_date');
           $e->freeze();
         }
       }
@@ -508,34 +520,14 @@ function smartdebit_civicrm_buildForm( $formName, &$form )
   }
 }
 
-function smartdebit_civicrm_validateForm($name, &$fields, &$files, &$form, &$errors) {
+/* function smartdebit_civicrm_validateForm($name, &$fields, &$files, &$form, &$errors) {
   // Only do recurring edit form
-  if ($name == 'CRM_Contribute_Form_UpdateSubscription') {
+    if ($name == 'CRM_Contribute_Form_UpdateSubscription') {
     // only do if payment process is Smart Debit
     if (isset($fields['payment_processor_type']) && $fields['payment_processor_type'] == 'Smart_Debit') {
-      $recurID = $form->getVar('_crid');
-      $linkedMembership = FALSE;
-      // Check this recurring contribution is linked to membership
-      $membershipID = CRM_Core_DAO::singleValueQuery('SELECT id FROM civicrm_membership WHERE contribution_recur_id = %1', array(1 => array($recurID, 'Int')));
-      if ($membershipID) {
-        $linkedMembership = TRUE;
-      }
-      // If recurring is linked to membership then check amount is higher than membership amount
-      if ($linkedMembership) {
-        $query = "
-	SELECT cc.total_amount
-	FROM civicrm_contribution cc 
-	INNER JOIN civicrm_membership_payment cmp ON cmp.contribution_id = cc.id
-	INNER JOIN civicrm_membership cm ON cm.id = cmp.membership_id
-	WHERE cmp.membership_id = %1";
-        $membershipAmount = CRM_Core_DAO::singleValueQuery($query, array(1 => array($membershipID, 'Int')));
-        if ($fields['amount'] < $membershipAmount) {
-          $errors['amount'] = ts('Amount should be higher than corresponding membership amount');
-        }
-      }
     }
   }
-}
+}*/
 
 /**
  * Implements hook_civicrm_links
