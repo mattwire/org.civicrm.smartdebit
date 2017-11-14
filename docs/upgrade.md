@@ -31,7 +31,7 @@ If you follow the instructions below the payment processor configuration will be
 `drush civicrm-ext-install org.civicrm.smartdebit`
 
 * Change Payment processor type back to Smart_Debit in CiviCRM UI
-* Configure Smart debit extension (civicrm/smartdebit/settings)
+* Configure Smart debit extension (civicrm/admin/smartdebit/settings)
 
 !!! tip "Cached collection reports"
     If upgrading from a previous version it is likely that you will need to rebuild the collection reports 
