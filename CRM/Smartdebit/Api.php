@@ -40,10 +40,9 @@ class CRM_Smartdebit_Api {
    * @param array $data POST data to send
    * @param string $username
    * @param string $password
-   * @param string $path
    * @return array
    */
-  public static function requestPost($url, $data, $username, $password, $path){
+  public static function requestPost($url, $data, $username, $password){
     // Prepare data
     $data = self::encodePostParams($data);
 
@@ -62,11 +61,11 @@ class CRM_Smartdebit_Api {
       CURLOPT_SSL_VERIFYPEER => 1,
     );
 
-    $session = curl_init( $url . $path);
-    curl_setopt_array( $session, $options );
+    $session = curl_init($url);
+    curl_setopt_array($session, $options);
 
     // Tell curl that this is the body of the POST
-    curl_setopt ($session, CURLOPT_POSTFIELDS, $data );
+    curl_setopt($session, CURLOPT_POSTFIELDS, $data);
 
     // $output contains the output string
     $output = curl_exec($session);
@@ -90,7 +89,7 @@ class CRM_Smartdebit_Api {
     }
     else {
       // Results are XML so turn this into a PHP Array (simplexml_load_string returns an object)
-      $resultsArray = json_decode(json_encode( (array) simplexml_load_string($output)),1);
+      $resultsArray = json_decode(json_encode((array) simplexml_load_string($output)),1);
       if (!isset($resultsArray['error'])) {
         $resultsArray['error'] = NULL;
       }

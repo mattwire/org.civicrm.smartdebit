@@ -622,6 +622,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         $recurParams = array (
           'id' => $params['contributionRecurID'],
           'trxn_id' => $params['trxn_id'],
+          'cycle_day' => $params['preferred_collection_day'],
           'contribution_status_id' => self::getInitialContributionStatus(TRUE),
         );
         // Update the recurring payment
