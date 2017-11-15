@@ -116,6 +116,7 @@ class CRM_Smartdebit_Utils {
       // This will always return the most recent contribution
       return $contributionRecords['values'][0];
     }
+    return NULL;
   }
 
   /**
@@ -198,7 +199,7 @@ class CRM_Smartdebit_Utils {
         return $aContact['values'][0];
       }
       else {
-        return;
+        return NULL;
       }
     }
     else {
@@ -223,7 +224,7 @@ class CRM_Smartdebit_Utils {
         return $aAddress['values'][0];
       }
       else {
-        return;
+        return NULL;
       }
     }
     else {

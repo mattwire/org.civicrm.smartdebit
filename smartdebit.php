@@ -506,7 +506,8 @@ function smartdebit_civicrm_buildForm( $formName, &$form )
           $e->freeze();
         }
       }
-    } elseif ($formName == 'CRM_Contribute_Form_UpdateBilling') {
+    }
+    elseif ($formName == 'CRM_Contribute_Form_UpdateBilling') {
       // This is triggered by clicking "Change Billing Details" on a recurring contribution.
     }
     if ($formName == 'CRM_Contribute_Form_CancelSubscription') {

@@ -589,7 +589,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    */
   function doDirectPayment(&$params) {
     $smartDebitParams = self::preparePostArray($params);
-    $serviceUserId = $this->_paymentProcessor['signature'];
 
     // Get the API Username and Password
     $username = $this->_paymentProcessor['user_name'];

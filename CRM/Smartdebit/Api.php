@@ -176,7 +176,7 @@ class CRM_Smartdebit_Api {
     // Send payment POST to the target URL
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, 'api/system_status');
 
-    $response = CRM_Smartdebit_Api::requestPost($url, '', $username, $password);
+    $response = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
 
     /* Expected Response:
     Array (
@@ -228,7 +228,7 @@ class CRM_Smartdebit_Api {
     if ($referenceNumber) {
       $url .= "&query[reference_number]=" . urlencode($referenceNumber);
     }
-    $response = CRM_Smartdebit_Api::requestPost($url, '', $username, $password);
+    $response = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
 
     // Take action based upon the response status
     if ($response['success']) {
@@ -272,7 +272,7 @@ class CRM_Smartdebit_Api {
     if ($referenceNumber) {
       $url .= "&query[reference_number]=".urlencode($referenceNumber);
     }
-    $response = CRM_Smartdebit_Api::requestPost($url, '', $username, $password);
+    $response = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
 
     // Take action based upon the response status
     if ($response['success']) {
@@ -302,7 +302,7 @@ class CRM_Smartdebit_Api {
   static function getCollectionReport( $dateOfCollection ) {
     if( empty($dateOfCollection)){
       CRM_Core_Session::setStatus(ts('Please select the collection date'), ts('Smart Debit'), 'error');
-      return false;
+      return FALSE;
     }
 
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
@@ -312,7 +312,7 @@ class CRM_Smartdebit_Api {
 
     $collections = array();
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/get_successful_collection_report', "query[service_user][pslid]=$pslid&query[collection_date]=$dateOfCollection");
-    $response    = CRM_Smartdebit_Api::requestPost($url, '', $username, $password);
+    $response    = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
 
     // Take action based upon the response status
     if ($response['success']) {
@@ -336,12 +336,13 @@ class CRM_Smartdebit_Api {
       self::reportError($response);
       CRM_Utils_System::redirect($url);
     }
+    return FALSE;
   }
 
   /**
    * Get AUDDIS file from Smart Debit. $uri is retrieved using getAuddisList
    * @param null $uri
-   * @return array
+   * @return array|bool
    */
   static function getAuddisFile($fileId)
   {
@@ -352,11 +353,11 @@ class CRM_Smartdebit_Api {
 
     if (empty($fileId)) {
       CRM_Core_Error::debug_log_message('Smartdebit getSmartdebitAuddisFile: Must specify file ID!');
-      return false;
+      return FALSE;
     }
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, "/api/auddis/$fileId",
       "query[service_user][pslid]=$pslid");
-    $responseAuddis = CRM_Smartdebit_Api::requestPost($url, '', $username, $password);
+    $responseAuddis = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
     $scrambled = str_replace(" ", "+", $responseAuddis['file']);
     $outputafterencode = base64_decode($scrambled);
     $auddisArray = json_decode(json_encode((array)simplexml_load_string($outputafterencode)), 1);
@@ -378,7 +379,7 @@ class CRM_Smartdebit_Api {
   /**
    * Get ARUDD file from Smart Debit. $uri is retrieved using getAruddList
    * @param null $uri
-   * @return array
+   * @return array|bool
    */
   static function getAruddFile($fileId)
   {
@@ -389,12 +390,12 @@ class CRM_Smartdebit_Api {
 
     if (empty($fileId)) {
       CRM_Core_Error::debug_log_message('Smartdebit getSmartdebitAruddFile: Must specify file ID!');
-      return false;
+      return FALSE;
     }
 
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, "/api/arudd/$fileId",
       "query[service_user][pslid]=$pslid");
-    $responseArudd = CRM_Smartdebit_Api::requestPost($url, '', $username, $password);
+    $responseArudd = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
     $scrambled = str_replace(" ", "+", $responseArudd['file']);
     $outputafterencode = base64_decode($scrambled);
     $aruddArray = json_decode(json_encode((array)simplexml_load_string($outputafterencode)), 1);

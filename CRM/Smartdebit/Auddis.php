@@ -37,19 +37,19 @@ class CRM_Smartdebit_Auddis
   private $_aruddDatesList = NULL;
   private $_auddisDatesList = NULL;
 
-  function getAuddisList() {
+  public function getAuddisList() {
     return $this->_auddisList;
   }
 
-  function getAruddList() {
+  public function getAruddList() {
     return $this->_aruddList;
   }
 
-  function getAuddisDatesList() {
+  public function getAuddisDatesList() {
     return $this->_auddisDatesList;
   }
 
-  function getAruddDatesList()
+  public function getAruddDatesList()
   {
     return $this->_aruddDatesList;
   }
@@ -61,8 +61,7 @@ class CRM_Smartdebit_Auddis
    * @param null $dateOfCollection
    * @return bool|mixed
    */
-  function getSmartdebitAuddisList($dateOfCollectionStart = null, $dateOfCollectionEnd = null)
-  {
+  public function getSmartdebitAuddisList($dateOfCollectionStart = null, $dateOfCollectionEnd = null) {
     if (!isset($dateOfCollectionEnd)) {
       $endDate = new DateTime();
       $dateOfCollectionEnd = $endDate->format('Y-m-d'); // Today
@@ -79,7 +78,7 @@ class CRM_Smartdebit_Auddis
 
     $urlAuddis = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/auddis/list',
       "query[service_user][pslid]=$pslid&query[from_date]=$dateOfCollectionStart&query[till_date]=$dateOfCollectionEnd");
-    $responseAuddis = CRM_Smartdebit_Api::requestPost($urlAuddis, '', $username, $password);
+    $responseAuddis = CRM_Smartdebit_Api::requestPost($urlAuddis, NULL, $username, $password);
     // Take action based upon the response status
     if ($responseAuddis['success']) {
       $this->_auddisList = $responseAuddis;
@@ -97,8 +96,7 @@ class CRM_Smartdebit_Auddis
    * @param null $dateOfCollection
    * @return bool|mixed
    */
-  function getSmartdebitAruddList($dateOfCollectionStart = null, $dateOfCollectionEnd = null)
-  {
+  public function getSmartdebitAruddList($dateOfCollectionStart = null, $dateOfCollectionEnd = null) {
     if (!isset($dateOfCollectionEnd)) {
       $endDate = new DateTime();
       $dateOfCollectionEnd = $endDate->format('Y-m-d'); // Today
@@ -113,7 +111,7 @@ class CRM_Smartdebit_Auddis
 
     // Send payment POST to the target URL
     $urlArudd = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/arudd/list', "query[service_user][pslid]=$pslid&query[from_date]=$dateOfCollectionStart&query[till_date]=$dateOfCollectionEnd");
-    $responseArudd = CRM_Smartdebit_Api::requestPost($urlArudd, '', $username, $password);
+    $responseArudd = CRM_Smartdebit_Api::requestPost($urlArudd, NULL, $username, $password);
 
     // Take action based upon the response status
     if ($responseArudd['success']) {
@@ -126,7 +124,7 @@ class CRM_Smartdebit_Auddis
       return TRUE;
     }
     else {
-      return false;
+      return FALSE;
     }
   }
 
@@ -134,7 +132,7 @@ class CRM_Smartdebit_Auddis
    * Build a list of auddis dates for processing
    * Call getAuddisDatesList for actual list
    *
-   * @return bool True if successful, false otherwise
+   * @return bool True if successful, FALSE otherwise
    */
   function getAuddisDates()
   {
@@ -161,9 +159,9 @@ class CRM_Smartdebit_Auddis
     if (!empty($auddisDates)) {
       $auddisDates = array_combine($auddisDates, $auddisDates);
       $this->_auddisDatesList = $auddisDates;
-      return true;
+      return TRUE;
     }
-    return false;
+    return FALSE;
   }
 
   /**
@@ -191,7 +189,7 @@ class CRM_Smartdebit_Auddis
    * Build a list of arudd dates for processing
    * Call getAruddDatesList for actual list
    *
-   * @return bool True if successful, false otherwise
+   * @return bool True if successful, FALSE otherwise
    */
   function getAruddDates() {
     $aruddDates = array();
@@ -215,9 +213,9 @@ class CRM_Smartdebit_Auddis
     if (!empty($aruddDates)) {
       $aruddDates = array_combine($aruddDates, $aruddDates);
       $this->_aruddDatesList = $aruddDates;
-      return true;
+      return TRUE;
     }
-    return false;
+    return FALSE;
   }
 
   /**
@@ -386,7 +384,7 @@ class CRM_Smartdebit_Auddis
   }
 
   /**
-   * Return true if auddis/arudd record has been processed, false otherwise
+   * Return TRUE if auddis/arudd record has been processed, FALSE otherwise
    * @param $auddisId
    * @return bool
    */
@@ -412,7 +410,7 @@ class CRM_Smartdebit_Auddis
    */
   static function setAuddisRecordProcessed($auddisId, $processed = TRUE) {
     if (empty($auddisId)) {
-      return false;
+      return FALSE;
     }
     else {
       $sql = "UPDATE `veda_smartdebit_auddis` SET processed={$processed} WHERE id={$auddisId}";
@@ -429,7 +427,7 @@ class CRM_Smartdebit_Auddis
    */
   static function getAuddisRecord($auddisId) {
     if (empty($auddisId)) {
-      return false;
+      return FALSE;
     }
     else {
       $sql = "SELECT id, date, type, processed FROM veda_smartdebit_auddis WHERE id={$auddisId}";
@@ -442,13 +440,13 @@ class CRM_Smartdebit_Auddis
         return $auddis;
       }
     }
-    return false;
+    return FALSE;
   }
 
   static function addAuddisRecord($auddis)
   {
     if (empty($auddis['report_generation_date']) || empty($auddis['auddis_id'])) {
-      return false;
+      return FALSE;
     } else {
       if (!CRM_Smartdebit_Auddis::getAuddisRecord($auddis['auddis_id'])) {
         // Not found so add it
@@ -462,7 +460,7 @@ VALUES (%1,%2,%3,%4)";
           4 => array(0, 'Boolean'),
         );
         CRM_Core_DAO::executeQuery($sql, $params);
-        return true;
+        return TRUE;
       }
 
       /* Auddis Record
@@ -480,12 +478,12 @@ VALUES (%1,%2,%3,%4)";
       [auddis_id] => 629096
       )*/
     }
+    return FALSE;
   }
 
-  static function addAruddRecord($arudd)
-  {
+  public static function addAruddRecord($arudd) {
     if (empty($arudd['current_processing_date']) || empty($arudd['arudd_id'])) {
-      return false;
+      return FALSE;
     } else {
       if (!CRM_Smartdebit_Auddis::getAuddisRecord($arudd['arudd_id'])) {
         // Not found so add it
@@ -499,7 +497,7 @@ VALUES (%1,%2,%3,%4)";
           4 => array(0, 'Boolean'),
         );
         CRM_Core_DAO::executeQuery($sql, $params);
-        return true;
+        return TRUE;
       }
 
       /*
@@ -521,5 +519,7 @@ VALUES (%1,%2,%3,%4)";
         )
        */
     }
+    return FALSE;
   }
+
 }

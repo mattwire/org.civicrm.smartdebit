@@ -54,7 +54,6 @@ class CRM_Smartdebit_Form_ReconciliationFixConfirm extends CRM_Core_Form {
     // Get contact details if set
     if(!empty($cid)){
       $contact = CRM_Smartdebit_Utils::getContactDetails($cid);
-      $address = CRM_Smartdebit_Utils::getContactAddress($cid);
       $this->assign('aContact', $contact);
     }
     // If 'Donation' option is chosen for membership, don't process

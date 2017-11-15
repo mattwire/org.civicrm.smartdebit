@@ -570,7 +570,7 @@ WHERE  ddi_reference = %0";
   /**
    * Create/update a contribution for the direct debit.
    * @param $params
-   * @return array (API Result)
+   * @return array|bool
    */
   static function createContribution($params) {
     // Mandatory Parameters
@@ -658,7 +658,7 @@ WHERE  ddi_reference = %0";
    * Check if contribution exists for given transaction Id. Return contribution, false otherwise.
    *
    * @param $transactionId
-   * @return bool|int
+   * @return array|bool
    */
   static function contributionExists($transactionId) {
     try {

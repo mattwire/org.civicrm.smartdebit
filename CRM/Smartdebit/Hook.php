@@ -58,8 +58,7 @@ class CRM_Smartdebit_Hook {
   /**
    * This hook allows to handle AUDDIS rejected contributions
    *
-   * @param integer $contributionId Contribution ID of the failed/rejected
-   *   contribuition
+   * @param integer $contributionId Contribution ID of the failed/rejected contribution
    *
    * @access public
    */

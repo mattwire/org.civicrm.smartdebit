@@ -22,7 +22,7 @@
 | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
 +-------------------------------------------------------------------*}
 
-<label class="crm-block crm-form-block crm-smartdebit-settings-form-block">
+<div class="crm-block crm-form-block crm-smartdebit-settings-form-block">
   <div class="crm-submit-buttons">
     {include file="CRM/common/formButtons.tpl" location="top"}
   </div>

@@ -39,7 +39,7 @@
       </div>
       <div style="float: left;margin-left: 5px;margin-right: 10px;width: 305px;">
         <p>
-        <div style="background-color: #ffffff;border: 1px solid #999999;padding: 0px 5px;">
+        <div style="background-color: #ffffff; border: 1px solid #999999; padding: 0 5;">
           <b>{$dd_details.company_address.company_name}</b><br>
           {if ($dd_details.company_address.address1 != '')} {$dd_details.company_address.address1}<br/> {/if}
           {if ($dd_details.company_address.address2 != '')} {$dd_details.company_address.address2}<br/> {/if}
@@ -52,7 +52,7 @@
         </p>
         <h2 style="font-size: 1em;margin-bottom: -5px; margin-top: 15px;text-align: left;font-weight: bold;">Name(s) of Account Holder(s)</h2>
         <p>
-        <div style="background-color: #ffffff;border: 1px solid #999999;padding: 0px 5px;">
+        <div style="background-color: #ffffff;border: 1px solid #999999;padding: 0 5;">
           {$dd_details.account_holder}<br />
         </div>
         </p>
@@ -73,7 +73,7 @@
         </table>
         </p>
         <p>
-        <div style="background-color: #ffffff;border: 1px solid #999999;padding: 0px 5px;">
+        <div style="background-color: #ffffff;border: 1px solid #999999;padding: 0 5;">
           <div style="border-bottom: 1px solid #dddddd;margin-top: 15px;"><span style="font-weight: bold;">To the Manager<span style="margin-left: 4em;">Bank/Building Society</span></span></div>
           <div style="border-bottom: 1px solid #dddddd;margin-top: 15px;"><br />{$dd_details.bank_name}</div>
           <div style="border-bottom: 1px solid #dddddd;margin-top: 15px;"><span style="font-weight: bold;">Branch</span><span style="margin-left: 3em;">{$dd_details.branch}</span></div>
@@ -89,7 +89,7 @@
         </p>
       </div>
       <div style="float: right;margin-right: 5px;width: 305px;">
-        <h1 style="font-size: 1.3em;margin-top: 0;text-align: left;margin: 0% 0%;">Instruction to your Bank or Building Society to pay by Direct Debit</h1>
+        <h1 style="font-size: 1.3em; text-align: left; margin: 0 0;">Instruction to your Bank or Building Society to pay by Direct Debit</h1>
         <h2 style="font-size: 1em;margin-bottom: -5px; margin-top: 15px;text-align: left;font-weight: bold;">Service User Number</h2>
         <p>
         <table style="background-color: #ffffff;border: 1px solid #000000;border-collapse: collapse;" summary="Branch Sort Code">
@@ -102,7 +102,7 @@
         </p>
         <h2 style="font-size: 1em;margin-bottom: -5px; margin-top: 15px;text-align: left;font-weight: bold;">Reference:</h2>
         <p>
-        <div style="background-color: #ffffff;border: 1px solid #999999;padding: 0px 5px;">
+        <div style="background-color: #ffffff;border: 1px solid #999999;padding: 0 5;">
           {$dd_details.ddi_reference}
         </div>
         </p>
@@ -111,7 +111,7 @@
           Please pay {$dd_details.company_address.company_name} Direct Debits from the account detailed in this Instruction subject to the safeguards assured by the Direct Debit Guarantee. I understand that this Instruction may remain with {$dd_details.company_address.company_name} and, if so, details will be passed electronically to my Bank / Building Society.
         </p>
         <p>
-        <div style="background-color: #ffffff;border: 1px solid #999999;padding: 0px 5px;">
+        <div style="background-color: #ffffff;border: 1px solid #999999;padding: 0 5;">
           <div style="border-bottom: 1px solid #dddddd;margin-top: 15px;"><span style="font-weight: bold;">Date</span><span style="margin-left: 1em;">{$dd_details.today|crmDate}</span></div>
           <div style="border-bottom: 1px solid #dddddd;margin-top: 15px;"></div>
         </div>
@@ -132,7 +132,7 @@
         <strong>The Direct Debit Guarantee</strong>
       </div>
       <div class="clear"></div>
-      <ul style="margin: 0px; padding: 10px 20px 10px 20px">
+      <ul style="margin: 0; padding: 10px 20px 10px 20px">
         <li style="margin-bottom: 10px">{ts}This Guarantee is offered by all banks and building societies that accept instructions to pay Direct Debits.{/ts}</li>
         <li style="margin-bottom: 10px">{ts}If there are any changes to the amount, date or frequency of your Direct Debit {$dd_details.company_address.company_name} will notify you 10 working days in advance of your account being debited or as otherwise agreed. If you request {$dd_details.company_address.company_name} to collect a payment, confirmation of the amount and date will be given to you at the time of the request.{/ts}</li>
         <li style="margin-bottom: 10px">{ts}If an error is made in the payment of your Direct Debit, by {$dd_details.company_address.company_name} or your bank or building society, you are entitled to a full and immediate refund of the amount paid from your bank or building society.{/ts}

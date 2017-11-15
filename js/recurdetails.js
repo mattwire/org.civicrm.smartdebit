@@ -1,6 +1,6 @@
 // https://civicrm.org/licensing
 
-CRM.$(function($) {
+CRM.$(function() {
     var smartDetails = CRM.vars.smartdebit.recurdetails;
     if (!CRM.$.isEmptyObject(smartDetails)) {
         var targetHtml = '<h3>View Smart Debit Payment</h3><table class = "crm-info-panel direct-debit">';

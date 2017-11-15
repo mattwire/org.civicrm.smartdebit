@@ -402,6 +402,8 @@ AND   csd.id IS NULL LIMIT 100";
    * In All cases the recurring details are taken from Smart Debit so its crucial this is correct first
    *
    * @param $params
+   *
+   * @return bool
    */
   static function reconcileRecordWithCiviCRM($params) {
     foreach (array(
@@ -493,6 +495,7 @@ AND   csd.id IS NULL LIMIT 100";
         return FALSE;
       }
     }
+    return FALSE;
   }
 
   /**
@@ -548,6 +551,8 @@ AND   csd.id IS NULL LIMIT 100";
         return 'Cancelled';
       case 12: // Rejected
         return 'Rejected';
+      default:
+        return 'Unknown';
     }
   }
 }

@@ -53,12 +53,11 @@
       {literal}
       // Date picker
       var dateOptions = {
-        dateFormat: 'yy-mm-dd', time: false, allowClear: true,
+        dateFormat: 'yy-mm-dd', time: false, allowClear: true
       };
       cj('#collection_date').crmDatepicker(dateOptions);
     </script>
     {/literal}
-    </table>
   </div><br />
   <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl" location="bottom"}</div>
 </div>

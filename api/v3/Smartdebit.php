@@ -33,7 +33,6 @@
  * @throws API_Exception
  */
 function civicrm_api3_smartdebit_sync($params) {
-  $result = array();
   $runner = CRM_Smartdebit_Sync::getRunner(FALSE);
   if ($runner) {
     $result = $runner->runAll();

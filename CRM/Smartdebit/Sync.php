@@ -283,7 +283,7 @@ class CRM_Smartdebit_Sync
    * @param $trxnId
    * @param $receiveDate
    * @param $amount
-   * @return false|contributionId
+   * @return integer|bool
    */
   static function processCollection($trxnId, $receiveDate, $contributionStatus, $amount, $collectionDescription) {
     if (empty($trxnId) || empty($receiveDate)  || empty($contributionStatus)) {
@@ -385,7 +385,7 @@ class CRM_Smartdebit_Sync
    * @param $auddisFile
    * @param $refKey
    * @param $dateKey
-   * @return array
+   * @return array|bool
    */
   static function processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey, $collectionDescription) {
     $errors = FALSE;

@@ -116,8 +116,6 @@
 <script type="text/javascript">
   {literal}
   var memStatusCurrent = {/literal}"{$memStatusCurrent}"{literal}; //MV assigned the membership Status Name 'Current' as constant
-  var contactUrl = {/literal}"{crmURL p='civicrm/ajax/rest' q='className=CRM_Contact_Page_AJAX&fnName=getContactList&json=1&context=navigation' h=0 }"{literal};
-  var getTemplateContentUrl = {/literal}"{crmURL p='civicrm/ajax/rest' h=0 q='className=CRM_Smartdebit_Page_AJAX&fnName=getMembershipByContactID&json=1'}";{literal}
   var $form = cj("form.{/literal}{$form.formClass}{literal}");
   var cid = null;
   cj("#contact_name", $form).change(function() {
@@ -151,8 +149,7 @@
               var options = cj.parseJSON(data);
               cj.each(options, function(key, value) {
                   if(key === "membership"){
-                      var opMem = value;
-                      cj.each(opMem, function(memID, text) {
+                      cj.each(value, function(memID, text) {
                           cj('#membership_record').append(cj('<option>', {
                               value: memID,
                               text : text
@@ -166,8 +163,7 @@
                       });
                   }
                   if(key === "cRecur"){
-                      var opRecur = value;
-                      cj.each(opRecur, function(crID, Recurtext) {
+                      cj.each(value, function(crID, Recurtext) {
                           cj('#contribution_recur_record').append(cj('<option>', {
                               value: crID,
                               text : Recurtext
@@ -195,7 +191,6 @@
       cj( "#membership_record" ).change(function() {
           var val = cj('#membership_record option:selected').text();
           var getTemplateContentUrl = {/literal}"{crmURL p='civicrm/ajax/rest' h=0 q='className=CRM_Smartdebit_Page_AJAX&fnName=getNotLinkedRecurringByContactID&json=1'}";{literal}
-          var data = cj( '#contact_name' ).select2('data');
           var cid = cj('input[name=cid]').val();
           if (cid !== null) {
               cj.ajax({
@@ -207,11 +202,9 @@
                   success: function (data, status) {
                       var options = cj.parseJSON(data);
                       if (val === 'Donation') {
-                          var opRecur = options.cRecurNotLinked;
-                          populateRecur(opRecur);
+                          populateRecur(options.cRecurNotLinked);
                       } else {
-                          var opRecur = options.cRecur;
-                          populateRecur(opRecur);
+                          populateRecur(options.cRecur);
                       }
                   }
               });
