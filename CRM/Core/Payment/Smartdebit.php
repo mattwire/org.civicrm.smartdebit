@@ -402,11 +402,71 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    * For direct debit we need to allow 10 working days prior to collection for cooling off
    * We also may need to send them a letter etc
    *
+   * @param $params:
+   *     preferred_collection_day: integer
+   *
+   * @return \DateTime
    */
-  static function getCollectionStartDate(&$params)
+  public static function getCollectionStartDate($params)
   {
     $preferredCollectionDay = $params['preferred_collection_day'];
     return CRM_Smartdebit_Base::firstCollectionDate($preferredCollectionDay);
+  }
+
+  /**
+   * @param $params
+   */
+  /**
+   * @param $params
+   *      collection_start_date: DateTime
+   *      collection_frequency: Smartdebit formatted collection frequency
+   *      collection_interval: Smartdebit formatted collection interval
+   *
+   * @return \DateTime|bool
+   */
+  public static function getCollectionEndDate($params) {
+    if (!empty($params['installments'])) {
+      $installments = $params['installments'];
+    }
+    else {
+      $installments = 0;
+    }
+    if (!empty($installments)) {
+      // Need to set an end date after final installment
+      $plus = array(
+        'years' => 0,
+        'months' => 0,
+        'weeks' => 0
+      );
+      switch ($params['collection_frequency']) {
+        case 'Y':
+          $plus['years'] = $installments * $params['collection_interval'];
+          break;
+        case 'Q':
+          $plusQuarters = $installments * $params['collection_interval'];
+          $plus['months'] = $plusQuarters * 3;
+          break;
+        case 'M':
+          $plus['months'] = $installments * $params['collection_interval'];
+          break;
+        case 'W':
+          $plus['weeks'] = $installments * $params['collection_interval'];
+          break;
+        default:
+          Civi::log()->debug('Smartdebit getCollectionEndDate: An unknown collection frequency (' . $params['collection_frequency'] . ') was passed!');
+      }
+      $intervalSpec= 'P' . $plus['years'] . 'Y' . $plus['months'] . 'M' . $plus['weeks'] . 'W';
+    }
+    elseif (empty($params['collection_interval'])) {
+      // If collection_interval == 0 then it's a single payment.
+      // Set end date 6 days after start date (min DD freq with Smart Debit is 1 week/7days)
+      $intervalSpec = 'P6D';
+    }
+    else {
+      return FALSE;
+    }
+    $endDate = $params['collection_start_date']->add(new DateInterval($intervalSpec));
+    return $endDate;
   }
 
   /**
@@ -421,8 +481,20 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     // Smart Debit supports Y, Q, M, W parameters
     // We return 'O' if the payment is not recurring.  You should then supply an end date to smart debit
     //    to ensure only a single payment is taken.
-    $frequencyUnit = (isset($params['frequency_unit'])) ? $params['frequency_unit'] : '';
-    $frequencyInterval = (isset($params['frequency_interval'])) ? $params['frequency_interval'] : 1;
+    // Get frequency unit
+    if (!empty($params['frequency_unit'])) {
+      $frequencyUnit = $params['frequency_unit'];
+    }
+    else {
+      $frequencyUnit = '';
+    }
+    // Get frequency interval
+    if (!empty($params['frequency_interval'])) {
+      $frequencyInterval = $params['frequency_interval'];
+    }
+    else {
+      $frequencyInterval = 1;
+    }
 
     switch (strtolower($frequencyUnit)) {
       case 'year':
@@ -472,23 +544,26 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         $collectionFrequency = 'W';
         break;
       default:
-        $collectionFrequency = 'O';
-        $frequencyInterval = 1; // Not really needed here
+        $collectionFrequency = 'Y';
+        $frequencyInterval = 0; // Used as a flag that it's a single payment
     }
     return array($collectionFrequency, $frequencyInterval);
   }
 
-  static function getCollectionFrequencyPostParams($params) {
+  private static function getCollectionFrequencyPostParams($params) {
     $collectionDate = self::getCollectionStartDate($params);
     list($collectionFrequency, $collectionInterval) = self::getCollectionFrequency($params);
-    if ($collectionFrequency == 'O') {
-      $collectionFrequency = 'Y';
-      // Set end date 6 days after start date (min DD freq with Smart Debit is 1 week/7days)
-      $endDate = $collectionDate->add(new DateInterval('P6D'));
+    $params['collection_start_date'] = $collectionDate;
+    $params['collection_frequency'] = $collectionFrequency;
+    $params['collection_interval'] = $collectionInterval;
+    $endDate = self::getCollectionEndDate($params);
+    if (!empty($endDate)) {
       $smartDebitParams['variable_ddi[end_date]'] = $endDate->format("Y-m-d");
     }
     $smartDebitParams['variable_ddi[frequency_type]'] = $collectionFrequency;
-    $smartDebitParams['variable_ddi[frequency_factor]'] = $collectionInterval;
+    if (!empty($collectionFrequency)) {
+      $smartDebitParams['variable_ddi[frequency_factor]'] = $collectionInterval;
+    }
     return $smartDebitParams;
   }
 
@@ -497,7 +572,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    * @param $pString
    * @return mixed
    */
-  static function replaceCommaWithSpace($pString)
+  public static function replaceCommaWithSpace($pString)
   {
     return str_replace(',', ' ', $pString);
   }
@@ -599,8 +674,13 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
     // Take action based upon the response status
     if ($response['success']) {
-      $params['trxn_id'] = $response['reference_number'];
-      self::setRecurTransactionId($params);
+      if (isset($smartDebitParams['variable_ddi[reference_number]'])) {
+        $params['trxn_id'] = $smartDebitParams['variable_ddi[reference_number]'];
+      }
+      if (isset($smartDebitParams['variable_ddi[end_date]'])) {
+        $params['end_date'] = $smartDebitParams['variable_ddi[end_date]'];
+      }
+      $params = self::setRecurTransactionId($params);
       CRM_Smartdebit_Base::completeDirectDebitSetup($params);
       return $params;
     }
@@ -610,20 +690,26 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   }
 
   /**
-   * Add transaction Id to recurring contribution
+   * As the recur transaction is created before payment, we need to update it with our params after payment
    * @param $params
    */
-  static function setRecurTransactionId(&$params) {
-    // As the recur transaction is created before payment, we need to update it with our params after payment
+  static function setRecurTransactionId($params) {
     if (!empty($params['trxn_id'])) {
+      // Common parameters
+      $recurParams = array(
+        'trxn_id' => $params['trxn_id'],
+      );
+      if (!empty($params['end_date'])) {
+        $recurParams['end_date'] = $params['end_date'];
+      }
+      if (!empty($params['preferred_collection_day'])) {
+        $recurParams['cycle_day'] = $params['preferred_collection_day'];
+      }
+
       if (!empty($params['contributionRecurID'])) {
         // Recurring transaction, so this is a recurring payment
-        $recurParams = array (
-          'id' => $params['contributionRecurID'],
-          'trxn_id' => $params['trxn_id'],
-          'cycle_day' => $params['preferred_collection_day'],
-          'contribution_status_id' => self::getInitialContributionStatus(TRUE),
-        );
+        $recurParams['id'] = $params['contributionRecurID'];
+        $recurParams['contribution_status_id'] = self::getInitialContributionStatus(TRUE);
         // Update the recurring payment
         civicrm_api3('ContributionRecur', 'create', $recurParams);
         // Update the contribution status
@@ -640,24 +726,21 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         $financialType['name'] = $params['contributionType_name'];
         $financialType=CRM_Financial_BAO_FinancialType::retrieve($financialType,$defaults);
         // Fill recurring transaction parameters
-        $recurParams = array(
-          'contact_id' =>  $params['contactID'],
-          'create_date' => $params['receive_date'],
-          'modified_date' => $params['receive_date'],
-          'start_date' => $params['receive_date'],
-          'amount' => $params['amount'],
-          'frequency_unit' => 'year',
-          'frequency_interval' => '1',
-          'trxn_id' => $params['trxn_id'],
-          'financial_type_id' => $financialType->id,
-          'auto_renew' => '0', // Make auto renew
-          'cycle_day' => $params['preferred_collection_day'],
-          'currency' => $params['currencyID'],
-          'invoice_id' => $params['invoiceID'],
-          'installments' => 1,
-          'contribution_status_id' => self::getInitialContributionStatus(TRUE),
-        );
+        $recurParams['contact_id'] =  $params['contactID'];
+        $recurParams['create_date'] = $params['receive_date'];
+        $recurParams['modified_date'] = $params['receive_date'];
+        $recurParams['start_date'] = $params['receive_date'];
+        $recurParams['amount'] = $params['amount'];
+        $recurParams['frequency_unit'] = 'year';
+        $recurParams['frequency_interval'] = '1';
+        $recurParams['financial_type_id'] = $financialType->id;
+        $recurParams['auto_renew'] = '0'; // Make auto renew
+        $recurParams['currency'] = $params['currencyID'];
+        $recurParams['invoice_id'] = $params['invoiceID'];
+        $recurParams['contribution_status_id'] = self::getInitialContributionStatus(TRUE);
+
         $recur = CRM_Smartdebit_Base::createRecurContribution($recurParams);
+        // Record recurring contribution ID in params for return
         $params['contributionRecurID'] = $recur['id'];
         $params['contribution_recur_id'] = $recur['id'];
         // We need to link the recurring contribution and contribution record, as Civi won't do it for us (4.7.21)
@@ -689,6 +772,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         self::updateMembershipStatus($params['membershipID']);
       }
     }
+    return $params;
   }
 
   /**
