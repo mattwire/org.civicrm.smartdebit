@@ -1,3 +1,9 @@
+## Release 1.12
+
+* Support changing recurring amount (via "Edit Recurring" on backend).
+* Set cycle_day and end_date on recurring contribution.
+* Support installments.
+
 ## Release 1.11
 
 * Add settings to customise confirm-by options (Email/Post).  Hide confirm-by and preferred collection date if there is only one available.
