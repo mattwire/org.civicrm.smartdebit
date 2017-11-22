@@ -9,26 +9,26 @@ If you follow the instructions below the payment processor configuration will be
 * Disable/Uninstall smart_debit_reconciliation via CiviCRM UI!
 * Disable/uninstall SmartDebit extension
 
-`drush civicrm-ext-disable uk.co.vedaconsulting.payment.smartdebitdd`
-`drush civicrm-ext-uninstall uk.co.vedaconsulting.payment.smartdebitdd`
+    `drush civicrm-ext-disable uk.co.vedaconsulting.payment.smartdebitdd`
+    `drush civicrm-ext-uninstall uk.co.vedaconsulting.payment.smartdebitdd`
 
 * Disable/uninstall ukdirectdebit extension
 
-`drush civicrm-ext-disable uk.co.vedaconsulting.payment.ukdirectdebit`
-`drush civicrm-ext-uninstall uk.co.vedaconsulting.payment.ukdirectdebit`
+    `drush civicrm-ext-disable uk.co.vedaconsulting.payment.ukdirectdebit`
+    `drush civicrm-ext-uninstall uk.co.vedaconsulting.payment.ukdirectdebit`
 
 * Remove extensions:
 
-`rm uk.co.vedaconsulting.module.smartdebit_reconciliation/ -rf`
-`rm uk.co.vedaconsulting.payment.* -rf`
+    `rm uk.co.vedaconsulting.module.smartdebit_reconciliation/ -rf`
+    `rm uk.co.vedaconsulting.payment.* -rf`
 
 * Delete existing:
   * Smartdebit scheduled jobs
 
 * Download/install new extensions (smartdebit)
 
-`git clone https://github.com/mattwire/org.civicrm.smartdebit.git`
-`drush civicrm-ext-install org.civicrm.smartdebit`
+    `git clone https://github.com/mattwire/org.civicrm.smartdebit.git`
+    `drush civicrm-ext-install org.civicrm.smartdebit`
 
 * Change Payment processor type back to Smart_Debit in CiviCRM UI
 * Configure Smart debit extension (civicrm/admin/smartdebit/settings)
