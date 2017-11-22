@@ -137,6 +137,7 @@ WHERE ddi_reference = '{$params['ddi_reference']}'
     $date = new DateTime();
 
     $ddDetails['today'] = $date->format('Ymd');
+    $ddDetails['notice_period'] = CRM_Smartdebit_Settings::getValue('notice_period');
 
     return $ddDetails;
   }

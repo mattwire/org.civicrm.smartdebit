@@ -421,7 +421,12 @@ class CRM_Smartdebit_Api {
    * @return null|string
    */
   static function encodePostParams($params) {
+    if (empty($params)) {
+      return NULL;
+    }
+
     $post = NULL;
+
     foreach ($params as $key => $value) {
       if (!empty($value)) {
         if (!empty($post)) {

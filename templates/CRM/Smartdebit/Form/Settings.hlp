@@ -44,6 +44,11 @@ the next available collection date. It is also used to calculate when the first 
 {ts}This will be displayed to the customer on sign up. It allows them to select their preferred collection day.  For example: 1,20 would allow the customer
 to have their Direct Debit payment taken on either the 1st or 20th of the month.{/ts}
 {/htxt}
+{htxt id='notice_period'}
+{ts}This is the "Advance Notice Period" as agreed with Smartdebit and displayed on the Direct Debit Guarantee.
+  "If there are any changes to the amount, date or frequency of your Direct Debit ORGANISATION_NAME will notify you XX working days in advance of your account being debited
+ or as otherwise agreed. If you request ORGANISATION_NAME to collect a payment, confirmation of the amount and date will be given to you at the time of the request."{/ts}
+{/htxt}
 {htxt id='service_user_number'}
 {ts}This is assigned to you by the Bank / Direct Debit provider and should be entered here.{/ts}
 {/htxt}

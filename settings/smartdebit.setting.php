@@ -119,6 +119,23 @@ return array(
     ),
   ),
 
+  //Advance notice period
+  'smartdebit_notice_period' => array(
+    'group_name' => 'Smart Debit Settings',
+    'group' => 'smartdebit',
+    'name' => 'smartdebit_notice_period',
+    'type' => 'String',
+    'default' => 10,
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'description' => 'Advance Notice Period of changes (days)',
+    'html_type' => 'Text',
+    'html_attributes' => array(
+      'size' => 50,
+    ),
+  ),
+
   //service_user_number
   'smartdebit_service_user_number' => array(
     'group_name' => 'Smart Debit Settings',
