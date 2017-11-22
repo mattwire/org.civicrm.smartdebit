@@ -9,6 +9,11 @@ It will need at least the following parameters configured:
 * Support Frequency Factor: Yes (if you want anything other than 1 month or 1 year intervals).
 * Support Collection days: For flexibility, allow any at Smartdebit and restrict via Smartdebit Settings in CiviCRM.
 
+Ask Smartdebit to confirm:
+
+* What is the "Advance Notice Period" for the Direct Debit Guarantee?
+
+
 ## CiviCRM Setup
 Install this extension!
 

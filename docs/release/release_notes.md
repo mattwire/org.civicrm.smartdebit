@@ -1,3 +1,8 @@
+## Release 1.13
+
+* Add setting for "Advance Notice Period" as required by some clients which is displayed 
+on the Direct Debit Guarantee.
+
 ## Release 1.12
 
 * Support changing recurring amount (via "Edit Recurring" on backend).
