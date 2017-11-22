@@ -48,7 +48,7 @@ class CRM_Smartdebit_Sync
    * @param null $aruddIDs
    * @return bool|CRM_Queue_Runner
    */
-  static function getRunner($interactive=TRUE, $auddisIDs = NULL, $aruddIDs = NULL) {
+  public static function getRunner($interactive=TRUE, $auddisIDs = NULL, $aruddIDs = NULL) {
     // Reset stats
     CRM_Smartdebit_Settings::save(array('rejected_auddis' => NULL));
     CRM_Smartdebit_Settings::save(array('rejected_arudd' => NULL));
@@ -176,7 +176,7 @@ class CRM_Smartdebit_Sync
     return $runner;
   }
 
-  static function runViaWeb($runner) {
+  public static function runViaWeb($runner) {
     if ($runner) {
       // Run Everything in the Queue via the Web.
       $runner->runAllViaWeb();
@@ -195,7 +195,7 @@ class CRM_Smartdebit_Sync
    * @param CRM_Queue_TaskContext $ctx
    * @param $smartDebitAuddisIds
    */
-  static function syncSmartdebitAuddis(CRM_Queue_TaskContext $ctx, $smartDebitAuddisIds)
+  public static function syncSmartdebitAuddis(CRM_Queue_TaskContext $ctx, $smartDebitAuddisIds)
   {
     // Add contributions for rejected payments with the status of 'failed'
     // Reset the counter when sync starts
@@ -227,7 +227,7 @@ class CRM_Smartdebit_Sync
    *
    * @return int
    */
-  static function syncSmartdebitArudd (CRM_Queue_TaskContext $ctx, $smartDebitAruddIds) {
+  public static function syncSmartdebitArudd (CRM_Queue_TaskContext $ctx, $smartDebitAruddIds) {
     // Add contributions for rejected payments with the status of 'failed'
     $rejectedIds = array();
     // Reset the counter when sync starts
@@ -258,7 +258,7 @@ class CRM_Smartdebit_Sync
    * @param $smartDebitPayerContacts
    * @return int
    */
-  static function syncSmartdebitCollectionReports(CRM_Queue_TaskContext $ctx, $smartDebitPayerContacts)
+  public static function syncSmartdebitCollectionReports(CRM_Queue_TaskContext $ctx, $smartDebitPayerContacts)
   {
     // Import each transaction from smart debit
     foreach ($smartDebitPayerContacts as $key => $sdContact) {
@@ -273,20 +273,23 @@ class CRM_Smartdebit_Sync
         continue;
       }
 
-      self::processCollection($sdContact['reference_number'], $daoCollectionReport->receive_date, 'Completed', $daoCollectionReport->amount, 'Collection Report');
+      self::processCollection($sdContact['reference_number'], $daoCollectionReport->receive_date, TRUE, $daoCollectionReport->amount, 'Collection Report');
     }
     return CRM_Queue_Task::TASK_SUCCESS;
   }
 
   /**
    * Process the collection/auddis/arudd record and add/update contributions as required
-   * @param $trxnId
-   * @param $receiveDate
-   * @param $amount
+   * @param string $trxnId
+   * @param string $receiveDate
+   * @param bool $contributionSuccess
+   * @param float $amount
+   * @param string $collectionDescription
+   *
    * @return integer|bool
    */
-  static function processCollection($trxnId, $receiveDate, $contributionStatus, $amount, $collectionDescription) {
-    if (empty($trxnId) || empty($receiveDate)  || empty($contributionStatus)) {
+  private static function processCollection($trxnId, $receiveDate, $contributionSuccess, $amount, $collectionDescription) {
+    if (empty($trxnId) || empty($receiveDate)) {
       // amount can be empty
       return FALSE;
     }
@@ -321,20 +324,33 @@ class CRM_Smartdebit_Sync
         'trxn_id' => $trxnId . '/' . CRM_Utils_Date::processDate($receiveDate),
         'financial_type_id' => $contributionRecur['financial_type_id'],
         'payment_instrument_id' => $contributionRecur['payment_instrument_id'],
-        'contribution_status_id' => CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', $contributionStatus),
         'receive_date' => CRM_Utils_Date::processDate($receiveDate),
       );
 
     // Check if the contribution is first payment
     // if yes, update the contribution instead of creating one
     // as CiviCRM should have created the first contribution
-    $contributeParams = self::checkIfFirstPayment($contributeParams, $contributionRecur);
+    list($firstPayment, $contributeParams) = self::checkIfFirstPayment($contributeParams, $contributionRecur);
     $contributeParams['source'] = 'Smart Debit: ' . $collectionDescription;
 
     // Allow params to be modified via hook
     CRM_Smartdebit_Hook::alterSmartdebitContributionParams($contributeParams);
 
-    $contributeResult = CRM_Smartdebit_Base::createContribution($contributeParams);
+    if ($contributionSuccess) {
+      // If payment is successful, we create the contribution as pending, then call completetransaction to mark it as completed and update/renew related memberships/events.
+      $contributeParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
+      $contributeResult = CRM_Smartdebit_Base::createContribution($contributeParams);
+      if (!$firstPayment && empty($contributeResult['is_error'])) {
+        civicrm_api3('contribution', 'completetransaction', array(
+          'id' => $contributeResult['id'],
+        ));
+      }
+    }
+    else {
+      // If payment failed, we create the contribution as failed, and don't call completetransaction (as we don't want to update/renew related memberships/events).
+      $contributeParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Failed');
+      $contributeResult = CRM_Smartdebit_Base::createContribution($contributeParams);
+    }
 
     if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit processCollection: $contributeParams=' . print_r($contributeParams, true)); }
     if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit processCollection: $contributeResult=' . print_r($contributeResult, true)); }
@@ -342,15 +358,14 @@ class CRM_Smartdebit_Sync
     if (empty($contributeResult['is_error'])) {
       // Get recurring contribution ID
       // get contact display name to display in result screen
-      $contactParams = array('version' => 3, 'id' => $contributionRecur['contact_id']);
-      $contactResult = civicrm_api('Contact', 'getsingle', $contactParams);
+      $contactResult = civicrm_api3('Contact', 'getsingle', array('id' => $contributionRecur['contact_id']));
 
       // Update Recurring contribution to "In Progress"
       $contributionRecur['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
       CRM_Smartdebit_Base::createRecurContribution($contributionRecur);
 
       // Only record completed collections in DB
-      if ($contributionStatus == 'Completed') {
+      if ($contributionSuccess) {
         // Store the results in veda_smartdebit_success_contributions table
         $keepSuccessResultsSQL = "
           INSERT INTO `veda_smartdebit_success_contributions`(
@@ -387,7 +402,7 @@ class CRM_Smartdebit_Sync
    * @param $dateKey
    * @return array|bool
    */
-  static function processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey, $collectionDescription) {
+  private static function processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey, $collectionDescription) {
     $errors = FALSE;
     $rejectedIds = array();
 
@@ -398,7 +413,7 @@ class CRM_Smartdebit_Sync
         continue;
       }
 
-      $contributionId = self::processCollection($value[$refKey], $value[$dateKey], 'Failed', 0, $collectionDescription);
+      $contributionId = self::processCollection($value[$refKey], $value[$dateKey], FALSE, 0, $collectionDescription);
 
       if ($contributionId) {
         // Look for an existing contribution
@@ -443,14 +458,14 @@ class CRM_Smartdebit_Sync
    * for the recurring contribution record
    *
    * @param $newContribution
-   * @param string $frequencyUnit
-   * @param int $frequencyInterval
-   * @return bool|array
+   * @param $contributionRecur
+   *
+   * @return array (bool: First Contribution, array: contributionrecord)
    */
-  static function checkIfFirstPayment($newContribution, $contributionRecur) {
+  private static function checkIfFirstPayment($newContribution, $contributionRecur) {
     if (empty($newContribution['contribution_recur_id'])) {
       if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: No recur_id'); }
-      return false;
+      return array(FALSE, NULL);
     }
     if (empty($contributionRecur['frequency_unit'])) {
       $contributionRecur['frequency_unit'] = 'year';
@@ -476,7 +491,7 @@ class CRM_Smartdebit_Sync
           if (CRM_Smartdebit_Sync::DEBUG) {
             CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Identical-Using existing contribution');
           }
-          return $newContribution;
+          return array(TRUE, $newContribution);
         }
       }
 
@@ -489,7 +504,7 @@ class CRM_Smartdebit_Sync
           if (strcmp(substr($contributionDetails['trxn_id'], strlen($contributionRecur['trxn_id']), 1), '/') == 0) {
             // Not identical but one of ours, so we'll create a new one
             if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Not identical,ours. Creating new contribution'); }
-            return $newContribution;
+            return array(FALSE, $newContribution);
           }
         }
       }
@@ -505,11 +520,11 @@ class CRM_Smartdebit_Sync
         if (($dateDiff < $days) && ($days != 0)) {
           if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Within dates,Using existing contribution'); }
           $newContribution['id'] = $contributionDetails['id'];
-          return $newContribution;
+          return array(TRUE, $newContribution);
         }
       }
     }
-    return $newContribution;
+    return array(FALSE, $newContribution);
   }
 
   /**
@@ -519,7 +534,7 @@ class CRM_Smartdebit_Sync
    * @param string $differenceFormat
    * @return string
    */
-  static function dateDifference($date_1, $date_2, $differenceFormat = '%a')
+  private static function dateDifference($date_1, $date_2, $differenceFormat = '%a')
   {
     $datetime1 = date_create($date_1);
     $datetime2 = date_create($date_2);
@@ -538,7 +553,7 @@ class CRM_Smartdebit_Sync
    * @param $frequencyInterval
    * @return int
    */
-  static function daysDifferenceForFrequency($frequencyUnit, $frequencyInterval) {
+  private static function daysDifferenceForFrequency($frequencyUnit, $frequencyInterval) {
     switch ($frequencyUnit) {
       case 'day':
         $days = $frequencyInterval * 1;
@@ -566,7 +581,7 @@ class CRM_Smartdebit_Sync
    * @param $smartDebitPayerContactDetails (array of smart debit contact details : call CRM_Smartdebit_Api::getPayerContactDetails())
    * @return bool|int
    */
-  static function updateSmartDebitMandatesTable($smartDebitPayerContactDetails) {
+  public static function updateSmartDebitMandatesTable($smartDebitPayerContactDetails) {
     // if the civicrm_sd table exists, then empty it
     $emptySql = "TRUNCATE TABLE `veda_smartdebit_mandates`";
     CRM_Core_DAO::executeQuery($emptySql);
