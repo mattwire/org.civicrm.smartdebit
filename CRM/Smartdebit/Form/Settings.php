@@ -23,6 +23,8 @@
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +-------------------------------------------------------------------*/
 
+use CRM_Smartdebit_ExtensionUtil as E;
+
 /**
  * Form controller class
  *
@@ -45,7 +47,7 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
       $this->assign('apiStatus', 'No Smartdebit payment processors are configured yet!');
     }
 
-    CRM_Utils_System::setTitle(ts('Smart Debit - Settings'));
+    CRM_Utils_System::setTitle(CRM_Smartdebit_Settings::TITLE . ' - ' . E::ts('Settings'));
 
     $settings = $this->getFormSettings();
 
@@ -168,7 +170,7 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
     $settings = $this->getFormSettings(FALSE);
     $defaults = array();
 
-    $existing = CRM_Smartdebit_Settings::get($settings);
+    $existing = CRM_Smartdebit_Settings::get(array_keys($settings));
     if ($existing) {
       foreach ($existing as $name => $value) {
         $defaults[$name] = $value;

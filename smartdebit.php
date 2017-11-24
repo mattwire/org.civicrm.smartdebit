@@ -24,6 +24,7 @@
  +-------------------------------------------------------------------*/
 
 require_once 'smartdebit.civix.php';
+use CRM_Smartdebit_ExtensionUtil as E;
 
 /**
  * Implements hook_civicrm_config().
