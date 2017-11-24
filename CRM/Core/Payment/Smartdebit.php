@@ -261,7 +261,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       'account_holder',
       'bank_account_number',
       'bank_identification_number',
-      'bank_name',
       'ddi_reference',
     );
   }
@@ -311,17 +310,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         'cc_field' => TRUE,
         'attributes' => array('size' => 20
         , 'maxlength' => 11
-        , 'autocomplete' => 'off'
-        ),
-        'is_required' => TRUE
-      ),
-      'bank_name' => array(
-        'htmlType' => 'text',
-        'name' => 'bank_name',
-        'title' => ts('Bank Name'),
-        'cc_field' => TRUE,
-        'attributes' => array('size' => 20
-        , 'maxlength' => 64
         , 'autocomplete' => 'off'
         ),
         'is_required' => TRUE
@@ -861,7 +849,7 @@ UPDATE civicrm_direct_debit SET
    */
   function doTransferCheckout(&$params, $component)
   {
-    CRM_Core_Error::fatal(ts('SmartDebit::doTransferCheckout: This function is not implemented'));
+    self::doDirectPayment($params);
   }
 
   /**
