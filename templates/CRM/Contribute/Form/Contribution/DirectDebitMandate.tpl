@@ -28,7 +28,6 @@
   </div>
   <div>
     {ts}Thank you very much for your Direct Debit Instruction details. Below is the Direct Debit Guarantee for your information.{/ts}
-    <strong> {ts}Please print this page for your records{/ts}</strong>
   </div>
   <div class="display-block">
     {* Start of DDI *}
@@ -130,7 +129,7 @@
     <div class="clear" style="padding: 10px"></div>
     <div style="border: 3px solid #000000;background-color: #ffffff;width: 95%; padding: 15px">
       <div style="font-family: Arial,Helvetica,Monaco; font-size: 28px; line-height: 35px">
-        <span style="float: right; width: 107px; vertical-align: top"><img src="{crmResURL ext=org.civicrm.smartdebit file=images/direct_debit_small.png}" alt="Direct Debit Logo" border="0"></span>
+        <span style="float: right; vertical-align: top"><img src="{crmResURL ext=org.civicrm.smartdebit file=images/direct_debit_small.png}" alt="Direct Debit Logo" border="0"></span>
         <strong>{ts}The Direct Debit Guarantee{/ts}</strong>
       </div>
       <div class="clear"></div>
