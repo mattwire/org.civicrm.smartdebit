@@ -1,3 +1,8 @@
+## Release 1.14
+
+* Simplify Direct debit instructions/mandate on contribution pages following feedback from smartdebit.
+* Support membership renewal by calling Contribution.completetransaction API
+
 ## Release 1.13
 
 * Add setting for "Advance Notice Period" as required by some clients which is displayed 
