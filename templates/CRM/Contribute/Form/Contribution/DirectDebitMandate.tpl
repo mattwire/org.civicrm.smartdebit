@@ -27,7 +27,14 @@
     {ts}Direct Debit Information{/ts}
   </div>
   <div>
-    {ts}Thank you very much for your Direct Debit Instruction details. Below is the Direct Debit Guarantee for your information.{/ts}
+    <div class="display-block">
+      {ts}Thank You For Setting Up a Direct Debit Payment.{/ts}
+      <br />
+      <strong>{ts 1=$dd_details.first_collection_date|crmDate}The first payment will be collected on or around %1.{/ts}</strong>
+      <br />
+      <br />
+      {ts}Below is the Direct Debit Guarantee for your information.{/ts}
+    </div>
   </div>
   <div class="display-block">
     {* Start of DDI *}

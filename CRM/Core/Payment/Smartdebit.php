@@ -198,6 +198,13 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     $direct_debit_response['ddi_reference'] = $values['ddi_reference'];
     $direct_debit_response['response_status'] = $response['message'];
 
+    // On success an array is returned, last success element is an array of attributes
+    if ((is_array($response['success'])) && isset(end($response['success'])['@attributes'])) {
+      foreach (end($response['success'])['@attributes'] as $key => $value) {
+        $direct_debit_response[$key] = $value;
+      }
+    }
+
     // Take action based upon the response status
     if ($response['success']) {
       $direct_debit_response['entity_id'] = isset($values['entity_id']) ? $values['entity_id'] : 0;
@@ -350,6 +357,31 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         'is_required' => TRUE,
       )
     );
+  }
+
+  /**
+   * Get form metadata for billing address fields.
+   *
+   * @param int $billingLocationID
+   *
+   * @return array
+   *    Array of metadata for address fields.
+   */
+  public function getBillingAddressFieldsMetadata($billingLocationID = NULL) {
+    $metadata = parent::getBillingAddressFieldsMetadata($billingLocationID);
+    if (!$billingLocationID) {
+      // Note that although the billing id is passed around the forms the idea that it would be anything other than
+      // the result of the function below doesn't seem to have eventuated.
+      // So taking this as a param is possibly something to be removed in favour of the standard default.
+      $billingLocationID = CRM_Core_BAO_LocationType::getBilling();
+    }
+
+    // State/county field is not required.
+    if (!empty($metadata["billing_state_province_id-{$billingLocationID}"]['is_required'])) {
+      $metadata["billing_state_province_id-{$billingLocationID}"]['is_required'] = FALSE;
+    }
+
+    return $metadata;
   }
 
   /**

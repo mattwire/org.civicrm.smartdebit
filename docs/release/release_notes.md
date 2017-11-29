@@ -1,3 +1,9 @@
+## Release 1.15
+
+* Fix retrieval and display of Bank Name from Smartdebit.
+* Add date of first collection to Thankyou page.
+* Make state/province optional in billing address as it's not required by Smartdebit.
+
 ## Release 1.14
 
 * Simplify Direct debit instructions/mandate on contribution pages following feedback from smartdebit.

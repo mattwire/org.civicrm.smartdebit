@@ -99,7 +99,10 @@ class CRM_Smartdebit_Api {
       switch ($header['http_code']) {
         case 200:
           $resultsArray['message'] = 'OK';
-          $resultsArray['success'] = TRUE;
+          if (!isset($resultsArray['success'])) {
+            // success is set to an array during API validate, but not set on API create
+            $resultsArray['success'] = TRUE;
+          }
           break;
         case 400:
           $resultsArray['message'] = 'BAD REQUEST';
