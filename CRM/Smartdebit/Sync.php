@@ -73,7 +73,10 @@ class CRM_Smartdebit_Sync
     $smartDebitPayerContacts = CRM_Smartdebit_Api::getPayerContactDetails();
 
     // Update mandates table for reconciliation functions
-    CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($smartDebitPayerContacts);
+    self::updateSmartDebitMandatesTable($smartDebitPayerContacts);
+
+    // Update recurring contributions
+    self::updateRecurringContributions($smartDebitPayerContacts);
 
     foreach ($smartDebitPayerContacts as $key => $sdContact) {
       // Check if a recurring contribution exists, otherwise remove it from list for processing
@@ -334,7 +337,7 @@ class CRM_Smartdebit_Sync
     $contributeParams['source'] = 'Smart Debit: ' . $collectionDescription;
 
     // Allow params to be modified via hook
-    CRM_Smartdebit_Hook::alterSmartdebitContributionParams($contributeParams);
+    CRM_Smartdebit_Hook::alterContributionParams($contributeParams, $firstPayment);
 
     if ($contributionSuccess) {
       // If payment is successful, we create the contribution as pending, then call completetransaction to mark it as completed and update/renew related memberships/events.
@@ -638,4 +641,28 @@ class CRM_Smartdebit_Sync
     $mandateFetchedCount = count($smartDebitPayerContactDetails);
     return $mandateFetchedCount;
   }
+
+  public static function updateRecurringContributions($smartDebitPayerContactDetails) {
+    foreach ($smartDebitPayerContactDetails as $key => $smartDebitRecord) {
+      // Get recur
+      try {
+        $recurContribution = civicrm_api3('ContributionRecur', 'getsingle', array(
+          'trxn_id' => $smartDebitRecord['reference_number'],
+        ));
+      }
+      catch (CiviCRM_API3_Exception $e) {
+        // Recurring contribution with transaction ID does not exist
+        continue;
+      }
+      // Update the recurring contribution
+      $recurContribution['start_date'] = $smartDebitRecord['start_date'];
+      $recurContribution['amount'] = filter_var($smartDebitRecord['regular_amount'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+      list($recurContribution['frequency_unit'], $recurContribution['frequency_interval']) =
+        CRM_Smartdebit_Base::translateSmartdebitFrequencytoCiviCRM($smartDebitRecord['frequency_type'], $smartDebitRecord['frequency_factor']);
+      // Hook to allow modifying recurring contribution during sync task
+      CRM_Smartdebit_Hook::updateRecurringContribution($recurContribution);
+      civicrm_api3('ContributionRecur', 'create', $recurContribution);
+    }
+  }
+
 }

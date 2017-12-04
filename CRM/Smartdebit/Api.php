@@ -2,6 +2,13 @@
 
 class CRM_Smartdebit_Api {
 
+  CONST SD_STATE_DRAFT = 0;
+  CONST SD_STATE_NEW = 1;
+  CONST SD_STATE_LIVE = 10;
+  CONST SD_STATE_CANCELLED = 11;
+  CONST SD_STATE_REJECTED = 12;
+  CONST SD_STATES = array(0 => 'Draft', 1 => 'New', 10 => 'Live', 11 => 'Cancelled', 12 => 'Rejected');
+
   /**
    * Return API URL with base prepended
    * @param array $processorDetails Array of processor details from CRM_Core_Payment_Smartdebit::getProcessorDetails()
@@ -129,12 +136,23 @@ class CRM_Smartdebit_Api {
     return $resultsArray;
   }
 
-  public static function reportError($response) {
+  /**
+   * Format error from Smartdebit for display
+   *
+   * @param array $response
+   * @param string $referenceNumber (Smartdebit reference number)
+   */
+  public static function reportError($response, $referenceNumber = NULL) {
     if (isset($response['head']['title'])) {
       $msg = $response['head']['title'];
     }
     else {
-      $msg = $response['statuscode'] . ': ' . $response['message'];
+      if (isset($response['error']) && $response['error'] == 'Database is empty.') {
+        $msg = 'Transaction Ref ' . $referenceNumber . ' not found!';
+      }
+      else {
+        $msg = $response['statuscode'] . ': ' . $response['message'];
+      }
     }
     CRM_Core_Session::setStatus($msg, 'Smart Debit', 'error');
     Civi::log()->error('Smart Debit: ' . $msg);
@@ -292,7 +310,7 @@ class CRM_Smartdebit_Api {
       return $smartDebitArray;
     }
     else {
-      self::reportError($response);
+      self::reportError($response, $referenceNumber);
       return false;
     }
   }
@@ -447,7 +465,7 @@ class CRM_Smartdebit_Api {
    *
    * @return int|string
    */
-  static function encodeAmount($amount) {
+  public static function encodeAmount($amount) {
     if (empty($amount)) {
       return 0;
     }

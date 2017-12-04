@@ -31,28 +31,35 @@
 class CRM_Smartdebit_Hook {
 
   /**
-   * This hook allows to alter contribution params when processing collection (before contribution is created).
-   *
-   * @param array $params Contribution params
-   *
-   * @access public
-   */
-  static function alterSmartdebitContributionParams(&$params) {
-    return CRM_Utils_Hook::singleton()
-      ->invoke(1, $params, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, 'civicrm_alterSmartdebitContributionParams');
-  }
-
-  /**
    * This hook allows to alter params before submitting to SmartDebit.
    *
    * @param array $params Raw params
    * @param array $smartDebitParams Params formatted for smartdebit
    *
+   * @access public
+   *
    * @return mixed
    */
-  static function alterSmartdebitCreateVariableDDIParams(&$params, &$smartDebitParams) {
+  static function alterCreateVariableDDIParams(&$params, &$smartDebitParams) {
     return CRM_Utils_Hook::singleton()
-      ->invoke(2, $params, $smartDebitParams, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, 'civicrm_alterSmartdebitCreateVariableDDIParams');
+      ->invoke(2, $params, $smartDebitParams, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject,
+        CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, 'civicrm_smartdebit_alterCreateVariableDDIParams');
+  }
+
+  /**
+   * This hook allows to alter contribution params when processing collection (before contribution is created).
+   *
+   * @param array $params Contribution params
+   * @param bool $firstPayment True if this is the first payment
+   *
+   * @access public
+   *
+   * @return mixed
+   */
+  static function alterContributionParams(&$params, $firstPayment) {
+    return CRM_Utils_Hook::singleton()
+      ->invoke(2, $params, $firstPayment, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject,
+        CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, 'civicrm_smartdebit_alterContributionParams');
   }
 
   /**
@@ -61,10 +68,28 @@ class CRM_Smartdebit_Hook {
    * @param integer $contributionId Contribution ID of the failed/rejected contribution
    *
    * @access public
+   *
+   * @return mixed
    */
   static function handleAuddisRejectedContribution($contributionId) {
     return CRM_Utils_Hook::singleton()
-      ->invoke(1, $contributionId, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, 'civicrm_handleAuddisRejectedContribution');
+      ->invoke(1, $contributionId, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject,
+        CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, 'civicrm_smartdebit_handleAuddisRejectedContribution');
+  }
+
+  /**
+   * This hook allows modifying recurring contribution parameters during sync task
+   *
+   * @param array $recurContributionParams Recurring contribution params (ContributionRecur.create API parameters)
+   *
+   * @access public
+   *
+   * @return mixed
+   */
+  static function updateRecurringContribution($recurContributionParams) {
+    return CRM_Utils_Hook::singleton()
+      ->invoke(1, $recurContributionParams, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject,
+        CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, 'civicrm_smartdebit_updateRecurringContribution');
   }
 
 }

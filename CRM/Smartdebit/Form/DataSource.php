@@ -34,7 +34,7 @@ class CRM_Smartdebit_Form_DataSource extends CRM_Core_Form {
   public function buildQuickForm() {
     $this->assign('period', CRM_Smartdebit_Sync::COLLECTION_REPORT_AGE);
     // Add datepicker to select the end date
-    $this->add('datepicker', 'collection_date', ts('Collection Date'), NULL, FALSE, NULL);
+    $this->add('datepicker', 'collection_date', ts('Collection Date'), array(), FALSE, array('time' => FALSE));
     $this->addButtons(array(
         array(
           'type' => 'submit',

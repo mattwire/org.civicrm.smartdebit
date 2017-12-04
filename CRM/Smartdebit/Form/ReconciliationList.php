@@ -541,16 +541,16 @@ AND   csd.id IS NULL LIMIT 100";
    */
   static function formatSDStatus($sdStatus) {
     switch ($sdStatus) {
-      case 0: // Draft
-        return 'Draft';
-      case 1: // New
-        return 'New';
-      case 10: // Live
-        return 'Live';
-      case 11: // Cancelled
-        return 'Cancelled';
-      case 12: // Rejected
-        return 'Rejected';
+      case CRM_Smartdebit_Api::SD_STATE_DRAFT:
+        return CRM_Smartdebit_Api::SD_STATES[CRM_Smartdebit_Api::SD_STATE_DRAFT];
+      case CRM_Smartdebit_Api::SD_STATE_NEW:
+        return CRM_Smartdebit_Api::SD_STATES[CRM_Smartdebit_Api::SD_STATE_NEW];
+      case CRM_Smartdebit_Api::SD_STATE_LIVE:
+        return CRM_Smartdebit_Api::SD_STATES[CRM_Smartdebit_Api::SD_STATE_LIVE];
+      case CRM_Smartdebit_Api::SD_STATE_CANCELLED:
+        return CRM_Smartdebit_Api::SD_STATES[CRM_Smartdebit_Api::SD_STATE_CANCELLED];
+      case CRM_Smartdebit_Api::SD_STATE_REJECTED:
+        return CRM_Smartdebit_Api::SD_STATES[CRM_Smartdebit_Api::SD_STATE_REJECTED];
       default:
         return 'Unknown';
     }

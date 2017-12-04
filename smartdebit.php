@@ -384,7 +384,7 @@ function smartdebit_civicrm_pageRun(&$page)
       $recurID = $page->getVar('_id');
 
       $queryParams = array(
-        'sequential' => 1,
+        'options' => array('sort' => "id DESC", 'limit' => 1),
         'return' => array("trxn_id", "id"),
         'id' => $recurID,
         'contact_id' => $contactID,
@@ -395,8 +395,13 @@ function smartdebit_civicrm_pageRun(&$page)
       $contributionRecurDetails = array();
       if (!empty($recurRef['trxn_id'])) {
         $smartDebitResponse = CRM_Smartdebit_Api::getPayerContactDetails($recurRef['trxn_id']);
-        foreach ($smartDebitResponse[0] as $key => $value) {
-          $contributionRecurDetails[$key] = $value;
+        if ($smartDebitResponse) {
+          foreach ($smartDebitResponse[0] as $key => $value) {
+            if ($key == 'current_state') {
+              $value = CRM_Smartdebit_Api::SD_STATES[$value];
+            }
+            $contributionRecurDetails[$key] = $value;
+          }
         }
       }
       // Add Smart Debit details via js
@@ -418,7 +423,8 @@ function smartdebit_civicrm_buildForm( $formName, &$form )
   if ($form->isSubmitted()) return;
 
   //Smart Debit
-  if (isset($form->_paymentProcessor['payment_processor_type']) && ($form->_paymentProcessor['payment_processor_type'] == 'Smart_Debit')) {
+  if (isset($form->_paymentProcessorObj) && ($form->_paymentProcessorObj instanceof CRM_Core_Payment_Smartdebit)
+    || (isset($form->_paymentProcessor['payment_processor_type']) && ($form->_paymentProcessor['payment_processor_type'] == 'Smart_Debit'))) {
     if ($formName == 'CRM_Contribute_Form_Contribution_Confirm') {
       // Confirm Contribution (check details and confirm)
       // Show the direct debit agreement on the confirm page
@@ -442,71 +448,36 @@ function smartdebit_civicrm_buildForm( $formName, &$form )
       ));
     } elseif ($formName == 'CRM_Contribute_Form_UpdateSubscription') {
       // Accessed when you click edit on a recurring contribution
-      $paymentProcessor = $form->_paymentProcessor;
-      if (isset($paymentProcessor['payment_processor_type']) && ($paymentProcessor['payment_processor_type'] == 'Smart_Debit')) {
-        $recurID = $form->getVar('contributionRecurID');
-        $linkedMembership = FALSE;
-        try {
-          $membershipRecord = civicrm_api3('Membership', 'getsingle', array(
-            'return' => array('id'),
-            'contribution_recur_id' => $recurID,
-            'options' => array('limit' => 1),
-          ));
-          if (isset($membershipRecord['id'])) {
-            $linkedMembership = TRUE;
-          }
-        }
-        catch (CiviCRM_API3_Exception $e) {
-          // No membership record
-        }
-        try {
-          $recurRecord = civicrm_api3('ContributionRecur', 'getsingle', array(
-            'id' => $recurID,
-            'options' => array('limit' => 1),
-          ));
-        }
-        catch (CiviCRM_API3_Exception $e) {
-          CRM_Core_Error::statusBounce('No recurring record! ' . $e->getMessage());
-        }
-
-        $form->removeElement('installments');
-
-        $frequencyUnits = array('W' => 'week', 'M' => 'month', 'Q' => 'quarter', 'Y' => 'year');
-        $frequencyIntervals = array(1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5, 6 => 6, 7 => 7, 8 => 8, 9 => 9, 10 => 10, 11 => 11, 12 => 12);
-
-        $form->addElement('select', 'frequency_unit', ts('Frequency'),
-          array('' => ts('- select -')) + $frequencyUnits
-        );
-        $form->addElement('select', 'frequency_interval', ts('Frequency Interval'),
-          array('' => ts('- select -')) + $frequencyIntervals
-        );
-        $form->addDate('start_date', ts('Start Date'), FALSE, array('formatType' => 'custom'));
-        $form->addDate('end_date', ts('End Date'), FALSE, array('formatType' => 'custom'));
-        $form->add('text', 'account_holder', ts('Account Holder'), array('size' => 20, 'maxlength' => 18, 'autocomplete' => 'on'));
-        $form->add('text', 'bank_account_number', ts('Bank Account Number'), array('size' => 20, 'maxlength' => 8, 'autocomplete' => 'off'));
-        $form->add('text', 'bank_identification_number', ts('Sort Code'), array('size' => 20, 'maxlength' => 6, 'autocomplete' => 'off'));
-        $form->add('text', 'bank_name', ts('Bank Name'), array('size' => 20, 'maxlength' => 64, 'autocomplete' => 'off'));
-        $form->add('hidden', 'payment_processor_type', 'Smart_Debit');
-
-        $reference = $recurRecord['trxn_id'];
-        $recur = new CRM_Contribute_BAO_ContributionRecur();
-        $recur->trxn_id = $reference;
-        $recur->find(TRUE);
-        $startDate = $recur->start_date;
-        list($defaults['start_date'], $defaults['start_date_time']) = CRM_Utils_Date::setDateDefaults($startDate, NULL);
-        $defaults['frequency_unit'] = array_search($recurRecord['frequency_unit'], $frequencyUnits);
-        $defaults['frequency_interval'] = array_search($recurRecord['frequency_interval'], $frequencyIntervals);
-        $form->setDefaults($defaults);
-        if ($linkedMembership) {
-          $form->assign('membership', TRUE);
-          $e = &$form->getElement('frequency_unit');
-          $e->freeze();
-          $e = &$form->getElement('frequency_interval');
-          $e->freeze();
-          $e = &$form->getElement('start_date');
-          $e->freeze();
-        }
+      $recurID = $form->getVar('contributionRecurID');
+      try {
+        $recurRecord = civicrm_api3('ContributionRecur', 'getsingle', array(
+          'id' => $recurID,
+          'options' => array('limit' => 1),
+        ));
       }
+      catch (CiviCRM_API3_Exception $e) {
+        CRM_Core_Error::statusBounce('No recurring record! ' . $e->getMessage());
+      }
+
+      // Modify frequency_unit/frequency_interval to set allowed values for Smartdebit
+      $frequencyUnits = array('week' => 'week', 'month' => 'month', 'year' => 'year');
+      $form->removeElement('frequency_unit');
+      $form->addElement('select', 'frequency_unit', ts('Frequency Unit'), $frequencyUnits);
+      $frequencyIntervals = array(1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5, 6 => 6, 7 => 7, 8 => 8, 9 => 9, 10 => 10, 11 => 11, 12 => 12);
+      $form->removeElement('frequency_interval');
+      $form->addElement('select', 'frequency_interval', ts('Frequency Interval'), $frequencyIntervals);
+
+      $form->add('datepicker', 'start_date', ts('Start Date'), array(), FALSE, array('time' => FALSE));
+
+      $reference = $recurRecord['trxn_id'];
+      $recur = new CRM_Contribute_BAO_ContributionRecur();
+      $recur->trxn_id = $reference;
+      $recur->find(TRUE);
+      $startDate = $recur->start_date;
+      $defaults['start_date'] = $startDate;
+      $defaults['frequency_unit'] = $recurRecord['frequency_unit'];
+      $defaults['frequency_interval'] = array_search($recurRecord['frequency_interval'], $frequencyIntervals);
+      $form->setDefaults($defaults);
     }
     elseif ($formName == 'CRM_Contribute_Form_UpdateBilling') {
       // This is triggered by clicking "Change Billing Details" on a recurring contribution.

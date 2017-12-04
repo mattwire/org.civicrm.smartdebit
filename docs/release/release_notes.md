@@ -1,3 +1,15 @@
+## Release 1.16
+
+* Improve display of Smartdebit mandate status.
+* Update recurring contribution parameters during sync (frequency, amount, start date).
+* Pass first_amount flag through to hook_civicrm_alterSmartdebitContributionParams hook.
+* Improve error message when Smartdebit mandate cannot be found (when viewing recurring contribution).
+* Improve "Update Subscription" so you can update frequency and start_date as well as amount.
+* Add a new hook "hook_civicrm_updateRecurringContribution" which allows you to update/perform actions during the sync job.
+
+!!! warning
+    Some of the hooks names were changed.  If you rely on hooks ensure your update your code when upgrading.
+
 ## Release 1.15
 
 * Fix retrieval and display of Bank Name from Smartdebit.

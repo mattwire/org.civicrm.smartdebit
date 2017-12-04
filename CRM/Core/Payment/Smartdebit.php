@@ -385,11 +385,25 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   }
 
   /**
+   * Get an array of the fields that can be edited on the recurring contribution.
+   *
+   * @return array
+   */
+  public function getEditableRecurringScheduleFields() {
+    return array(
+      'amount',
+      'frequency_interval',
+      'frequency_unit',
+      'start_date',
+    );
+  }
+
+  /**
    * Get contact email for POSTing to Smart Debit API
    * @param $params
    * @return mixed
    */
-  static function getUserEmail(&$params)
+  private static function getUserEmail(&$params)
   {
     $useremail = NULL;
     // Set email
@@ -668,7 +682,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
     $smartDebitParams = array_merge((array)$smartDebitParams, (array)self::getCollectionFrequencyPostParams($params));
 
-    CRM_Smartdebit_Hook::alterSmartdebitCreateVariableDDIParams($params, $smartDebitParams);
+    CRM_Smartdebit_Hook::alterCreateVariableDDIParams($params, $smartDebitParams);
 
     return $smartDebitParams;
   }
@@ -891,8 +905,11 @@ UPDATE civicrm_direct_debit SET
    *
    * @return array|bool|object
    */
-  public function changeSubscriptionAmount(&$message = '', $params = array())
-  {
+  public function changeSubscriptionAmount(&$message = '', $params = array()) {
+    self::changeSubscription($this->paymentProcessor, $params);
+  }
+
+  public static function changeSubscription($paymentProcessor, $params) {
     try {
       $recurRecord = civicrm_api3('ContributionRecur', 'getsingle', array(
         'id' => $params['id'],
@@ -904,9 +921,9 @@ UPDATE civicrm_direct_debit SET
       return FALSE;
     }
 
-    $serviceUserId = $this->_paymentProcessor['signature'];
-    $username = $this->_paymentProcessor['user_name'];
-    $password = $this->_paymentProcessor['password'];
+    $serviceUserId = $paymentProcessor['signature'];
+    $username = $paymentProcessor['user_name'];
+    $password = $paymentProcessor['password'];
 
     $amount = CRM_Smartdebit_Api::encodeAmount(isset($params['amount']) ? $params['amount'] : 0);
     if (!empty($params['end_date'])) {
@@ -916,17 +933,10 @@ UPDATE civicrm_direct_debit SET
       $eDate = $recurRecord['end_date'];
     }
 
-    if (empty($params['preferred_collection_day'])) {
-      $params['preferred_collection_day'] = $recurRecord['cycle_day'];
-    }
     $endDate = $startDate = NULL;
-    $sDate = self::getCollectionStartDate($params);
     if (!empty($eDate)) {
       $endDate = strtotime($eDate);
       $endDate = date("Y-m-d", $endDate);
-    }
-    if (!empty($sDate)) {
-      $startDate = $sDate->format("Y-m-d");
     }
 
     $smartDebitParams = array(
@@ -934,8 +944,8 @@ UPDATE civicrm_direct_debit SET
       'variable_ddi[first_amount]' => $amount,
       'variable_ddi[default_amount]' => $amount,
     );
-    if (!empty($startDate)) {
-      $smartDebitParams['variable_ddi[start_date]'] = $startDate;
+    if (!empty($params['start_date'])) {
+      $smartDebitParams['variable_ddi[start_date]'] = $params['start_date'];
     }
     if (!empty($endDate)) {
       $smartDebitParams['variable_ddi[end_date]'] = $endDate;
@@ -950,7 +960,7 @@ UPDATE civicrm_direct_debit SET
       $smartDebitParams = array_merge($smartDebitParams, self::getCollectionFrequencyPostParams($params));
     }
 
-    $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/' . $recurRecord['trxn_id'] . '/update');
+    $url = CRM_Smartdebit_Api::buildUrl($paymentProcessor, 'api/ddi/variable/' . $recurRecord['trxn_id'] . '/update');
     $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
     if (!$response['success']) {
       $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
