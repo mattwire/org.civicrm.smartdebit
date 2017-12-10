@@ -373,7 +373,7 @@ class CRM_Smartdebit_Api {
     $pslid = CRM_Utils_Array::value('signature', $userDetails);
 
     if (empty($fileId)) {
-      CRM_Core_Error::debug_log_message('Smartdebit getSmartdebitAuddisFile: Must specify file ID!');
+      Civi::log()->debug('Smartdebit getSmartdebitAuddisFile: Must specify file ID!');
       return FALSE;
     }
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, "/api/auddis/$fileId",
@@ -410,7 +410,7 @@ class CRM_Smartdebit_Api {
     $pslid = CRM_Utils_Array::value('signature', $userDetails);
 
     if (empty($fileId)) {
-      CRM_Core_Error::debug_log_message('Smartdebit getSmartdebitAruddFile: Must specify file ID!');
+      Civi::log()->debug('Smartdebit getSmartdebitAruddFile: Must specify file ID!');
       return FALSE;
     }
 

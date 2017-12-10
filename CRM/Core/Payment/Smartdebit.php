@@ -538,7 +538,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         if ($frequencyInterval % 3 != 0) {
           // Monthly
           if ($frequencyInterval > 4) {
-            CRM_Core_Error::debug_log_message('The maximum monthly collection interval for Smart Debit is 4 months but you specified ' . $frequencyInterval . ' months. 
+            Civi::log()->debug('The maximum monthly collection interval for Smart Debit is 4 months but you specified ' . $frequencyInterval . ' months. 
             Resetting to 4 months. If you meant to select a quarterly interval make sure the collection interval is a multiple of 3.');
             $frequencyInterval = 4;
           }
@@ -546,7 +546,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         } else {
           // Quarterly (frequencyInterval is a multiple of 3)
           if ($frequencyInterval > 12) {
-            CRM_Core_Error::debug_log_message('The maximum quarterly collection interval for Smart Debit is 4 quarters but you specified ' . $frequencyInterval . ' months. Resetting to 4 quarters');
+            Civi::log()->debug('The maximum quarterly collection interval for Smart Debit is 4 quarters but you specified ' . $frequencyInterval . ' months. Resetting to 4 quarters');
             $frequencyInterval = 12;
           }
           // Convert frequencyInterval from months to quarters
@@ -557,7 +557,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       case 'week':
         // weekly
         if ($frequencyInterval > 4) {
-          CRM_Core_Error::debug_log_message('The maximum weekly collection interval for Smart Debit is 4 weeks but you specified ' . $frequencyInterval . ' weeks. 
+          Civi::log()->debug('The maximum weekly collection interval for Smart Debit is 4 weeks but you specified ' . $frequencyInterval . ' weeks. 
             Resetting to 4 weeks.');
           $frequencyInterval = 4;
         }
@@ -566,11 +566,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       case 'day':
         // Make sure frequencyInterval is a multiple of 7 days (ie 1 week)
         if ($frequencyInterval % 7 != 0) {
-          CRM_Core_Error::debug_log_message('The minimum collection interval for Smart Debit is 1 week but you specified ' . $frequencyInterval . ' days. Resetting to 1 week');
+          Civi::log()->debug('The minimum collection interval for Smart Debit is 1 week but you specified ' . $frequencyInterval . ' days. Resetting to 1 week');
           $frequencyInterval = 7;
         }
         if ($frequencyInterval > 28) {
-          CRM_Core_Error::debug_log_message('The maximum weekly collection interval for Smart Debit is 4 weeks but you specified ' . $frequencyInterval . ' days. Resetting to 4 weeks');
+          Civi::log()->debug('The maximum weekly collection interval for Smart Debit is 4 weeks but you specified ' . $frequencyInterval . ' days. Resetting to 4 weeks');
           $frequencyInterval = 28;
         }
         // Convert frequencyInterval from days to weeks

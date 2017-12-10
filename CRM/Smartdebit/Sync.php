@@ -38,8 +38,6 @@ class CRM_Smartdebit_Sync
 
   const COLLECTION_REPORT_AGE = '-3 month';
 
-  const DEBUG = false;
-
   /**
    * If $auddisIDs and $aruddIDs are not set all available AUDDIS/ARUDD records will be processed.
    *
@@ -61,14 +59,14 @@ class CRM_Smartdebit_Sync
     ));
 
     // Get collection report for today
-    CRM_Core_Error::debug_log_message('Smartdebit cron: Retrieving Daily Collection Report.');
+    Civi::log()->debug('Smartdebit cron: Retrieving Daily Collection Report.');
     $date = new DateTime();
     $collections = CRM_Smartdebit_Api::getCollectionReport($date->format('Y-m-d'));
     if (!isset($collections['error'])) {
       CRM_Smartdebit_Auddis::saveSmartdebitCollectionReport($collections);
     }
 
-    CRM_Core_Error::debug_log_message('Smartdebit Sync: Retrieving Smart Debit Payer Contact Details.');
+    Civi::log()->debug('Smartdebit Sync: Retrieving Smart Debit Payer Contact Details.');
     // Get list of payers from Smartdebit
     $smartDebitPayerContacts = CRM_Smartdebit_Api::getPayerContactDetails();
 
@@ -117,7 +115,7 @@ class CRM_Smartdebit_Sync
       $i++;
     }
 
-    CRM_Core_Error::debug_log_message('Smartdebit Sync: Retrieving AUDDIS reports.');
+    Civi::log()->debug('Smartdebit Sync: Retrieving AUDDIS reports.');
     // Get auddis/arudd IDs for last month if none specified.
     $auddisProcessor = new CRM_Smartdebit_Auddis();
 
@@ -139,7 +137,7 @@ class CRM_Smartdebit_Sync
       $queue->createItem($task);
     }
 
-    CRM_Core_Error::debug_log_message('Smartdebit Sync: Retrieving ARUDD reports.');
+    Civi::log()->debug('Smartdebit Sync: Retrieving ARUDD reports.');
     if (!isset($aruddIDs)) {
       // Get list of auddis records from smart debit
       if ($auddisProcessor->getSmartdebitAruddList()) {
@@ -249,7 +247,7 @@ class CRM_Smartdebit_Sync
     }
     CRM_Smartdebit_Settings::save(array('rejected_arudd' => $rejectedIds));
 
-    CRM_Core_Error::debug_log_message('Smartdebit: Sync Job End.');
+    Civi::log()->debug('Smartdebit: Sync Job End.');
     return CRM_Queue_Task::TASK_SUCCESS;
   }
 
@@ -272,7 +270,7 @@ class CRM_Smartdebit_Sync
       $params = array(1 => array($sdContact['reference_number'], 'String'));
       $daoCollectionReport = CRM_Core_DAO::executeQuery($selectQuery, $params);
       if (!$daoCollectionReport->fetch()) {
-        CRM_Core_Error::debug_log_message('Smartdebit syncSmartdebitRecords: No collection report for ' . $sdContact['reference_number']);
+        Civi::log()->debug('Smartdebit syncSmartdebitRecords: No collection report for ' . $sdContact['reference_number']);
         continue;
       }
 
@@ -303,11 +301,11 @@ class CRM_Smartdebit_Sync
         'trxn_id' => $trxnId,
       ));
     } catch (Exception $e) {
-      CRM_Core_Error::debug_log_message('Smartdebit processCollection: Not Matched=' . $trxnId);
+      Civi::log()->debug('Smartdebit processCollection: Not Matched=' . $trxnId);
       return FALSE;
     }
-    if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit processCollection: $contributionRecur=' . print_r($contributionRecur, true)); }
-    if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit processCollection: Matched=' . $trxnId); }
+    if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: $contributionRecur=' . print_r($contributionRecur, true)); }
+    if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: Matched=' . $trxnId); }
 
     if (empty($amount)) {
       $amount = $contributionRecur['amount'];
@@ -319,7 +317,6 @@ class CRM_Smartdebit_Sync
 
     $contributeParams =
       array(
-        'version' => 3,
         'contact_id' => $contributionRecur['contact_id'],
         'contribution_recur_id' => $contributionRecur['id'],
         'total_amount' => $amount,
@@ -339,6 +336,8 @@ class CRM_Smartdebit_Sync
     // Allow params to be modified via hook
     CRM_Smartdebit_Hook::alterContributionParams($contributeParams, $firstPayment);
 
+    if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: $contribution=' . print_r($contributeParams, true)); }
+
     if ($contributionSuccess) {
       // If payment is successful, we create the contribution as pending, then call completetransaction to mark it as completed and update/renew related memberships/events.
       $contributeParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
@@ -355,8 +354,8 @@ class CRM_Smartdebit_Sync
       $contributeResult = CRM_Smartdebit_Base::createContribution($contributeParams);
     }
 
-    if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit processCollection: $contributeParams=' . print_r($contributeParams, true)); }
-    if (self::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit processCollection: $contributeResult=' . print_r($contributeResult, true)); }
+    if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: $contributeParams=' . print_r($contributeParams, true)); }
+    if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: $contributeResult=' . print_r($contributeResult, true)); }
 
     if (empty($contributeResult['is_error'])) {
       // Get recurring contribution ID
@@ -412,7 +411,7 @@ class CRM_Smartdebit_Sync
     // Process each record in the auddis file
     foreach ($auddisFile as $key => $value) {
       if (!isset($value[$refKey]) || !isset($value[$dateKey])) {
-        CRM_Core_Error::debug_log_message('Smartdebit processAuddis. Id=' . $auddisId . '. Malformed Auddis/Arudd record from Smartdebit.');
+        Civi::log()->debug('Smartdebit processAuddis. Id=' . $auddisId . '. Malformed Auddis/Arudd record from Smartdebit.');
         continue;
       }
 
@@ -444,7 +443,7 @@ class CRM_Smartdebit_Sync
         // Allow auddis rejected contribution to be handled by hook
         CRM_Smartdebit_Hook::handleAuddisRejectedContribution($contributionId);
       } else {
-        CRM_Core_Error::debug_log_message('Smartdebit processAuddis: ' . $value[$refKey] . ' NOT matched to contribution in CiviCRM - try reconciliation.');
+        Civi::log()->debug('Smartdebit processAuddis: ' . $value[$refKey] . ' NOT matched to contribution in CiviCRM - try reconciliation.');
         $errors = TRUE;
       }
     }
@@ -467,7 +466,7 @@ class CRM_Smartdebit_Sync
    */
   private static function checkIfFirstPayment($newContribution, $contributionRecur) {
     if (empty($newContribution['contribution_recur_id'])) {
-      if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: No recur_id'); }
+      if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit checkIfFirstPayment: No recur_id'); }
       return array(FALSE, NULL);
     }
     if (empty($contributionRecur['frequency_unit'])) {
@@ -485,14 +484,14 @@ class CRM_Smartdebit_Sync
 
     // We have only one contribution for the recurring record
     if ($contributionResult['count'] > 0) {
-      if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: '.$contributionResult['count'].' contribution(s). id='.$contributionResult['id']); }
+      if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit checkIfFirstPayment: '.$contributionResult['count'].' contribution(s). id='.$contributionResult['id']); }
 
       foreach ($contributionResult['values'] as $contributionDetails) {
         // Check if trxn_ids are identical, if so, update this trxn
         if (strcmp($contributionDetails['trxn_id'], $newContribution['trxn_id']) == 0) {
           $newContribution['id'] = $contributionDetails['id'];
-          if (CRM_Smartdebit_Sync::DEBUG) {
-            CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Identical-Using existing contribution');
+          if (CRM_Smartdebit_Settings::getValue('debug')) {
+            Civi::log()->debug('Smartdebit checkIfFirstPayment: Identical-Using existing contribution');
           }
           return array(TRUE, $newContribution);
         }
@@ -506,7 +505,7 @@ class CRM_Smartdebit_Sync
           // Does our trxn_id contain a '/' after the ref?
           if (strcmp(substr($contributionDetails['trxn_id'], strlen($contributionRecur['trxn_id']), 1), '/') == 0) {
             // Not identical but one of ours, so we'll create a new one
-            if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Not identical,ours. Creating new contribution'); }
+            if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit checkIfFirstPayment: Not identical,ours. Creating new contribution'); }
             return array(FALSE, $newContribution);
           }
         }
@@ -521,7 +520,7 @@ class CRM_Smartdebit_Sync
         // if diff is less than set number of days, return Contribution ID to update the contribution
         // If $days == 0 it's a lifetime membership
         if (($dateDiff < $days) && ($days != 0)) {
-          if (CRM_Smartdebit_Sync::DEBUG) { CRM_Core_Error::debug_log_message('Smartdebit checkIfFirstPayment: Within dates,Using existing contribution'); }
+          if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit checkIfFirstPayment: Within dates,Using existing contribution'); }
           $newContribution['id'] = $contributionDetails['id'];
           return array(TRUE, $newContribution);
         }

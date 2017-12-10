@@ -432,7 +432,7 @@ WHERE  ddi_reference = %0";
     // Mandatory Parameters
     // Amount
     if (empty($recurParams['amount'])) {
-      CRM_Core_Error::debug_log_message('Smartdebit createRecurContribution: ERROR must specify amount!');
+      Civi::log()->debug('Smartdebit createRecurContribution: ERROR must specify amount!');
       return FALSE;
     }
     else {
@@ -440,7 +440,7 @@ WHERE  ddi_reference = %0";
       $recurParams['amount'] = preg_replace("/([^0-9\\.])/i", "", $recurParams['amount']);
     }
     if (empty($recurParams['contact_id'])) {
-      CRM_Core_Error::debug_log_message('Smartdebit createRecurContribution: ERROR must specify contact_id!');
+      Civi::log()->debug('Smartdebit createRecurContribution: ERROR must specify contact_id!');
       return FALSE;
     }
 
@@ -577,7 +577,7 @@ WHERE  ddi_reference = %0";
     // Mandatory Parameters
     // Amount
     if (empty($params['total_amount'])) {
-      CRM_Core_Error::debug_log_message('Smartdebit createContribution: ERROR must specify amount!');
+      Civi::log()->debug('Smartdebit createContribution: ERROR must specify amount!');
       return FALSE;
     }
     else {
@@ -585,7 +585,7 @@ WHERE  ddi_reference = %0";
       $params['total_amount'] = preg_replace("/([^0-9\\.])/i", "", $params['total_amount']);
     }
     if (empty($params['contact_id'])) {
-      CRM_Core_Error::debug_log_message('Smartdebit createContribution: ERROR must specify contact_id!');
+      Civi::log()->debug('Smartdebit createContribution: ERROR must specify contact_id!');
       return FALSE;
     }
 

@@ -218,6 +218,22 @@ return array(
     ),
   ),
 
+// Debug mode
+    'smartdebit_debug' => array(
+    'group_name' => 'Smart Debit Settings',
+    'group' => 'smartdebit',
+    'name' => 'smartdebit_debug',
+    'type' => 'Boolean',
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'default' => 0,
+    'description' => 'Enable debugging to log',
+    'html_type' => 'Checkbox',
+    'html_attributes' => array(
+    ),
+  ),
+
   // Internal settings for stats
   //transaction_prefix
   'smartdebit_rejected_auddis' => array(
