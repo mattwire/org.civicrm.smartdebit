@@ -373,6 +373,7 @@ class CRM_Smartdebit_Sync
 
       // Update Recurring contribution to "In Progress"
       $contributionRecur['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
+      if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: Updating contributionrecur=' . $contributionRecur['id']); }
       CRM_Smartdebit_Base::createRecurContribution($contributionRecur);
 
       // Only record completed collections in DB

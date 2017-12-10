@@ -564,7 +564,12 @@ WHERE  ddi_reference = %0";
     }
 
     // Create the recurring contribution
-    $result = civicrm_api3('ContributionRecur', 'create', $params);
+    try {
+      $result = civicrm_api3('ContributionRecur', 'create', $params);
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      Civi::log()->error('Smartdebit createRecurContribution=' . $params['id'] . ' : ' . $e->getMessage());
+    }
     return $result;
   }
 
@@ -596,8 +601,8 @@ WHERE  ddi_reference = %0";
     }
     // Set status
     if (empty($params['contribution_status_id'])) {
-      // Default to "In Progress" as we assume setup was successful at this point
-      $params['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
+      // Default to "Completed" as we assume contribution was successful if status not passed in
+      $params['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed');
     }
     // Default to today for modified date
     if (empty($params['receive_date'])) {
@@ -651,7 +656,12 @@ WHERE  ddi_reference = %0";
     }
 
     // Create/Update the contribution
-    $result = civicrm_api3('Contribution', 'create', $contributionParams);
+    try {
+      $result = civicrm_api3('Contribution', 'create', $contributionParams);
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      Civi::log()->error('Smartdebit createContribution=' . $contributionParams['id'] . ' : ' . $e->getMessage());
+    }
     return $result;
   }
 
