@@ -659,6 +659,24 @@ class CRM_Smartdebit_Sync
       $recurContribution['amount'] = filter_var($smartDebitRecord['regular_amount'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
       list($recurContribution['frequency_unit'], $recurContribution['frequency_interval']) =
         CRM_Smartdebit_Base::translateSmartdebitFrequencytoCiviCRM($smartDebitRecord['frequency_type'], $smartDebitRecord['frequency_factor']);
+
+      switch ($smartDebitRecord['current_state']) {
+        case CRM_Smartdebit_Api::SD_STATE_LIVE:
+        case CRM_Smartdebit_Api::SD_STATE_NEW:
+          // Clear cancel date and set status if live
+          $recurContribution['cancel_date'] = '';
+          if (($recurContribution['contribution_status_id'] != CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending'))
+            && ($recurContribution['contribution_status_id'] != CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress'))) {
+            $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
+          }
+          break;
+        case CRM_Smartdebit_Api::SD_STATE_CANCELLED:
+          $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Cancelled');
+          break;
+        case CRM_Smartdebit_Api::SD_STATE_REJECTED:
+          $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Failed');
+          break;
+      }
       // Hook to allow modifying recurring contribution during sync task
       CRM_Smartdebit_Hook::updateRecurringContribution($recurContribution);
       civicrm_api3('ContributionRecur', 'create', $recurContribution);
