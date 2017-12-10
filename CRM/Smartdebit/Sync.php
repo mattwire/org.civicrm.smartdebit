@@ -339,19 +339,28 @@ class CRM_Smartdebit_Sync
     if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: $contribution=' . print_r($contributeParams, true)); }
 
     if ($contributionSuccess) {
-      // If payment is successful, we create the contribution as pending, then call completetransaction to mark it as completed and update/renew related memberships/events.
-      $contributeParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
-      $contributeResult = CRM_Smartdebit_Base::createContribution($contributeParams);
-      if (!$firstPayment && empty($contributeResult['is_error'])) {
-        civicrm_api3('contribution', 'completetransaction', array(
-          'id' => $contributeResult['id'],
-        ));
+      if ($firstPayment) {
+        if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: success firstpayment (recur:' . $contributionRecur['id'] . ')'); }
+        // Update contribution that was created when we setup the recurring/contribution.
+        $contributeResult = CRM_Smartdebit_Base::createContribution($contributeParams);
+      }
+      else {
+        if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: success recurpayment (recur:' . $contributionRecur['id'] . ')'); }
+        // If payment is successful, we call repeattransaction to create a new contribution and update/renew related memberships/events.
+        civicrm_api3('contribution', 'repeattransaction', $contributeParams);
       }
     }
     else {
       // If payment failed, we create the contribution as failed, and don't call completetransaction (as we don't want to update/renew related memberships/events).
       $contributeParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Failed');
-      $contributeResult = CRM_Smartdebit_Base::createContribution($contributeParams);
+      if ($firstPayment) {
+        if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: failed firstpayment (recur:' . $contributionRecur['id'] . ')'); }
+        $contributeResult = CRM_Smartdebit_Base::createContribution($contributeParams);
+      }
+      else {
+        if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: failed recurpayment (recur:' . $contributionRecur['id'] . ')'); }
+        civicrm_api3('contribution', 'repeattransaction', $contributeParams);
+      }
     }
 
     if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: $contributeParams=' . print_r($contributeParams, true)); }
