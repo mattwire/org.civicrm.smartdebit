@@ -177,21 +177,16 @@ AND   opva.label = 'Direct Debit' ";
           }
         }
 
-        /* Smart Debit statuses are as follows
-          0 Draft
-          1 New
-          10 Live
-          11 Cancelled
-          12 Rejected
-         *
-         */
+        $contributionInProgressId = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
         // First case check if Smart Debit is new or live then CiviCRM is in progress
         if ($checkStatus) {
-          if (($dao->current_state == 10 || $dao->current_state == 1) && ($dao->contribution_status_id != 5)) {
+          if (($dao->current_state == CRM_Smartdebit_Api::SD_STATE_LIVE || $dao->current_state == CRM_Smartdebit_Api::SD_STATE_NEW)
+               && ($dao->contribution_status_id != $contributionInProgressId)) {
             $difference['status'] = TRUE;
           }
           // Recurring record active in Civi, but smart debit record is not active
-          if (!($dao->current_state == 10 || $dao->current_state == 1) && ($dao->contribution_status_id == 5)) {
+          if (!($dao->current_state == CRM_Smartdebit_Api::SD_STATE_LIVE || $dao->current_state == CRM_Smartdebit_Api::SD_STATE_NEW)
+               && ($dao->contribution_status_id == $contributionInProgressId)) {
             $difference['status'] = TRUE;
           }
         }
@@ -301,7 +296,7 @@ AND ctrc.id IS NULL";
       else {
         $sql .= " AND contact.id IS NULL";
       }
-      $params = array( 1 => array( 10, 'Int' ), 2 => array(1, 'Int') );
+      $params = array( 1 => array( CRM_Smartdebit_Api::SD_STATE_LIVE, 'Int' ), 2 => array(CRM_Smartdebit_Api::SD_STATE_NEW, 'Int') );
       $dao = CRM_Core_DAO::executeQuery( $sql, $params);
       while ($dao->fetch()) {
         $differences = 'Transaction ID not Found in CiviCRM';
@@ -439,7 +434,7 @@ AND   csd.id IS NULL LIMIT 100";
       }
 
       // Set state of recurring contribution (10=live,1=New at SmartDebit)
-      if ($smartDebitRecord['current_state'] == 10 || $smartDebitRecord['current_state'] == 1) {
+      if ($smartDebitRecord['current_state'] == CRM_Smartdebit_Api::SD_STATE_LIVE || $smartDebitRecord['current_state'] == CRM_Smartdebit_Api::SD_STATE_NEW) {
         $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
       }
       else {
