@@ -6,6 +6,11 @@
 * Improve error message when Smartdebit mandate cannot be found (when viewing recurring contribution).
 * Improve "Update Subscription" so you can update frequency and start_date as well as amount.
 * Add a new hook "hook_civicrm_updateRecurringContribution" which allows you to update/perform actions during the sync job.
+* Bugfix: Default to completed for new contributions, not 'In Progress'!
+* Rename sync API to Job.process_smartdebit for consistency (old Smartdebit.sync is still available as an alias)
+* Switch to repeattransaction API for adding each new contribution (as completetransaction doesn't work if contribution is already 'Completed').
+* Add setting for debug logging.
+* Update recurring contribution status and clear cancel date if mandate is live at smartdebit.
 
 !!! warning
     Some of the hooks names were changed.  If you rely on hooks ensure your update your code when upgrading.
