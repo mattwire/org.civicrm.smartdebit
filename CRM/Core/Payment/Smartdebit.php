@@ -961,11 +961,13 @@ UPDATE civicrm_direct_debit SET
     }
 
     $url = CRM_Smartdebit_Api::buildUrl($paymentProcessor, 'api/ddi/variable/' . $recurRecord['trxn_id'] . '/update');
+    if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit changeSubscription: ' . $url . print_r($smartDebitParams, TRUE)); }
     $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
     if (!$response['success']) {
       $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
       $msg .= '<br />Update Subscription Failed.';
-      CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
+      CRM_Core_Session::setStatus($msg, 'Smart Debit', 'error');
+      Civi::log()->warning('Smartdebit changeSubscription: ' . $msg);
       return FALSE;
     }
     return TRUE;
