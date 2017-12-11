@@ -36,8 +36,6 @@ class CRM_Smartdebit_Sync
   const END_PARAMS = 'state=done';
   const BATCH_COUNT = 10;
 
-  const COLLECTION_REPORT_AGE = '-3 month';
-
   /**
    * If $auddisIDs and $aruddIDs are not set all available AUDDIS/ARUDD records will be processed.
    *

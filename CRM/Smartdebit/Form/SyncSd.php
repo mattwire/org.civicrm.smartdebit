@@ -46,7 +46,7 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
       $now = new DateTime();
       $dateOfCollectionEnd = date('Y-m-d', (string)$now->getTimestamp()); // Today
     }
-    $dateOfCollectionStart = date('Y-m-d', strtotime($dateOfCollectionEnd . CRM_Smartdebit_Sync::COLLECTION_REPORT_AGE));
+    $dateOfCollectionStart = date('Y-m-d', strtotime($dateOfCollectionEnd . CRM_Smartdebit_Settings::getValue('cr_cache')));
     $this->assign('dateOfCollectionEnd', $dateOfCollectionEnd);
     $this->assign('dateOfCollectionStart', $dateOfCollectionStart);
 

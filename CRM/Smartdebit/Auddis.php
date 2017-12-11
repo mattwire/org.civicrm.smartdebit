@@ -67,7 +67,7 @@ class CRM_Smartdebit_Auddis
       $dateOfCollectionEnd = $endDate->format('Y-m-d'); // Today
     }
     if (!isset($dateOfCollectionStart)) {
-      $dateOfCollectionStart = date('Y-m-d', strtotime($dateOfCollectionEnd . CRM_Smartdebit_Sync::COLLECTION_REPORT_AGE));
+      $dateOfCollectionStart = date('Y-m-d', strtotime($dateOfCollectionEnd . CRM_Smartdebit_Settings::getValue('cr_cache')));
     }
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
     $username = CRM_Utils_Array::value('user_name', $userDetails);
@@ -102,7 +102,7 @@ class CRM_Smartdebit_Auddis
       $dateOfCollectionEnd = $endDate->format('Y-m-d'); // Today
     }
     if (!isset($dateOfCollectionStart)) {
-      $dateOfCollectionStart = date('Y-m-d', strtotime($dateOfCollectionEnd . CRM_Smartdebit_Sync::COLLECTION_REPORT_AGE));
+      $dateOfCollectionStart = date('Y-m-d', strtotime($dateOfCollectionEnd . CRM_Smartdebit_Settings::getValue('cr_cache')));
     }
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
     $username = CRM_Utils_Array::value('user_name', $userDetails);
@@ -312,7 +312,7 @@ class CRM_Smartdebit_Auddis
   }
 
   /**
-   * This gets all the collection reports for the time period ending $dateOfCollection and starting COLLECTION_REPORT_AGE days/months earlier
+   * This gets all the collection reports for the time period ending $dateOfCollection and starting 'cr_cache' days/months earlier
    * @param $dateOfCollection
    * @return array
    */
@@ -330,7 +330,7 @@ class CRM_Smartdebit_Auddis
     // Get a collection report for every day of the month
     $dateEnd = new DateTime($dateOfCollection);
     $dateStart = clone $dateEnd;
-    $dateStart->modify(CRM_Smartdebit_Sync::COLLECTION_REPORT_AGE);
+    $dateStart->modify(CRM_Smartdebit_Settings::getValue('cr_cache'));
     $dateCurrent = clone $dateEnd;
 
     // Iterate back one day at a time requesting reports
@@ -375,7 +375,7 @@ class CRM_Smartdebit_Auddis
    */
   static function removeOldSmartdebitCollectionReports() {
     $date = new DateTime();
-    $date->modify(CRM_Smartdebit_Sync::COLLECTION_REPORT_AGE);
+    $date->modify(CRM_Smartdebit_Settings::getValue('cr_cache'));
     $dateString = $date->format('Ymd') . '000000';
     $query = "DELETE FROM `veda_smartdebit_collectionreports` WHERE receive_date < %1";
     $params = array(1 => array($dateString, 'String'));

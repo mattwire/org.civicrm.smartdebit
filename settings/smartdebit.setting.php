@@ -234,6 +234,23 @@ return array(
     ),
   ),
 
+  //Collection report cache retention period
+  'smartdebit_cr_cache' => array(
+    'group_name' => 'Smart Debit Settings',
+    'group' => 'smartdebit',
+    'name' => 'smartdebit_cr_cache',
+    'type' => 'String',
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'default' => '-3 month',
+    'description' => 'Collection Report Cache Retention Period',
+    'html_type' => 'Text',
+    'html_attributes' => array(
+      'size' => 50,
+    ),
+  ),
+
   // Internal settings for stats
   //transaction_prefix
   'smartdebit_rejected_auddis' => array(
