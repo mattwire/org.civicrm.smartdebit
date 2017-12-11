@@ -536,7 +536,8 @@ class CRM_Smartdebit_Sync
         }
       }
     }
-    return array(FALSE, $newContribution);
+    // If no contributions linked to recur, it must be the first contribution!
+    return array(TRUE, $newContribution);
   }
 
   /**
