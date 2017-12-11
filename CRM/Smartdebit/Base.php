@@ -641,6 +641,7 @@ WHERE  ddi_reference = %0";
       'currency' => $params['currency'],
       'payment_instrument_id' => $params['payment_instrument_id'],
       'invoice_id' => $params['invoice_id'],
+      'source' => $params['source'],
     );
     if (!empty($params['contribution_id'])) {
       $contributionParams['contribution_id'] = $params['contribution_id'];

@@ -213,7 +213,7 @@ class CRM_Smartdebit_Sync
         unset($auddisFile['auddis_date']);
         $refKey = 'reference';
         $dateKey = 'effective-date';
-        $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey, 'AUDDIS report'));
+        $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey, 'SDAUDDIS'));
       }
     }
     CRM_Smartdebit_Settings::save(array('rejected_auddis' => $rejectedIds));
@@ -242,7 +242,7 @@ class CRM_Smartdebit_Sync
         unset($aruddFile['arudd_date']);
         $refKey = 'ref';
         $dateKey = 'originalProcessingDate';
-        $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($aruddId, $aruddFile, $refKey, $dateKey, 'ARUDD report'));
+        $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($aruddId, $aruddFile, $refKey, $dateKey, 'SDARUDD'));
       }
     }
     CRM_Smartdebit_Settings::save(array('rejected_arudd' => $rejectedIds));
@@ -274,7 +274,7 @@ class CRM_Smartdebit_Sync
         continue;
       }
 
-      self::processCollection($sdContact['reference_number'], $daoCollectionReport->receive_date, TRUE, $daoCollectionReport->amount, 'Collection Report');
+      self::processCollection($sdContact['reference_number'], $daoCollectionReport->receive_date, TRUE, $daoCollectionReport->amount, 'SDCR');
     }
     return CRM_Queue_Task::TASK_SUCCESS;
   }
@@ -331,7 +331,20 @@ class CRM_Smartdebit_Sync
     // if yes, update the contribution instead of creating one
     // as CiviCRM should have created the first contribution
     list($firstPayment, $contributeParams) = self::checkIfFirstPayment($contributeParams, $contributionRecur);
-    $contributeParams['source'] = 'Smart Debit: ' . $collectionDescription;
+
+    $contributeParams['source'] = $collectionDescription;
+    try {
+      // Try to get description for contribution from membership
+      $membership = civicrm_api3('Membership', 'getsingle', array(
+        'contribution_recur_id' => $contributionRecur['id'],
+      ));
+      if (!empty($membership['source'])) {
+        $contributeParams['source'] = $collectionDescription . ' - ' . $membership['source'];
+      }
+    }
+    catch (Exception $e) {
+      // Do nothing, we just use passed in description
+    }
 
     // Allow params to be modified via hook
     CRM_Smartdebit_Hook::alterContributionParams($contributeParams, $firstPayment);
