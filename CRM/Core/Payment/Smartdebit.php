@@ -973,6 +973,11 @@ UPDATE civicrm_direct_debit SET
       Civi::log()->warning('Smartdebit changeSubscription: ' . $msg);
       return FALSE;
     }
+
+    // Update the cached mandate
+    $payerContactDetails = CRM_Smartdebit_Api::getPayerContactDetails($smartDebitParams['reference_number']);
+    CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($payerContactDetails);
+
     return TRUE;
   }
 
@@ -1017,6 +1022,11 @@ UPDATE civicrm_direct_debit SET
       CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
       return FALSE;
     }
+
+    // Update the cached mandate
+    $payerContactDetails = CRM_Smartdebit_Api::getPayerContactDetails($smartDebitParams['reference_number']);
+    CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($payerContactDetails);
+
     return TRUE;
   }
 
@@ -1061,6 +1071,10 @@ UPDATE civicrm_direct_debit SET
       CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
       return FALSE;
     }
+
+    // Update the cached mandate
+    $payerContactDetails = CRM_Smartdebit_Api::getPayerContactDetails($smartDebitParams['reference_number']);
+    CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($payerContactDetails);
     return TRUE;
   }
 

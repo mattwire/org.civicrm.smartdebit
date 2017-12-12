@@ -69,10 +69,7 @@ class CRM_Smartdebit_Sync
     $smartDebitPayerContacts = CRM_Smartdebit_Api::getPayerContactDetails();
 
     // Update mandates table for reconciliation functions
-    self::updateSmartDebitMandatesTable($smartDebitPayerContacts);
-
-    // Update recurring contributions
-    self::updateRecurringContributions($smartDebitPayerContacts);
+    self::updateSmartDebitMandatesTable($smartDebitPayerContacts, TRUE);
 
     foreach ($smartDebitPayerContacts as $key => $sdContact) {
       // Check if a recurring contribution exists, otherwise remove it from list for processing
@@ -158,6 +155,14 @@ class CRM_Smartdebit_Sync
       array('CRM_Smartdebit_Auddis', 'removeOldSmartdebitCollectionReports'),
       array(),
       'Clean up old collection reports'
+    );
+    $queue->createItem($task);
+
+    // Update recurring contributions
+    $task = new CRM_Queue_Task(
+      array('CRM_Smartdebit_Sync', 'updateRecurringContributions'),
+      array($smartDebitPayerContacts),
+      'Update Recurring Contributions in CiviCRM'
     );
     $queue->createItem($task);
 
@@ -602,13 +607,16 @@ class CRM_Smartdebit_Sync
    * Update Smartdebit Mandates in table veda_smartdebit_mandates for further analysis
    * This table is only used by Reconciliation functions
    *
-   * @param $smartDebitPayerContactDetails (array of smart debit contact details : call CRM_Smartdebit_Api::getPayerContactDetails())
+   * @param array $smartDebitPayerContactDetails (array of smart debit contact details : call CRM_Smartdebit_Api::getPayerContactDetails())
+   * @param bool $truncate If true, truncate the table before inserting new records.
    * @return bool|int
    */
-  public static function updateSmartDebitMandatesTable($smartDebitPayerContactDetails) {
-    // if the civicrm_sd table exists, then empty it
-    $emptySql = "TRUNCATE TABLE `veda_smartdebit_mandates`";
-    CRM_Core_DAO::executeQuery($emptySql);
+  public static function updateSmartDebitMandatesTable($smartDebitPayerContactDetails, $truncate = FALSE) {
+    if ($truncate) {
+      // if the civicrm_sd table exists, then empty it
+      $emptySql = "TRUNCATE TABLE `veda_smartdebit_mandates`";
+      CRM_Core_DAO::executeQuery($emptySql);
+    }
 
     // Get payer contact details
     if (empty($smartDebitPayerContactDetails)) {
@@ -616,6 +624,11 @@ class CRM_Smartdebit_Sync
     }
     // Insert mandates into table
     foreach ($smartDebitPayerContactDetails as $key => $smartDebitRecord) {
+      if (!$truncate) {
+        $deleteSql = "DELETE FROM `veda_smartdebit_mandates` WHERE reference_number='{$smartDebitRecord['reference_number']}'";
+        CRM_Core_DAO::executeQuery($deleteSql);
+      }
+
       $sql = "INSERT INTO `veda_smartdebit_mandates`(
             `title`,
             `first_name`,
