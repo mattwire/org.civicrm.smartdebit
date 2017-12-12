@@ -698,6 +698,7 @@ class CRM_Smartdebit_Sync
    */
   public static function updateRecurringContributionsTask(CRM_Queue_TaskContext $ctx, $smartDebitPayerContactDetails) {
     self::updateRecurringContributions($smartDebitPayerContactDetails);
+    return CRM_Queue_Task::TASK_SUCCESS;
   }
 
   /**
