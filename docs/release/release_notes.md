@@ -1,3 +1,8 @@
+## Release 1.17
+
+* Rename hook_civicrm_alterCreateVariableDDIParams to hook_civicrm_alterVariableDDIParams
+* Expand scope of hook_civicrm_alterVariableDDIParams so it works in all API create/update scenarios.
+
 ## Release 1.16
 
 * Improve display of Smartdebit mandate status.

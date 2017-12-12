@@ -35,15 +35,16 @@ class CRM_Smartdebit_Hook {
    *
    * @param array $params Raw params
    * @param array $smartDebitParams Params formatted for smartdebit
+   * @param string $op One of validate|create|update|updatebilling|cancel
    *
    * @access public
    *
    * @return mixed
    */
-  static function alterCreateVariableDDIParams(&$params, &$smartDebitParams) {
+  static function alterVariableDDIParams(&$params, &$smartDebitParams, $op) {
     return CRM_Utils_Hook::singleton()
-      ->invoke(2, $params, $smartDebitParams, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject,
-        CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, 'civicrm_smartdebit_alterCreateVariableDDIParams');
+      ->invoke(3, $params, $smartDebitParams, $op, CRM_Utils_Hook::$_nullObject,
+        CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, 'civicrm_smartdebit_alterVariableDDIParams');
   }
 
   /**

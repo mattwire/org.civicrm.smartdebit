@@ -680,11 +680,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       'variable_ddi[start_date]' => $collectionDate->format("Y-m-d"),
       'variable_ddi[email_address]' => self::getUserEmail($params),
     );
-
     $smartDebitParams = array_merge((array)$smartDebitParams, (array)self::getCollectionFrequencyPostParams($params));
-
-    CRM_Smartdebit_Hook::alterCreateVariableDDIParams($params, $smartDebitParams);
-
     return $smartDebitParams;
   }
 
@@ -699,6 +695,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    */
   function doDirectPayment(&$params) {
     $smartDebitParams = self::preparePostArray($params);
+    CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'create');
 
     // Get the API Username and Password
     $username = $this->_paymentProcessor['user_name'];
@@ -951,6 +948,9 @@ UPDATE civicrm_direct_debit SET
     if (!empty($endDate)) {
       $smartDebitParams['variable_ddi[end_date]'] = $endDate;
     }
+    else {
+      $smartDebitParams['variable_ddi[end_date]'] = '';
+    }
     if (!isset($params['frequency_unit'])) {
       $params['frequency_unit'] = $recurRecord['frequency_unit'];
     }
@@ -960,6 +960,8 @@ UPDATE civicrm_direct_debit SET
     if (isset($params['frequency_unit']) || isset($params['frequency_interval'])) {
       $smartDebitParams = array_merge($smartDebitParams, self::getCollectionFrequencyPostParams($params));
     }
+
+    CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'update');
 
     $url = CRM_Smartdebit_Api::buildUrl($paymentProcessor, 'api/ddi/variable/' . $recurRecord['trxn_id'] . '/update');
     if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit changeSubscription: ' . $url . print_r($smartDebitParams, TRUE)); }
@@ -1005,6 +1007,8 @@ UPDATE civicrm_direct_debit SET
       'variable_ddi[reference_number]' => $reference,
     );
 
+    CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'cancel');
+
     $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/' . $reference . '/cancel');
     $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
     if (!$response['success']) {
@@ -1047,6 +1051,8 @@ UPDATE civicrm_direct_debit SET
       'variable_ddi[county]' => $state,
       'variable_ddi[country]' => $country,
     );
+
+    CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'updatebilling');
 
     $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/' . $reference . '/update');
     $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
