@@ -174,13 +174,14 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    *  to validate payment details with SmartDebit
    * Sets appropriate parameters and calls Smart Debit API to validate a payment (does not setup the payment)
    *
-   * @param array $values
+   * @param array $params
    * @param array $errors
    */
-  public function validatePaymentInstrument($values, &$errors) {
-    parent::validatePaymentInstrument($values, $errors);
+  public function validatePaymentInstrument($params, &$errors) {
+    parent::validatePaymentInstrument($params, $errors);
 
-    $smartDebitParams = self::preparePostArray($values);
+    $smartDebitParams = self::preparePostArray($params);
+    CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'validate');
 
     // Get the API Username and Password
     $username = $this->_paymentProcessor['user_name'];
@@ -193,9 +194,9 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     $direct_debit_response['data_type'] = 'recurring';
     $direct_debit_response['entity_type'] = 'contribution_recur';
     $direct_debit_response['first_collection_date'] = $smartDebitParams['variable_ddi[start_date]'];
-    $direct_debit_response['preferred_collection_day'] = $values['preferred_collection_day'];
-    $direct_debit_response['confirmation_method'] = $values['confirmation_method'];
-    $direct_debit_response['ddi_reference'] = $values['ddi_reference'];
+    $direct_debit_response['preferred_collection_day'] = $params['preferred_collection_day'];
+    $direct_debit_response['confirmation_method'] = $params['confirmation_method'];
+    $direct_debit_response['ddi_reference'] = $params['ddi_reference'];
     $direct_debit_response['response_status'] = $response['message'];
 
     // On success an array is returned, last success element is an array of attributes
@@ -207,7 +208,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
     // Take action based upon the response status
     if ($response['success']) {
-      $direct_debit_response['entity_id'] = isset($values['entity_id']) ? $values['entity_id'] : 0;
+      $direct_debit_response['entity_id'] = isset($params['entity_id']) ? $params['entity_id'] : 0;
       self::recordSmartDebitResponse($direct_debit_response);
     }
     else {
