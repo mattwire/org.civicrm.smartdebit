@@ -675,8 +675,9 @@ class CRM_Smartdebit_Sync
         // Recurring contribution with transaction ID does not exist
         continue;
       }
+
+      $recurContributionOriginal = $recurContribution;
       // Update the recurring contribution
-      $recurContribution['start_date'] = $smartDebitRecord['start_date'];
       $recurContribution['amount'] = filter_var($smartDebitRecord['regular_amount'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
       list($recurContribution['frequency_unit'], $recurContribution['frequency_interval']) =
         CRM_Smartdebit_Base::translateSmartdebitFrequencytoCiviCRM($smartDebitRecord['frequency_type'], $smartDebitRecord['frequency_factor']);
@@ -700,7 +701,10 @@ class CRM_Smartdebit_Sync
       }
       // Hook to allow modifying recurring contribution during sync task
       CRM_Smartdebit_Hook::updateRecurringContribution($recurContribution);
-      civicrm_api3('ContributionRecur', 'create', $recurContribution);
+      if ($recurContribution != $recurContributionOriginal) {
+        $recurContribution['modified_date'] = (new DateTime())->format('Y-m-d H:i:s');
+        civicrm_api3('ContributionRecur', 'create', $recurContribution);
+      }
     }
   }
 
