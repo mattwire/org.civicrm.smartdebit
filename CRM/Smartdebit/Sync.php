@@ -56,20 +56,9 @@ class CRM_Smartdebit_Sync
       'reset' => TRUE,
     ));
 
-    // Get collection report for today
-    Civi::log()->debug('Smartdebit cron: Retrieving Daily Collection Report.');
-    $date = new DateTime();
-    $collections = CRM_Smartdebit_Api::getCollectionReport($date->format('Y-m-d'));
-    if (!isset($collections['error'])) {
-      CRM_Smartdebit_Auddis::saveSmartdebitCollectionReport($collections);
-    }
-
-    Civi::log()->debug('Smartdebit Sync: Retrieving Smart Debit Payer Contact Details.');
-    // Get list of payers from Smartdebit
-    $smartDebitPayerContacts = CRM_Smartdebit_Api::getPayerContactDetails();
-
-    // Update mandates table for reconciliation functions
-    self::updateSmartDebitMandatesTable($smartDebitPayerContacts, TRUE);
+    //FIXME: Move these to task queue (but can't because they're needed to setup the queue)
+    self::retrieveDailyCollectionReport();
+    $smartDebitPayerContacts = self::retrievePayerContactDetails();
 
     foreach ($smartDebitPayerContacts as $key => $sdContact) {
       // Check if a recurring contribution exists, otherwise remove it from list for processing
@@ -160,7 +149,7 @@ class CRM_Smartdebit_Sync
 
     // Update recurring contributions
     $task = new CRM_Queue_Task(
-      array('CRM_Smartdebit_Sync', 'updateRecurringContributions'),
+      array('CRM_Smartdebit_Sync', 'updateRecurringContributionsTask'),
       array($smartDebitPayerContacts),
       'Update Recurring Contributions in CiviCRM'
     );
@@ -192,6 +181,31 @@ class CRM_Smartdebit_Sync
     }
   }
 
+  /**
+   * Batch task to retrieve daily collection reports
+   */
+  public static function retrieveDailyCollectionReport() {
+    // Get collection report for today
+    Civi::log()->debug('Smartdebit cron: Retrieving Daily Collection Report.');
+    $date = new DateTime();
+    $collections = CRM_Smartdebit_Api::getCollectionReport($date->format('Y-m-d'));
+    if (!isset($collections['error'])) {
+      CRM_Smartdebit_Auddis::saveSmartdebitCollectionReport($collections);
+    }
+  }
+
+  /**
+   * Batch task to retrieve payer contact details (mandates)
+   */
+  public static function retrievePayerContactDetails() {
+    Civi::log()->debug('Smartdebit Sync: Retrieving Smart Debit Payer Contact Details.');
+    // Get list of payers from Smartdebit
+    $smartDebitPayerContacts = CRM_Smartdebit_Api::getPayerContactDetails();
+
+    // Update mandates table for reconciliation functions
+    self::updateSmartDebitMandatesTable($smartDebitPayerContacts, TRUE);
+    return $smartDebitPayerContacts;
+  }
 
 /**
    * Sync the AUDDIS records with contacts
@@ -625,7 +639,8 @@ class CRM_Smartdebit_Sync
     // Insert mandates into table
     foreach ($smartDebitPayerContactDetails as $key => $smartDebitRecord) {
       if (!$truncate) {
-        $deleteSql = "DELETE FROM `veda_smartdebit_mandates` WHERE reference_number='{$smartDebitRecord['reference_number']}'";
+        $deleteSql = "DELETE FROM `veda_smartdebit_mandates` WHERE reference_number='%1'";
+        $deleteParams = array(1 => $smartDebitRecord['reference_number']);
         CRM_Core_DAO::executeQuery($deleteSql);
       }
 
@@ -676,6 +691,22 @@ class CRM_Smartdebit_Sync
     return $mandateFetchedCount;
   }
 
+  /**
+   * Helper function to trigger updateRecurringContributions via taskrunner
+   * @param \CRM_Queue_TaskContext $ctx
+   * @param $smartDebitPayerContactDetails
+   */
+  public static function updateRecurringContributionsTask(CRM_Queue_TaskContext $ctx, $smartDebitPayerContactDetails) {
+    self::updateRecurringContributions($smartDebitPayerContactDetails);
+  }
+
+  /**
+   * Update parameters of CiviCRM recurring contributions that represent Smartdebit Direct Debit Mandates
+   *
+   * @param $smartDebitPayerContactDetails
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
   public static function updateRecurringContributions($smartDebitPayerContactDetails) {
     foreach ($smartDebitPayerContactDetails as $key => $smartDebitRecord) {
       // Get recur
