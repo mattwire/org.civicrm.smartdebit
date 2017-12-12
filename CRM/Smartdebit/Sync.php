@@ -744,6 +744,21 @@ class CRM_Smartdebit_Sync
           $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Failed');
           break;
       }
+
+      // Set start date to date of first contribution
+      try {
+        $firstContribution = civicrm_api3('Contribution', 'getsingle', array(
+          'contribution_recur_id' => $recurContribution['id'],
+          'options' => array('limit' => 1, 'sort' => "receive_date ASC"),
+        ));
+        if (!empty($firstContribution['receive_date'])) {
+          $recurContribution['start_date'] = $firstContribution['receive_date'];
+        }
+      }
+      catch (CiviCRM_API3_Exception $e) {
+        // No contribution, so don't update start date.
+      }
+
       // Hook to allow modifying recurring contribution during sync task
       CRM_Smartdebit_Hook::updateRecurringContribution($recurContribution);
       if ($recurContribution != $recurContributionOriginal) {
