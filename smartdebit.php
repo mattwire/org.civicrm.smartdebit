@@ -56,24 +56,24 @@ function smartdebit_civicrm_install()
          CREATE TABLE IF NOT EXISTS `civicrm_direct_debit` (
         `id`                        int(10) unsigned NOT NULL auto_increment,
         `created`                   datetime NOT NULL,
-        `data_type`                 varchar(16) ,
-        `entity_type`               varchar(32) ,
+        `data_type`                 varchar(16),
+        `entity_type`               varchar(32),
         `entity_id`                 int(10) unsigned,
-        `bank_name`                 varchar(100) ,
-        `branch`                    varchar(100) ,
-        `address1`                  varchar(100) ,
-        `address2`                  varchar(100) ,
-        `address3`                  varchar(100) ,
-        `address4`                  varchar(100) ,
-        `town`                      varchar(100) ,
-        `county`                    varchar(100) ,
-        `postcode`                  varchar(20)  ,
+        `bank_name`                 varchar(100),
+        `branch`                    varchar(100),
+        `address1`                  varchar(100),
+        `address2`                  varchar(100),
+        `address3`                  varchar(100),
+        `address4`                  varchar(100),
+        `town`                      varchar(100),
+        `county`                    varchar(100),
+        `postcode`                  varchar(20),
         `first_collection_date`     varchar(100),
-        `preferred_collection_day`  varchar(100) ,
-        `confirmation_method`       varchar(100) ,
+        `preferred_collection_day`  varchar(100),
+        `confirmation_method`       varchar(100),
         `ddi_reference`             varchar(100) NOT NULL,
-        `response_status`           varchar(100) ,
-        `response_raw`              longtext     ,
+        `response_status`           varchar(100),
+        `response_raw`              longtext,
         `request_counter`           int(10) unsigned,
         `complete_flag`             tinyint unsigned,
         `additional_details1`       varchar(100),
@@ -84,7 +84,7 @@ function smartdebit_civicrm_install()
         PRIMARY KEY  (`id`),
         KEY `entity_id` (`entity_id`),
         KEY `data_type` (`data_type`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+        ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;
     ");
 
   // Create a table to store AUDDIS/ARUDD dates
@@ -148,9 +148,10 @@ function smartdebit_civicrm_install()
             `frequency_type` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
             `frequency_factor` int(10) unsigned DEFAULT NULL,
             `start_date` datetime NOT NULL,
-            `current_state` int(10) unsigned DEFAULT NULL,					
+            `current_state` int(10) unsigned DEFAULT NULL,
             `reference_number` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
             `payerReference` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+            `recur_id` int(10) unsigned COMMENT 'ID of recurring contribution',
             PRIMARY KEY (`id`)
            ) ENGINE=InnoDB AUTO_INCREMENT=350 DEFAULT CHARSET=latin1";
 
