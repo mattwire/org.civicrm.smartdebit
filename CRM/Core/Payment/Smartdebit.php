@@ -943,10 +943,12 @@ UPDATE civicrm_direct_debit SET
       $eDate = $recurRecord['end_date'];
     }
 
-    $endDate = $startDate = NULL;
     if (!empty($eDate)) {
       $endDate = strtotime($eDate);
       $endDate = date("Y-m-d", $endDate);
+    }
+    else {
+      $endDate = NULL;
     }
 
     $smartDebitParams = array(
