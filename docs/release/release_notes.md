@@ -1,7 +1,16 @@
 ## Release 1.17
 
-* Rename hook_civicrm_alterCreateVariableDDIParams to hook_civicrm_alterVariableDDIParams
+* Rename hook_civicrm_alterCreateVariableDDIParams to hook_civicrm_alterVariableDDIParams.
 * Expand scope of hook_civicrm_alterVariableDDIParams so it works in all API create/update scenarios.
+* Set start date to match date of first contribution on recurring contribution.
+* Update the cached mandate when updating smartdebit mandate via API.
+* Only update recurring contribution if it changed. Don't touch start_date unless we want to update it.
+* Make Collection Report cache size configurable.
+* Improve description for contributions so they now display Source: SDCR, SDAUDDIS, SDARUDD for collection report, ARUDD, AUDDIS respectively.
+* Internal improvements to sync job.
+
+!!! warning
+    hook_civicrm_alterCreateVariableDDIParams is now renamed to hook_civirm_alterVariableDDIParams and has additional parameter $op.
 
 ## Release 1.16
 

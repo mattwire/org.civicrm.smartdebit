@@ -147,8 +147,6 @@ WHERE ddi_reference = '{$params['ddi_reference']}'
    * Main purpose is to tidy the contribution
    * And to setup the relevant Direct Debit Mandate Information
    *
-   * // FIXME: Do we need to send email?
-   *
    * @param $objects
    */
   static function completeDirectDebitSetup( $params )  {
