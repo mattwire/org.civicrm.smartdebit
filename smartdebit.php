@@ -394,9 +394,9 @@ function smartdebit_civicrm_pageRun(&$page)
 
       $contributionRecurDetails = array();
       if (!empty($recurRef['trxn_id'])) {
-        $smartDebitResponse = CRM_Smartdebit_Api::getPayerContactDetails($recurRef['trxn_id']);
+        $smartDebitResponse = CRM_Smartdebit_Mandates::getbyReference($recurRef['trxn_id'], TRUE);
         if ($smartDebitResponse) {
-          foreach ($smartDebitResponse[0] as $key => $value) {
+          foreach ($smartDebitResponse as $key => $value) {
             if ($key == 'current_state') {
               $value = CRM_Smartdebit_Api::SD_STATES[$value];
             }

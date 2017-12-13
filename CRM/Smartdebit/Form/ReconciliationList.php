@@ -63,8 +63,7 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     $sync = CRM_Utils_Array::value('sync', $_GET, '');
     if ($sync) {
       // Do a sync
-      $mandatesList = CRM_Smartdebit_Api::getPayerContactDetails();
-      CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($mandatesList, TRUE);
+      CRM_Smartdebit_Mandates::getFromSmartdebit();
 
       // Redirect back to this form
       $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/list', 'reset=1');
@@ -73,8 +72,7 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     }
 
     // Check if we have any data to use, otherwise we'll need to sync with Smartdebit
-    $query = "SELECT COUNT(*) FROM veda_smartdebit_mandates";
-    $count = CRM_Core_DAO::singleValueQuery($query);
+    $count = CRM_Smartdebit_Mandates::count();
     $this->assign('totalMandates', $count);
     if ($count == 0) {
       // Have not done a sync.  Display state and add button to perform sync
@@ -411,7 +409,7 @@ AND   csd.id IS NULL LIMIT 100";
     }
 
     // Get the Smart Debit details for the payer
-    $smartDebitResponse = CRM_Smartdebit_Api::getPayerContactDetails($params['payer_reference']);
+    $smartDebitResponse = CRM_Smartdebit_Mandates::getbyReference($params['payer_reference'], TRUE);
 
     foreach ($smartDebitResponse as $key => $smartDebitRecord) {
       // Setup params for the relevant record

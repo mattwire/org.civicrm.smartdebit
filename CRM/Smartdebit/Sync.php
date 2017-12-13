@@ -58,7 +58,7 @@ class CRM_Smartdebit_Sync
 
     //FIXME: Move these to task queue (but can't because they're needed to setup the queue)
     self::retrieveDailyCollectionReport();
-    $smartDebitPayerContacts = self::retrievePayerContactDetails();
+    $smartDebitPayerContacts = CRM_Smartdebit_Mandates::getFromSmartdebit();
 
     foreach ($smartDebitPayerContacts as $key => $sdContact) {
       // Check if a recurring contribution exists, otherwise remove it from list for processing
@@ -192,19 +192,6 @@ class CRM_Smartdebit_Sync
     if (!isset($collections['error'])) {
       CRM_Smartdebit_Auddis::saveSmartdebitCollectionReport($collections);
     }
-  }
-
-  /**
-   * Batch task to retrieve payer contact details (mandates)
-   */
-  public static function retrievePayerContactDetails() {
-    Civi::log()->debug('Smartdebit Sync: Retrieving Smart Debit Payer Contact Details.');
-    // Get list of payers from Smartdebit
-    $smartDebitPayerContacts = CRM_Smartdebit_Api::getPayerContactDetails();
-
-    // Update mandates table for reconciliation functions
-    self::updateSmartDebitMandatesTable($smartDebitPayerContacts, TRUE);
-    return $smartDebitPayerContacts;
   }
 
 /**
@@ -615,80 +602,6 @@ class CRM_Smartdebit_Sync
         break;
     }
     return $days;
-  }
-
-  /**
-   * Update Smartdebit Mandates in table veda_smartdebit_mandates for further analysis
-   * This table is only used by Reconciliation functions
-   *
-   * @param array $smartDebitPayerContactDetails (array of smart debit contact details : call CRM_Smartdebit_Api::getPayerContactDetails())
-   * @param bool $truncate If true, truncate the table before inserting new records.
-   * @return bool|int
-   */
-  public static function updateSmartDebitMandatesTable($smartDebitPayerContactDetails, $truncate = FALSE) {
-    if ($truncate) {
-      // if the civicrm_sd table exists, then empty it
-      $emptySql = "TRUNCATE TABLE `veda_smartdebit_mandates`";
-      CRM_Core_DAO::executeQuery($emptySql);
-    }
-
-    // Get payer contact details
-    if (empty($smartDebitPayerContactDetails)) {
-      return FALSE;
-    }
-    // Insert mandates into table
-    foreach ($smartDebitPayerContactDetails as $key => $smartDebitRecord) {
-      if (!$truncate) {
-        $deleteSql = "DELETE FROM `veda_smartdebit_mandates` WHERE reference_number='%1'";
-        $deleteParams = array(1 => $smartDebitRecord['reference_number']);
-        CRM_Core_DAO::executeQuery($deleteSql);
-      }
-
-      $sql = "INSERT INTO `veda_smartdebit_mandates`(
-            `title`,
-            `first_name`,
-            `last_name`, 
-            `email_address`,
-            `address_1`, 
-            `address_2`, 
-            `address_3`, 
-            `town`, 
-            `county`,
-            `postcode`,
-            `first_amount`,
-            `regular_amount`,
-            `frequency_type`,
-            `frequency_factor`,
-            `start_date`,
-            `current_state`,
-            `reference_number`,
-            `payerReference`
-            ) 
-            VALUES (%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18)";
-      $params = array(
-        1 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'title', 'NULL'), 'String' ),
-        2 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'first_name', 'NULL'), 'String' ),
-        3 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'last_name', 'NULL'), 'String' ),
-        4 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'email_address', 'NULL'),  'String'),
-        5 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'address_1', 'NULL'), 'String' ),
-        6 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'address_2', 'NULL'), 'String' ),
-        7 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'address_3', 'NULL'), 'String' ),
-        8 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'town', 'NULL'), 'String' ),
-        9 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'county', 'NULL'), 'String' ),
-        10 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'postcode', 'NULL'), 'String' ),
-        11 => array( CRM_Smartdebit_Utils::getCleanSmartdebitAmount(CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'first_amount', 'NULL')), 'String' ),
-        12 => array( CRM_Smartdebit_Utils::getCleanSmartdebitAmount(CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'regular_amount', 'NULL')), 'String' ),
-        13 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'frequency_type', 'NULL'), 'String' ),
-        14 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'frequency_factor', 'NULL'), 'Int' ),
-        15 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'start_date', 'NULL'), 'String' ),
-        16 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'current_state', 'NULL'), 'Int' ),
-        17 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'reference_number', 'NULL'), 'String' ),
-        18 => array( CRM_Smartdebit_Utils::getArrayFieldValue($smartDebitRecord, 'payerReference', 'NULL'), 'String' ),
-      );
-      CRM_Core_DAO::executeQuery($sql, $params);
-    }
-    $mandateFetchedCount = count($smartDebitPayerContactDetails);
-    return $mandateFetchedCount;
   }
 
   /**

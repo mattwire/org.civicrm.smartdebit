@@ -38,9 +38,11 @@ class CRM_Smartdebit_Form_Payerdetails extends CRM_Core_Form {
       return;
     }
 
-    $smartDebitResponse = CRM_Smartdebit_Api::getPayerContactDetails($reference_number);
+    // Get Smartdebit Mandate details
+    $smartDebitResponse = CRM_Smartdebit_Mandates::getbyReference($reference_number, TRUE);
 
-    foreach ($smartDebitResponse[0] as $key => $value) {
+    // Convert fields to labels for display
+    foreach ($smartDebitResponse as $key => $value) {
       if ($key == 'current_state') {
         $value = CRM_Smartdebit_Api::SD_STATES[$value];
       }
@@ -48,7 +50,6 @@ class CRM_Smartdebit_Form_Payerdetails extends CRM_Core_Form {
     }
 
     $this->assign('transactionId', $reference_number);
-
     $this->assign('smartDebitDetails', $smartDebitDetails);
 
     $url = $_SERVER['HTTP_REFERER'];

@@ -975,9 +975,7 @@ UPDATE civicrm_direct_debit SET
     }
 
     // Update the cached mandate
-    $payerContactDetails = CRM_Smartdebit_Api::getPayerContactDetails($smartDebitParams['reference_number']);
-    CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($payerContactDetails);
-
+    CRM_Smartdebit_Mandates::getbyReference($recurRecord['trxn_id'], TRUE);
     return TRUE;
   }
 
@@ -1024,8 +1022,7 @@ UPDATE civicrm_direct_debit SET
     }
 
     // Update the cached mandate
-    $payerContactDetails = CRM_Smartdebit_Api::getPayerContactDetails($smartDebitParams['reference_number']);
-    CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($payerContactDetails);
+    CRM_Smartdebit_Mandates::getbyReference($smartDebitParams['reference_number'], TRUE);
 
     return TRUE;
   }
@@ -1073,8 +1070,8 @@ UPDATE civicrm_direct_debit SET
     }
 
     // Update the cached mandate
-    $payerContactDetails = CRM_Smartdebit_Api::getPayerContactDetails($smartDebitParams['reference_number']);
-    CRM_Smartdebit_Sync::updateSmartDebitMandatesTable($payerContactDetails);
+    CRM_Smartdebit_Mandates::getbyReference($smartDebitParams['reference_number'], TRUE);
+
     return TRUE;
   }
 
