@@ -904,13 +904,25 @@ UPDATE civicrm_direct_debit SET
    * @return array|bool|object
    */
   public function changeSubscriptionAmount(&$message = '', $params = array()) {
+    // We don't use recur start_date as smartdebit start_date can change during the subscription
+    unset($params['start_date']);
     self::changeSubscription($this->paymentProcessor, $params);
   }
 
-  public static function changeSubscription($paymentProcessor, $params) {
+  /**
+   * This function allows to update the subscription with Smartdebit
+   * @param array $paymentProcessor
+   * @param array $recurContributionParams
+   * @param date $startDate We pass this is separately to recurContributionParams as we don't use recur start_date
+   *                        because subscription can change during life
+   *
+   * @return bool
+   * @throws \Exception
+   */
+  public static function changeSubscription($paymentProcessor, $recurContributionParams, $startDate = NULL) {
     try {
       $recurRecord = civicrm_api3('ContributionRecur', 'getsingle', array(
-        'id' => $params['id'],
+        'id' => $recurContributionParams['id'],
         'options' => array('limit' => 1),
       ));
     }
@@ -923,9 +935,9 @@ UPDATE civicrm_direct_debit SET
     $username = $paymentProcessor['user_name'];
     $password = $paymentProcessor['password'];
 
-    $amount = CRM_Smartdebit_Api::encodeAmount(isset($params['amount']) ? $params['amount'] : 0);
-    if (!empty($params['end_date'])) {
-      $eDate = $params['end_date'];
+    $amount = CRM_Smartdebit_Api::encodeAmount(isset($recurContributionParams['amount']) ? $recurContributionParams['amount'] : 0);
+    if (!empty($recurContributionParams['end_date'])) {
+      $eDate = $recurContributionParams['end_date'];
     }
     else {
       $eDate = $recurRecord['end_date'];
@@ -942,8 +954,9 @@ UPDATE civicrm_direct_debit SET
       'variable_ddi[first_amount]' => $amount,
       'variable_ddi[default_amount]' => $amount,
     );
-    if (!empty($params['start_date'])) {
-      $smartDebitParams['variable_ddi[start_date]'] = $params['start_date'];
+    if (!empty($startDate)) {
+      // We want to update the start_date
+      $smartDebitParams['variable_ddi[start_date]'] = $startDate;
     }
     if (!empty($endDate)) {
       $smartDebitParams['variable_ddi[end_date]'] = $endDate;
@@ -951,17 +964,17 @@ UPDATE civicrm_direct_debit SET
     else {
       $smartDebitParams['variable_ddi[end_date]'] = '';
     }
-    if (!isset($params['frequency_unit'])) {
-      $params['frequency_unit'] = $recurRecord['frequency_unit'];
+    if (!isset($recurContributionParams['frequency_unit'])) {
+      $recurContributionParams['frequency_unit'] = $recurRecord['frequency_unit'];
     }
-    if (!isset($params['frequency_interval'])) {
-      $params['frequency_interval'] = $recurRecord['frequency_interval'];
+    if (!isset($recurContributionParams['frequency_interval'])) {
+      $recurContributionParams['frequency_interval'] = $recurRecord['frequency_interval'];
     }
-    if (isset($params['frequency_unit']) || isset($params['frequency_interval'])) {
-      $smartDebitParams = array_merge($smartDebitParams, self::getCollectionFrequencyPostParams($params));
+    if (isset($recurContributionParams['frequency_unit']) || isset($recurContributionParams['frequency_interval'])) {
+      $smartDebitParams = array_merge($smartDebitParams, self::getCollectionFrequencyPostParams($recurContributionParams));
     }
 
-    CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'update');
+    CRM_Smartdebit_Hook::alterVariableDDIParams($recurContributionParams, $smartDebitParams, 'update');
 
     $url = CRM_Smartdebit_Api::buildUrl($paymentProcessor, 'api/ddi/variable/' . $recurRecord['trxn_id'] . '/update');
     if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit changeSubscription: ' . $url . print_r($smartDebitParams, TRUE)); }
