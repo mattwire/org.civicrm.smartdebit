@@ -754,10 +754,10 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       }
       else {
         // No recurring transaction, assume this is a non-recurring payment (so create a recurring contribution with a single installment
-        // Get the financial type ID
-        $financialType['name'] = $params['contributionType_name'];
-        $financialType=CRM_Financial_BAO_FinancialType::retrieve($financialType,$defaults);
         // Fill recurring transaction parameters
+        if (empty($params['receive_date'])) {
+          $params['receive_date'] = date('YmdHis');
+        }
         $recurParams['contact_id'] =  $params['contactID'];
         $recurParams['create_date'] = $params['receive_date'];
         $recurParams['modified_date'] = $params['receive_date'];
@@ -765,7 +765,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         $recurParams['amount'] = $params['amount'];
         $recurParams['frequency_unit'] = 'year';
         $recurParams['frequency_interval'] = '1';
-        $recurParams['financial_type_id'] = $financialType->id;
+        $recurParams['financial_type_id'] = $params['financialTypeID'];
         $recurParams['auto_renew'] = '0'; // Make auto renew
         $recurParams['currency'] = $params['currencyID'];
         $recurParams['invoice_id'] = $params['invoiceID'];
