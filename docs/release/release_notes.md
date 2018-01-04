@@ -1,3 +1,7 @@
+## Release 1.18
+
+* Minor tweaks for drupal webform support
+
 ## Release 1.17
 
 * Rename hook_civicrm_alterCreateVariableDDIParams to hook_civicrm_alterVariableDDIParams.
