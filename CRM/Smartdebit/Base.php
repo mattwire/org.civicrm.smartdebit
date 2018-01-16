@@ -660,6 +660,7 @@ WHERE  ddi_reference = %0";
     }
     catch (CiviCRM_API3_Exception $e) {
       Civi::log()->error('Smartdebit createContribution=' . $contributionParams['id'] . ' : ' . $e->getMessage());
+      $result['is_error'] = 1;
     }
     return $result;
   }
