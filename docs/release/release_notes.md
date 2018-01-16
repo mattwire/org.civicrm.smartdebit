@@ -1,3 +1,16 @@
+## Release 1.19
+
+* Set default collection report cache to 1 year as this works better for annual collections.
+* Always set contribution_status_id when creating a new contribution.
+* Capture the API (contribution) result when using repeattransaction so we we can store the contribution ID in veda_success_contributions table and avoid a fatal error when not set.
+* Report error when we could not create contribution so that processCollection does not try and record it as successful.
+* Change some logging from debug to info for sync task.
+* Tweaks to reconciliation and createrecurcontribution for better error handling.
+* Reconciliation:
+  * Allow to reconcile mandates in any status (not just live)
+  * Fix start_date not being set correctly
+  * Improve error handling
+
 ## Release 1.18
 
 * Minor tweaks for drupal webform support
