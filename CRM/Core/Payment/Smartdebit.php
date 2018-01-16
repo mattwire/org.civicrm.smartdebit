@@ -212,11 +212,18 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       self::recordSmartDebitResponse($direct_debit_response);
     }
     else {
-      self::formatErrorsForContributionForm($response['error'], $errors);
+      self::formatErrorsForContributionForm($response['error'], $errors, $params);
     }
   }
 
-  public static function formatErrorsForContributionForm($responseErrors, &$errors) {
+  /**
+   * Parse and format error message for display on contribution form
+   *
+   * @param $responseErrors
+   * @param array $errors
+   * @param array $params Parameters passed to original function
+   */
+  public static function formatErrorsForContributionForm($responseErrors, &$errors, $params) {
     if (!is_array($responseErrors)) {
       $responseErrors = array($responseErrors);
     }
@@ -235,8 +242,14 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         case 'Start date mus': // Start date ..
           $errors['preferred_collection_day'] = CRM_Utils_Array::value('preferred_collection_day', $errors) . $error . '. ';
           break;
-          default:
-            $errors['unknown'] = CRM_Utils_Array::value('unknown', $errors) . $error . '. ';
+        case 'Frequency type': //' must be in list'
+          Civi::log()->debug('Smartdebit validation error: Frequency type must be in list. collection_frequency='
+            . CRM_Utils_Array::value('collection_frequency', $params) . '; collection_interval='
+            . CRM_Utils_Array::value('collection_interval', $params));
+          $errors['unknown'] = CRM_Utils_Array::value('unknown', $errors) . $error . '. ';
+          break;
+        default:
+          $errors['unknown'] = CRM_Utils_Array::value('unknown', $errors) . $error . '. ';
       }
     }
     if (isset($errors['unknown'])) {
