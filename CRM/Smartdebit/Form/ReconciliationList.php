@@ -399,92 +399,79 @@ AND   csd.id IS NULL LIMIT 100";
    * @return bool
    */
   static function reconcileRecordWithCiviCRM($params) {
-    foreach (array(
-               'contact_id',
-               'payer_reference') as $required) {
-
+    foreach (array('contact_id', 'payer_reference' ) as $required) {
       if (empty($params[$required])) {
         throw new InvalidArgumentException("Missing params[$required]");
       }
     }
 
     // Get the Smart Debit details for the payer
-    $smartDebitResponse = CRM_Smartdebit_Mandates::getbyReference($params['payer_reference'], TRUE);
+    $smartDebitRecord = CRM_Smartdebit_Mandates::getbyReference($params['payer_reference'], TRUE);
 
-    foreach ($smartDebitResponse as $key => $smartDebitRecord) {
-      // Setup params for the relevant record
-      $recurParams['contact_id'] = $params['contact_id'];
-      $recurParams['contribution_recur_id'] = (!empty($params['contribution_recur_id']) ? $params['contribution_recur_id'] : NULL);
-      $recurParams['frequency_type'] = $smartDebitRecord['frequency_type'];
-      $recurParams['frequency_factor'] = $smartDebitRecord['frequency_factor'];
-      $recurParams['amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($smartDebitRecord['regular_amount']);
-      $recurParams['start_date'] = $smartDebitRecord['start_date'].' 00:00:00';
-      $recurParams['next_sched_contribution'] = $smartDebitRecord['start_date'].' 00:00:00';
-      $recurParams['trxn_id'] = $params['payer_reference'];
+    // Setup params for the relevant record
+    $recurParams['contact_id'] = $params['contact_id'];
+    $recurParams['contribution_recur_id'] = (!empty($params['contribution_recur_id']) ? $params['contribution_recur_id'] : NULL);
+    $recurParams['frequency_type'] = $smartDebitRecord['frequency_type'];
+    $recurParams['frequency_factor'] = $smartDebitRecord['frequency_factor'];
+    $recurParams['amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($smartDebitRecord['regular_amount']);
+    $recurParams['start_date'] = $smartDebitRecord['start_date'].' 00:00:00';
+    $recurParams['next_sched_contribution'] = $smartDebitRecord['start_date'].' 00:00:00';
+    $recurParams['trxn_id'] = $params['payer_reference'];
 
-      $auditlog = CRM_Smartdebit_Api::getAuditLog($params['payer_reference']);
-      if (isset($auditlog[0]['description'])) {
-        if (strpos($auditlog[0]['description'], 'Created') !== FALSE) {
-          if (isset($auditlog[0]['timestamp'])) {
-            $recurParams['create_date'] = $auditlog[0]['timestamp'];
-          }
+    $auditlog = CRM_Smartdebit_Api::getAuditLog($params['payer_reference']);
+    if (isset($auditlog[0]['description'])) {
+      if (strpos($auditlog[0]['description'], 'Created') !== FALSE) {
+        if (isset($auditlog[0]['timestamp'])) {
+          $recurParams['create_date'] = $auditlog[0]['timestamp'];
         }
       }
+    }
 
-      // Set state of recurring contribution (10=live,1=New at SmartDebit)
-      if ($smartDebitRecord['current_state'] == CRM_Smartdebit_Api::SD_STATE_LIVE || $smartDebitRecord['current_state'] == CRM_Smartdebit_Api::SD_STATE_NEW) {
-        $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
+    // Set state of recurring contribution (10=live,1=New at SmartDebit)
+    if ($smartDebitRecord['current_state'] == CRM_Smartdebit_Api::SD_STATE_LIVE || $smartDebitRecord['current_state'] == CRM_Smartdebit_Api::SD_STATE_NEW) {
+      $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
+    }
+    else {
+      $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Cancelled');
+    }
+
+    // Create / Update recurring contribution
+    try {
+      $contributionRecurResult = CRM_Smartdebit_Base::createRecurContribution($recurParams);
+      $recurId = $contributionRecurResult['id'];
+    }
+    catch (Exception $e) {
+      $message = 'Error creating recurring contribution for contact ('.$params['contact_id'].') ' . $e->getMessage();
+      CRM_Core_Session::setStatus($message, CRM_Smartdebit_Settings::TITLE);
+      Civi::log()->error('Smartdebit reconcileRecordWithCiviCRM: ' . $message);
+      return FALSE;
+    }
+
+    // A contribution with just the SD payer reference may exist if an older version of SmartDebit extension was used.
+    // If we find one, we need to update it
+    // If no contribution exists, we don't need to create one, as the sync job will do that for us.
+    $contribution = CRM_Smartdebit_Base::contributionExists($params['payer_reference']);
+    if ($contribution) {
+      if (!empty($recurId)) {
+        $contribution['contribution_recur_id'] = $recurId;
       }
-      else {
-        $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Cancelled');
-      }
+      $contribution['trxn_id'] = $params['payer_reference'].'/'.date('YmdHis', strtotime($recurParams['start_date']));
+      //$contribution['contribution_status_id'] = $recurParams['contribution_status_id'];
+      $contribution['total_amount'] = $recurParams['amount'];
+      $contribution['receive_date'] = $recurParams['start_date'];
+      CRM_Smartdebit_Base::createContribution($contribution);
+    }
 
-      $membershipId = 0;
-
-      // Create / Update recurring contribution
+    // Link Membership to recurring contribution
+    if (!empty($params['membership_id'])) {
+      $params['contribution_recur_id'] = $recurId;
       try {
-        $result = CRM_Smartdebit_Base::createRecurContribution($recurParams);
-        $recurId = $result['id'];
+        self::linkMembershipToRecurContribution($params);
       }
-      catch (Exception $e) {
-        $recurId = -1;
-        CRM_Core_Session::setStatus("Error creating recurring contribution for contact (".$params['contact_id'].") " . $e->getMessage(), 'Smart Debit');
-      }
-
-      // A contribution with just the SD payer reference may exist if an older version of SmartDebit extension was used.
-      // If we find one, we need to update it
-      // If no contribution exists, we don't need to create one, as the sync job will do that for us.
-      $contribution = CRM_Smartdebit_Base::contributionExists($params['payer_reference']);
-      if ($contribution) {
-        if (!empty($recurId)) {
-          $contribution['contribution_recur_id'] = $recurId;
-        }
-        $contribution['trxn_id'] = $params['payer_reference'].'/'.date('YmdHis', strtotime($recurParams['start_date']));
-        //$contribution['contribution_status_id'] = $recurParams['contribution_status_id'];
-        $contribution['total_amount'] = $recurParams['amount'];
-        $contribution['receive_date'] = $recurParams['start_date'];
-        CRM_Smartdebit_Base::createContribution($contribution);
-      }
-
-      // Link Membership to recurring contribution
-      if (!empty($params['membership_id'])) {
-        $params['contribution_recur_id'] = $recurId;
-        try {
-          $result = self::linkMembershipToRecurContribution($params);
-          $membershipId = $result['id'];
-        }
-        catch (Exception $e) {
-          $membershipId = -1;
-          CRM_Core_Session::setStatus("Error linking membership (".$params['membership_id'].") to recurring contribution (".$params['contribution_recur_id'].") " . $e->getMessage(), 'Smart Debit');
-        }
-      }
-
-      // Return true if we succeeded, false otherwise
-      // Set return value
-      if ($recurId >= 0 && $membershipId >= 0) {
-        return TRUE;
-      }
-      else {
+      catch (CiviCRM_API3_Exception $e) {
+        $message = 'Error linking membership (' . $params['membership_id'] . ') to recurring contribution (' . $params['contribution_recur_id'] . ') ' . $e->getMessage();
+        CRM_Core_Session::setStatus($message, CRM_Smartdebit_Settings::TITLE);
+        Civi::log()->error('Smartdebit reconcileRecordWithCiviCRM: ' . $message);
         return FALSE;
       }
     }
@@ -495,6 +482,8 @@ AND   csd.id IS NULL LIMIT 100";
    * This is used when we need to create a linked mem
    * @param $params
    *
+   * @return array
+   * @throws \CiviCRM_API3_Exception
    */
   static function linkMembershipToRecurContribution($params) {
     foreach (array(
@@ -507,19 +496,11 @@ AND   csd.id IS NULL LIMIT 100";
       }
     }
 
-    try {
-      $membershipRecord = civicrm_api3('Membership', 'getsingle', array(
-        'id' => $params['membership_id'],
-      ));
-    }
-    catch (Exception $e) {
-      // Failed to find membership.  This should never happen unless we get a malformed submission
-      CRM_Core_Session::setStatus('Failed to find membership with Id: ' . $params['membership_id'], 'Smart Debit: Link Membership');
-      return FALSE;
-    }
+    $membershipRecord = civicrm_api3('Membership', 'getsingle', array(
+      'id' => $params['membership_id'],
+    ));
 
     return civicrm_api3('Membership', 'create', array(
-      'sequential' => 1,
       'id' => $params['membership_id'],
       'contact_id' => $params['contact_id'],
       'contribution_recur_id' => $params['contribution_recur_id'],

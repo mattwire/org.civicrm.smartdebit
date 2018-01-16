@@ -424,22 +424,24 @@ WHERE  ddi_reference = %0";
 
   /**
    * Create a new recurring contribution for the direct debit instruction we set up.
+   *
    * @param $recurParams
+   *
+   * @return array
+   * @throws \CiviCRM_API3_Exception
    */
   static function createRecurContribution($recurParams) {
     // Mandatory Parameters
     // Amount
     if (empty($recurParams['amount'])) {
-      Civi::log()->debug('Smartdebit createRecurContribution: ERROR must specify amount!');
-      return FALSE;
+      throw new InvalidArgumentException('Smartdebit createRecurContribution: Missing parameter: amount', 1);
     }
     else {
       // Make sure it's properly formatted (ie remove symbols etc)
       $recurParams['amount'] = preg_replace("/([^0-9\\.])/i", "", $recurParams['amount']);
     }
     if (empty($recurParams['contact_id'])) {
-      Civi::log()->debug('Smartdebit createRecurContribution: ERROR must specify contact_id!');
-      return FALSE;
+      throw new InvalidArgumentException('Smartdebit createRecurContribution: Missing parameter: contact_id', 1);
     }
 
     // Optional parameters
@@ -562,13 +564,7 @@ WHERE  ddi_reference = %0";
     }
 
     // Create the recurring contribution
-    try {
-      $result = civicrm_api3('ContributionRecur', 'create', $params);
-    }
-    catch (CiviCRM_API3_Exception $e) {
-      Civi::log()->error('Smartdebit createRecurContribution=' . $params['id'] . ' : ' . $e->getMessage());
-    }
-    return $result;
+    return civicrm_api3('ContributionRecur', 'create', $params);
   }
 
   /**
