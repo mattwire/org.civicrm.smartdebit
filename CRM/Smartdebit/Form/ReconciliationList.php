@@ -31,24 +31,6 @@
  * Path: civicrm/smartdebit/reconciliation/list
  */
 class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
-  /* Smart Debit parameters
-    address_3 (String, 0 characters )
-    first_name (String, 9 characters ) simon1008
-    last_name (String, 9 characters ) simon1008
-    regular_amount (String, 6 characters ) �7.60
-    start_date (String, 10 characters ) 2013-04-01
-    county (String, 0 characters )
-    address_1 (String, 9 characters ) simon1008
-    postcode (String, 7 characters ) B25 8XY
-    title (String, 0 characters )
-    email_address (String, 18 characters ) simon1008@veda.com
-    current_state (String, 2 characters ) 10
-    town (String, 9 characters ) simon1008
-    payerReference (String, 5 characters ) 36978
-    frequency_type (String, 1 characters ) M
-    reference_number (String, 8 characters ) 00000573
-    address_2 (String, 0 characters )
-  */
 
   /**
    * Build the form
@@ -278,8 +260,7 @@ SELECT contact.id as contact_id,
 FROM veda_smartdebit_mandates csd1 
 LEFT JOIN civicrm_contribution_recur ctrc ON ctrc.trxn_id = csd1.reference_number 
 LEFT JOIN civicrm_contact contact ON contact.id = csd1.payerReference 
-WHERE ( csd1.current_state = %1 OR csd1.current_state = %2 ) 
-AND ctrc.id IS NULL";
+WHERE ctrc.id IS NULL";
       // Filter records that have an amount recorded against them or not
       if ($hasAmount) {
         $sql .= " AND (COALESCE(csd1.regular_amount, '') != '')";
@@ -294,8 +275,7 @@ AND ctrc.id IS NULL";
       else {
         $sql .= " AND contact.id IS NULL";
       }
-      $params = array( 1 => array( CRM_Smartdebit_Api::SD_STATE_LIVE, 'Int' ), 2 => array(CRM_Smartdebit_Api::SD_STATE_NEW, 'Int') );
-      $dao = CRM_Core_DAO::executeQuery( $sql, $params);
+      $dao = CRM_Core_DAO::executeQuery($sql);
       while ($dao->fetch()) {
         $differences = 'Transaction ID not Found in CiviCRM';
         $transactionRecordFound = false;
@@ -332,7 +312,7 @@ AND ctrc.id IS NULL";
         $listArray[$dao->smart_debit_id]['sd_frequency'] = $dao->frequency_type;
 
         // We've found a contact id matching that in smart debit
-        // Need to determine if its a correupt renewal or something
+        // Need to determine if it is a corrupt renewal or something
         // i.e. there is a pending payment for the recurring record and the recurring record itself
       }
       $query = "SELECT FOUND_ROWS()";
@@ -361,7 +341,7 @@ WHERE opgr.name = 'payment_instrument'
 AND   opva.label = 'Direct Debit' 
 AND   csd.id IS NULL LIMIT 100";
 
-      $dao = CRM_Core_DAO::executeQuery( $sql );
+      $dao = CRM_Core_DAO::executeQuery($sql);
 
       while ($dao->fetch()) {
         $transactionRecordFound = false;
