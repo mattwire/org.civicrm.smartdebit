@@ -383,7 +383,7 @@ class CRM_Smartdebit_Sync
       else {
         if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: success recurpayment (recur:' . $contributionRecur['id'] . ')'); }
         // If payment is successful, we call repeattransaction to create a new contribution and update/renew related memberships/events.
-        civicrm_api3('contribution', 'repeattransaction', $contributeParams);
+        $contributeResult = civicrm_api3('contribution', 'repeattransaction', $contributeParams);
       }
     }
     else {
@@ -395,7 +395,7 @@ class CRM_Smartdebit_Sync
       }
       else {
         if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: failed recurpayment (recur:' . $contributionRecur['id'] . ')'); }
-        civicrm_api3('contribution', 'repeattransaction', $contributeParams);
+        $contributeResult = civicrm_api3('contribution', 'repeattransaction', $contributeParams);
       }
     }
 
