@@ -24,7 +24,7 @@ class CRM_Smartdebit_Mandates {
    * Batch task to retrieve payer contact details (mandates)
    */
   public static function getFromSmartdebit() {
-    Civi::log()->debug('Smartdebit Sync: Retrieving Smart Debit Payer Contact Details.');
+    Civi::log()->info('Smartdebit Sync: Retrieving Smart Debit Payer Contact Details.');
     // Get list of payers from Smartdebit
     $smartDebitPayerContacts = CRM_Smartdebit_Api::getPayerContactDetails();
 

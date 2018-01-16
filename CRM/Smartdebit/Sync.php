@@ -96,7 +96,7 @@ class CRM_Smartdebit_Sync
       $i++;
     }
 
-    Civi::log()->debug('Smartdebit Sync: Retrieving AUDDIS reports.');
+    Civi::log()->info('Smartdebit Sync: Retrieving AUDDIS reports.');
     // Get auddis/arudd IDs for last month if none specified.
     $auddisProcessor = new CRM_Smartdebit_Auddis();
 
@@ -118,7 +118,7 @@ class CRM_Smartdebit_Sync
       $queue->createItem($task);
     }
 
-    Civi::log()->debug('Smartdebit Sync: Retrieving ARUDD reports.');
+    Civi::log()->info('Smartdebit Sync: Retrieving ARUDD reports.');
     if (!isset($aruddIDs)) {
       // Get list of auddis records from smart debit
       if ($auddisProcessor->getSmartdebitAruddList()) {
@@ -199,7 +199,7 @@ class CRM_Smartdebit_Sync
   public static function retrieveDailyCollectionReport(CRM_Queue_TaskContext $ctx) {
     // FIXME: We should probably retry if this fails, but there is not a report for every day so would need to handle that too.
     // Get collection report for today
-    Civi::log()->debug('Smartdebit cron: Retrieving Daily Collection Report.');
+    Civi::log()->info('Smartdebit Sync: Retrieving Daily Collection Report.');
     $date = new DateTime();
     $collections = CRM_Smartdebit_Api::getCollectionReport($date->format('Y-m-d'));
     if (!isset($collections['error'])) {
