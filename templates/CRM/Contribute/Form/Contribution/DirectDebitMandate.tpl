@@ -128,7 +128,7 @@
       <div style="clear: both;"></div>
       <div>
         <p style="text-align: center;">
-          {ts}Banks and Building Societies may not accept Direct Debit Instructions from some types of account.{/ts}
+          {ts}Banks and Building Societies may not accept Direct Debit Instructions for some types of account.{/ts}
         </p>
       </div>
     </div>
