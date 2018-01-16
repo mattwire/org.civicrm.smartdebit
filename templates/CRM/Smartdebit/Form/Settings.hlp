@@ -64,8 +64,8 @@ in CiviCRM will be "Pending", as it could fail.  However, this means that new me
  memberships etc to become active.{/ts}
 {/htxt}
 {htxt id='smartdebit_cr_cache'}
-{ts}How long should CiviCRM cache collection reports from SmartDebit?  The default is 3 months but you can change this to anything reasonable here -
+{ts}How long should CiviCRM cache collection reports from SmartDebit?  The default is 1 year but you can change this to anything reasonable here -
  consider that a longer time will increase time it takes to sync as well as database size.{/ts}
  <br/>{ts}Must be a valid format per: <a href="http://www.php.net/manual/en/datetime.formats.php">Date and Time Formats</a>{/ts}
- <br/>{ts}Default value is '-3 month'{/ts}
+ <br/>{ts}Default value is '-1 year'{/ts}
 {/htxt}

@@ -243,7 +243,7 @@ return array(
     'add' => '4.7',
     'is_domain' => 1,
     'is_contact' => 0,
-    'default' => '-3 month',
+    'default' => '-1 year',
     'description' => 'Collection Report Cache Retention Period',
     'html_type' => 'Text',
     'html_attributes' => array(
