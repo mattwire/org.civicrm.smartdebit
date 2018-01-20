@@ -1,6 +1,8 @@
-## Release 1.20 (dev)
+## Release 1.20
 * Improve error handling and debug info (don't stop the sync process if one transaction fails).
+* Add missing "by reference" on params for updateRecurringContributions hook.
 * Add Smartdebit.updaterecurring API function.
+* Add Smartdebit.getmandates API function.
 
 ## Release 1.19
 
