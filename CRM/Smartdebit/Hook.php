@@ -87,7 +87,7 @@ class CRM_Smartdebit_Hook {
    *
    * @return mixed
    */
-  static function updateRecurringContribution($recurContributionParams) {
+  static function updateRecurringContribution(&$recurContributionParams) {
     return CRM_Utils_Hook::singleton()
       ->invoke(1, $recurContributionParams, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject,
         CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, 'civicrm_smartdebit_updateRecurringContribution');
