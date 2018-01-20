@@ -35,3 +35,21 @@
 function civicrm_api3_smartdebit_sync($params) {
   return civicrm_api3_job_process_smartdebit($params);
 }
+
+/**
+ * Call this function to update "Smartdebit" recurring contributions in CiviCRM.
+ * This makes no changes at Smartdebit itself, but it calls the updateRecurringContribution hook
+ *   which may make changes at Smartdebit depending on your implementation
+ * @param $params
+ *
+ * @return array
+ */
+function civicrm_api3_smartdebit_updaterecurring($params) {
+  try {
+    CRM_Smartdebit_Sync::updateRecurringContributions();
+  }
+  catch (Exception $e) {
+    return civicrm_api3_create_error($e->getMessage());
+  }
+  return civicrm_api3_create_success();
+}

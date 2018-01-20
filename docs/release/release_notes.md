@@ -1,3 +1,7 @@
+## Release 1.20 (dev)
+* Improve error handling and debug info (don't stop the sync process if one transaction fails).
+* Add Smartdebit.updaterecurring API function.
+
 ## Release 1.19
 
 * Set default collection report cache to 1 year as this works better for annual collections.
