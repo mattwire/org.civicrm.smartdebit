@@ -1,5 +1,13 @@
 ## API functions
 
+#### Smartdebit.getmandates
+Parameters:
+* **refresh**: If true, refresh from Smartdebit, otherwise load from local cache.
+* **only_withrecurid**: If true, only load mandates that have a recurring contribution ID associated with them.
+* **trxn_id**: CiviCRM transaction ID / Smartdebit Reference Number of Mandate.
+
+This will retrieve one or more mandates either from the local cache or directly from Smartdebit.
+
 #### Smartdebit.updaterecurring
 Parameters: None
 

@@ -53,3 +53,35 @@ function civicrm_api3_smartdebit_updaterecurring($params) {
   }
   return civicrm_api3_create_success();
 }
+
+function civicrm_api3_smartdebit_getmandates($params) {
+  if (empty($params['refresh'])) {
+    $params['refresh'] = FALSE;
+  }
+  if (!isset($params['only_withrecurid'])) {
+    $params['only_withrecurid'] = FALSE;
+  }
+  if (!isset($params['trxn_id'])) {
+    $mandates = CRM_Smartdebit_Mandates::getAll($params['refresh'], $params['only_withrecurid']);
+  }
+  else {
+    $mandates = array(CRM_Smartdebit_Mandates::getbyReference($params['trxn_id'], $params['refresh']));
+  }
+
+  return _civicrm_api3_basic_array_get('smartdebit', $params, $mandates, 'reference_number', array());
+}
+
+function _civicrm_api3_smartdebit_getmandates_spec(&$spec) {
+  $spec['refresh']['api.required'] = 0;
+  $spec['refresh']['title'] = 'Refresh from smartdebit';
+  $spec['refresh']['description'] = 'If True, refresh from Smartdebit, otherwise load from local cache';
+  $spec['refresh']['type'] = CRM_Utils_Type::T_BOOLEAN;
+  $spec['only_withrecurid']['api.required'] = 0;
+  $spec['only_withrecurid']['title'] = 'Only load mandates which have a recurring contribution ID';
+  $spec['only_withrecurid']['type'] = CRM_Utils_Type::T_BOOLEAN;
+  $spec['trxn_id']['api.required'] = 0;
+  $spec['trxn_id']['title'] = 'Transaction ID / Reference Number';
+  $spec['trxn_id']['description'] = 'The Smartdebit "Reference Number" / CiviCRM Transaction ID (eg. WEB00000123)';
+  $spec['trxn_id']['type'] = CRM_Utils_Type::T_STRING;
+}
+
