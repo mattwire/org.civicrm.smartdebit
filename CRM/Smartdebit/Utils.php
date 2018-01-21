@@ -233,21 +233,6 @@ class CRM_Smartdebit_Utils {
   }
 
   /**
-   * @param $array
-   * @param $field
-   * @param $value
-   * @return mixed
-   */
-  static function getArrayFieldValue($array, $field, $value) {
-    if (!isset($array[$field])) {
-      return $value;
-    }
-    else {
-      return $array[$field];
-    }
-  }
-
-  /**
    * @param $amount
    * @return mixed
    */
