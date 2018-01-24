@@ -35,6 +35,7 @@ class CRM_Smartdebit_Sync
   const END_URL = 'civicrm/smartdebit/syncsd/confirm';
   const END_PARAMS = 'state=done';
   const BATCH_COUNT = 10;
+  const COLLECTION_REPORT_BACKTRACK_DAYS = 7;
 
   /**
    * If $auddisIDs and $aruddIDs are not set all available AUDDIS/ARUDD records will be processed.
@@ -68,16 +69,21 @@ class CRM_Smartdebit_Sync
     );
     $queue->createItem($task);
 
-    // Get collection report
-    $task = new CRM_Queue_Task(
+    // Get collection reports
+    // Do not call via queue, as we need to collection reports
+    // ready for the sync process queue
+    CRM_Smartdebit_Sync::retrieveDailyCollectionReport();
+
+    /*$task = new CRM_Queue_Task(
       array('CRM_Smartdebit_Sync', 'retrieveDailyCollectionReport'),
       array(),
       "Retrieving daily collection report from Smartdebit"
     );
-    $queue->createItem($task);
+    $queue->createItem($task);*/
 
     // Set the Number of Rounds
-    $count = CRM_Smartdebit_Mandates::count(TRUE);
+    // We need to set the rounds based on collection report and not mandates
+    $count = self::getCollectionReportsCount();
     $rounds = ceil($count/self::BATCH_COUNT);
     // Setup a Task in the Queue
     $i = 0;
@@ -196,16 +202,22 @@ class CRM_Smartdebit_Sync
   /**
    * Batch task to retrieve daily collection reports
    */
-  public static function retrieveDailyCollectionReport(CRM_Queue_TaskContext $ctx) {
+  public static function retrieveDailyCollectionReport() {
     // FIXME: We should probably retry if this fails, but there is not a report for every day so would need to handle that too.
     // Get collection report for today
     Civi::log()->info('Smartdebit Sync: Retrieving Daily Collection Report.');
-    $date = new DateTime();
-    $collections = CRM_Smartdebit_Api::getCollectionReport($date->format('Y-m-d'));
-    if (!isset($collections['error'])) {
-      CRM_Smartdebit_Auddis::saveSmartdebitCollectionReport($collections);
+
+    // Collection report is available only after 3 days
+    // So we will not get any results if we check for the current date
+    // Hence checking collection report for the past 7 days
+    $backtrackDays = self::COLLECTION_REPORT_BACKTRACK_DAYS;
+    for ($i = 0; $i < $backtrackDays; $i++) {
+      $date = (new \DateTime())->modify("-{$i} day");
+      $collections = CRM_Smartdebit_Api::getCollectionReport($date->format('Y-m-d'));
+      if (!isset($collections['error'])) {
+        CRM_Smartdebit_Auddis::saveSmartdebitCollectionReport($collections);
+      }
     }
-    return CRM_Queue_Task::TASK_SUCCESS;
   }
 
 /**
@@ -278,25 +290,25 @@ class CRM_Smartdebit_Sync
    * @return int
    */
   public static function syncSmartdebitCollectionReports(CRM_Queue_TaskContext $ctx, $start, $length) {
-    // Get batch of mandates to process
-    $smartDebitPayerContacts  = array_slice(CRM_Smartdebit_Mandates::getAll(FALSE, TRUE), $start, $length, TRUE);
+    // Get batch of payments in the collection report to process
+    $smartDebitPayments  = array_slice(self::getallCollectionPayments(), $start, $length, TRUE);
 
     // Import each transaction from smart debit
-    foreach ($smartDebitPayerContacts as $key => $sdContact) {
-      // Get transaction details from collection report
-      $selectQuery = "SELECT `receive_date` as receive_date, `amount` as amount 
-                      FROM `veda_smartdebit_collectionreports` 
-                      WHERE `transaction_id` = %1";
-      $params = array(1 => array($sdContact['reference_number'], 'String'));
+    foreach ($smartDebitPayments as $key => $sdPayment) {
+      // Check mandate details for the payment
+      $selectQuery = "SELECT `regular_amount` as amount
+                      FROM `veda_smartdebit_mandates`
+                      WHERE `reference_number` = %1";
+      $params = array(1 => array($sdPayment['transaction_id'], 'String'));
       $daoCollectionReport = CRM_Core_DAO::executeQuery($selectQuery, $params);
       if (!$daoCollectionReport->fetch()) {
         if (CRM_Smartdebit_Settings::getValue('debug')) {
-          Civi::log()->debug('Smartdebit syncSmartdebitRecords: No collection report for ' . $sdContact['reference_number']);
+          Civi::log()->debug('Smartdebit syncSmartdebitRecords: No mandate available  for ' . $sdPayment['transaction_id']);
         }
         continue;
       }
 
-      self::processCollection($sdContact['reference_number'], $daoCollectionReport->receive_date, TRUE, $daoCollectionReport->amount, 'SDCR');
+      self::processCollection($sdPayment['transaction_id'], $sdPayment['receive_date'], TRUE, $sdPayment['amount'], 'SDCR');
     }
     return CRM_Queue_Task::TASK_SUCCESS;
   }
@@ -336,6 +348,12 @@ class CRM_Smartdebit_Sync
     // UK dates (eg. 27/05/1990) won't work with strtotime, even with timezone properly set.
     // However, if you just replace "/" with "-" it will work fine.
     $receiveDate = date('Y-m-d', strtotime(str_replace('/', '-', $receiveDate)));
+
+    // Use financial type from Smart debit settings
+    // if recurring record does not have financial type
+    if (empty($contributionRecur['financial_type_id'])) {
+      $contributionRecur['financial_type_id'] = CRM_Smartdebit_Settings::getValue('smartdebit_financial_type');
+    }
 
     $contributeParams =
       array(
@@ -714,4 +732,30 @@ class CRM_Smartdebit_Sync
     }
   }
 
+  /**
+   * Function to get the retrived collection report count
+   *
+   * @return int
+   */
+  public static function getCollectionReportsCount() {
+    $count = CRM_Core_DAO::singleValueQuery("SELECT count(*) FROM `veda_smartdebit_collectionreports`");
+    return $count;
+  }
+
+  /**
+   * Function to get the all available payments in the collection reports
+   *
+   * @return array
+   */
+  public static function getallCollectionPayments() {
+    $sql = "SELECT * FROM `veda_smartdebit_collectionreports`";
+    $dao = CRM_Core_DAO::executeQuery($sql);
+    $allPayments = array();
+    while ($dao->fetch()) {
+      $payment = $dao->toArray();
+      $payment['receive_date'] = date('Y-m-d', strtotime($payment['receive_date']));
+      $allPayments[] = $payment;
+    }
+    return $allPayments;
+  }
 }
