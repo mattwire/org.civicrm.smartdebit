@@ -75,15 +75,35 @@
       </tbody></table>
   {/if}
 
-  <h3>Configuration</h3>
+  <h3>Statistics</h3>
   <table class="form-layout-compressed"><tbody>
-    {foreach from=$elementNames item=elementName}
-      <tr><td>
-          <label for="{$elementName}">{$form.$elementName.label} {help id=$elementName title=$form.$elementName.label}</label>
-          {$form.$elementName.html}
-        </td></tr>
-    {/foreach}
+    <tr><td>
+        <label>Cached Mandates</label>
+        {$sdMandateCount}
+    </td></tr>
+    <tr><td>
+        <label>Cached Collection Reports</label>
+        {$sdCRCount}
+    </td></tr>
     </tbody></table>
+
+  <h2>Configuration</h2>
+
+  {foreach from=$elementGroups item=elementGroup}
+    <div class="clear">
+      <br />
+      <h3>{$elementGroup.title}</h3>
+      <div class="help">{$elementGroup.description}</div>
+      <table class="form-layout-compressed">
+        {foreach from=$elementGroup.elementNames item=elementName}
+          <tr><td>
+              {$form.$elementName.html}
+              <label for="{$elementName}">{$form.$elementName.label} {help id=$elementName title=$form.$elementName.label}</label>
+            </td></tr>
+        {/foreach}
+      </table>
+    </div>
+  {/foreach}
 
   {* FOOTER *}
   <div class="crm-submit-buttons">

@@ -35,55 +35,67 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
   function buildQuickForm() {
     parent::buildQuickForm();
 
-    try {
-      $sdStatus = CRM_Smartdebit_Api::getSystemStatus(FALSE);
-      $sdStatusTest = CRM_Smartdebit_Api::getSystemStatus(TRUE);
-      $this->assign('sdStatus', $sdStatus);
-      $this->assign('sdStatusTest', $sdStatusTest);
-    }
-    catch (Exception $e) {
-      // Do nothing here. Api will throw exception if API URL is not configured, which it won't be if
-      // Smartdebit payment processor has not been setup yet.
-      $this->assign('apiStatus', 'No Smartdebit payment processors are configured yet!');
-    }
+    $className = E::CLASS_PREFIX . '_Settings';
+    CRM_Utils_System::setTitle($className::TITLE . ' - ' . E::ts('Settings'));
 
-    CRM_Utils_System::setTitle(CRM_Smartdebit_Settings::TITLE . ' - ' . E::ts('Settings'));
+    $className = E::CLASS_PREFIX . '_Form_SettingsCustom';
+    if (method_exists($className, 'buildQuickFormPre')) {
+      $className::buildQuickFormPre($this);
+    }
 
     $settings = $this->getFormSettings();
 
-    $this->addSelect('payment_instrument_id',
-      array(
-        'entity' => 'contribution',
-        'label' => ts('Default Payment Method'),
-        'placeholder'  => NULL,
-      )
-    );
-    $this->addSelect('financial_type',
-      array(
-        'entity' => 'contribution',
-        'label' => ts('Default Financial Type'),
-        'placeholder'  => NULL,
-      )
-    );
-
-    $activityTypes = CRM_Activity_BAO_Activity::buildOptions('activity_type_id', 'create');
-    $this->addElement('select', 'activity_type', ts('Activity Type (Sign Up)'), array('' => ts('- select -')) + $activityTypes);
-    $this->addElement('select', 'activity_type_letter', ts('Activity Type (Letter)'), array('' => ts('- select -')) + $activityTypes);
-
     foreach ($settings as $name => $setting) {
       if (isset($setting['html_type'])) {
-        Switch ($setting['html_type']) {
-          case 'Text':
-            if ($name != 'smartdebit_activity_type_letter') {
-              $this->addElement('text', $name, ts($setting['description']), $setting['html_attributes'], array());
-            }
+        Switch (strtolower($setting['html_type'])) {
+          case 'text':
+            $this->addElement('text', $name, ts($setting['description']), $setting['html_attributes'], array());
             break;
-          case 'Checkbox':
+          case 'checkbox':
             $this->addElement('checkbox', $name, ts($setting['description']), '', '');
             break;
+          case 'datepicker':
+            foreach ($setting['html_extra'] as $key => $value) {
+              if ($key == 'minDate') {
+                $minDate = new DateTime('now');
+                $minDate->modify($value);
+                $setting['html_extra'][$key] = $minDate->format('Y-m-d');
+              }
+            }
+            $this->add('datepicker', $name, ts($setting['description']), $setting['html_attributes'], FALSE, $setting['html_extra']);
+            break;
+          case 'select2':
+            $className = E::CLASS_PREFIX . '_Form_SettingsCustom';
+            if (method_exists($className, 'addSelect2Element')) {
+              $className::addSelect2Element($this, $name, $setting);
+            }
+            break;
+          case 'select':
+            $className = E::CLASS_PREFIX . '_Form_SettingsCustom';
+            if (method_exists($className, 'addSelectElement')) {
+              $className::addSelectElement($this, $name, $setting);
+            }
+            break;
+          case 'hidden':
+            $hidden = TRUE;
+        }
+
+        if (isset($hidden)) {
+          continue;
+        }
+
+        $adminGroup = isset($setting['admin_group']) ? $setting['admin_group'] : 'default';
+        $elementGroups[$adminGroup]['elementNames'][] = $name;
+        // Title and description may not be defined on all elements (they only need to be on one)
+        if (!empty($setting['admin_grouptitle'])) {
+          $elementGroups[$setting['admin_group']]['title'] = $setting['admin_grouptitle'];
+        }
+        if (!empty($setting['admin_groupdescription'])) {
+          $elementGroups[$setting['admin_group']]['description'] = $setting['admin_groupdescription'];
         }
       }
     }
+
     $this->addButtons(array(
       array (
         'type' => 'submit',
@@ -97,11 +109,12 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
     ));
 
     // export form elements
-    $this->assign('elementNames', $this->getRenderableElementNames());
+    $this->assign('elementGroups', $elementGroups);
 
   }
 
   function postProcess() {
+    $className = E::CLASS_PREFIX . '_Settings';
     $changed = $this->_submitValues;
     $settings = $this->getFormSettings(TRUE);
     foreach ($settings as &$setting) {
@@ -114,30 +127,9 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
     }
     // Make sure we have all settings elements set (boolean settings will be unset by default and wouldn't be saved)
     $settingsToSave = array_merge($settings, array_intersect_key($changed, $settings));
-    CRM_Smartdebit_Settings::save($settingsToSave);
+    $className::save($settingsToSave);
     parent::postProcess();
-    CRM_Core_Session::singleton()->setStatus('Configuration Updated', CRM_Smartdebit_Settings::TITLE, 'success');
-  }
-
-  /**
-   * Get the fields/elements defined in this form.
-   *
-   * @return array (string)
-   */
-  public function getRenderableElementNames() {
-    // The _elements list includes some items which should not be
-    // auto-rendered in the loop -- such as "qfKey" and "buttons".  These
-    // items don't have labels.  We'll identify renderable by filtering on
-    // the 'label'.
-    $elementNames = array();
-    foreach ($this->_elements as $element) {
-      /** @var HTML_QuickForm_Element $element */
-      $label = $element->getLabel();
-      if (!empty($label)) {
-        $elementNames[] = $element->getName();
-      }
-    }
-    return $elementNames;
+    CRM_Core_Session::singleton()->setStatus('Configuration Updated', $className::TITLE, 'success');
   }
 
   /**
@@ -146,15 +138,16 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
    * @return array
    */
   function getFormSettings($metadata=TRUE) {
+    $className = E::CLASS_PREFIX . '_Settings';
     $unprefixedSettings = array();
-    $settings = civicrm_api3('setting', 'getfields', array('filters' => CRM_Smartdebit_Settings::getFilter()));
+    $settings = civicrm_api3('setting', 'getfields', array('filters' => $className::getFilter()));
     if (!empty($settings['values'])) {
       foreach ($settings['values'] as $name => $values) {
         if ($metadata) {
-          $unprefixedSettings[CRM_Smartdebit_Settings::getName($name, FALSE)] = $values;
+          $unprefixedSettings[$className::getName($name, FALSE)] = $values;
         }
         else {
-          $unprefixedSettings[CRM_Smartdebit_Settings::getName($name, FALSE)] = NULL;
+          $unprefixedSettings[$className::getName($name, FALSE)] = NULL;
         }
       }
     }
@@ -167,10 +160,11 @@ class CRM_Smartdebit_Form_Settings extends CRM_Core_Form {
    * @see CRM_Core_Form::setDefaultValues()
    */
   function setDefaultValues() {
+    $className = E::CLASS_PREFIX . '_Settings';
     $settings = $this->getFormSettings(FALSE);
     $defaults = array();
 
-    $existing = CRM_Smartdebit_Settings::get(array_keys($settings));
+    $existing = $className::get(array_keys($settings));
     if ($existing) {
       foreach ($existing as $name => $value) {
         $defaults[$name] = $value;

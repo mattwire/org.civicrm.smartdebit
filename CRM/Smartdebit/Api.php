@@ -154,8 +154,8 @@ class CRM_Smartdebit_Api {
         $msg = $response['statuscode'] . ': ' . $response['message'];
       }
     }
-    CRM_Core_Session::setStatus($msg, 'Smart Debit', 'error');
-    Civi::log()->error('Smart Debit: ' . $msg);
+    CRM_Core_Session::setStatus($msg, 'Smart Debit API', 'error');
+    Civi::log()->error('Smart Debit API: ' . $msg);
   }
 
   /**

@@ -66,6 +66,10 @@ class CRM_Smartdebit_Settings {
    * @return array
    */
   public static function get($settings) {
+    if ((!is_array($settings) || empty($settings))) {
+      return array();
+    }
+
     $domainID = CRM_Core_Config::domainID();
 
     foreach ($settings as $name) {
