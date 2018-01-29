@@ -107,7 +107,7 @@ class CRM_Smartdebit_CollectionReports {
       $whereClause = 'WHERE ' . implode(' AND ', $where);
     }
 
-    $sql = "SELECT FROM `" . self::TABLENAME . "` {$whereClause}";
+    $sql = "SELECT id FROM `" . self::TABLENAME . "` {$whereClause}";
     $dao = CRM_Core_DAO::executeQuery($sql);
     if ($dao->fetch()) {
       return TRUE;
