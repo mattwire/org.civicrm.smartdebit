@@ -428,7 +428,22 @@ class CRM_Smartdebit_Sync
 
   private static function repeatTransaction($contributeParams) {
     try {
-      return civicrm_api3('contribution', 'repeattransaction', $contributeParams);
+      // Check for duplicate transaction IDs.
+      if (!empty($contributeParams['trxn_id'])) {
+        $existingContribution = civicrm_api3('Contribution', 'get', array(
+          'trxn_id' => $contributeParams['trxn_id'],
+        ));
+        if ($existingContribution['count'] > 0) {
+          // If we have a contribution already then update it instead of trying to create a new one
+          if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit repeatTransaction: Updating existing contribution ' . $existingContribution['id']); }
+          $contributeParams['id'] = $existingContribution['id'];
+          return CRM_Smartdebit_Base::createContribution($contributeParams);
+        }
+        else {
+          // Call contribution.repeattransaction to create a new contribution
+          return civicrm_api3('contribution', 'repeattransaction', $contributeParams);
+        }
+      }
     }
     catch (CiviCRM_API3_Exception $e) {
       Civi::log()->error('Smartdebit repeatTransaction error: ' . $e->getMessage() . ' ' . print_r($contributeParams, TRUE));
