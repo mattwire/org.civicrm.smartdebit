@@ -8,6 +8,7 @@
 *Thanks Rajesh Sundararajan for submitting PR#12 to improve sync of collection reports.*
 
 ## Release 1.20
+
 * Improve error handling and debug info (don't stop the sync process if one transaction fails).
 * Add missing "by reference" on params for updateRecurringContributions hook.
 * Add Smartdebit.updaterecurring API function.
