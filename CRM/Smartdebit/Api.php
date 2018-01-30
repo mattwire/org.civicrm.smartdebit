@@ -53,9 +53,6 @@ class CRM_Smartdebit_Api {
     // Prepare data
     $data = self::encodePostParams($data);
 
-    // Set a one-minute timeout for this script
-    set_time_limit(60);
-
     $options = array(
       CURLOPT_RETURNTRANSFER => true, // return web page
       CURLOPT_HEADER => false, // don't return headers
@@ -63,7 +60,7 @@ class CRM_Smartdebit_Api {
       CURLOPT_USERPWD => $username . ':' . $password,
       CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
       CURLOPT_HTTPHEADER => array("Accept: application/xml"),
-      CURLOPT_USERAGENT => "CiviCRM PHP DD Client", // Let Smartdebit see who we are
+      CURLOPT_USERAGENT => "CiviCRM Smartdebit Client", // Let Smartdebit see who we are
       CURLOPT_SSL_VERIFYHOST => 2,
       CURLOPT_SSL_VERIFYPEER => 1,
     );

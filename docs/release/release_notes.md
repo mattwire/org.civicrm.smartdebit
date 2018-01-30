@@ -1,3 +1,12 @@
+## Release 1.21
+
+* Handle situation where we already have a (not first-payment) contribution recorded for the transaction ID (update the contribution instead of trying to create a new one).
+* Get collection report by backtracking 7 days, as collection report is available in Smart debit only after 3 days
+* Sync/Process smart debit payments based on the collection report and not mandates, as not all mandates will have collection (quarterly, half-yearly or yearly mandates)
+* Remove 60 second time limit on API calls as large collection reports can exceed this (rely on the server configuration instead).
+
+*Thanks Rajesh Sundararajan for submitting PR#12 to improve sync of collection reports.*
+
 ## Release 1.20
 * Improve error handling and debug info (don't stop the sync process if one transaction fails).
 * Add missing "by reference" on params for updateRecurringContributions hook.
