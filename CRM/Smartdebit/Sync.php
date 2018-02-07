@@ -339,14 +339,14 @@ class CRM_Smartdebit_Sync
     // as CiviCRM should have created the first contribution
     list($firstPayment, $contributeParams) = self::checkIfFirstPayment($contributeParams, $contributionRecur);
 
-    $contributeParams['source'] = $collectionDescription;
+    $contributeParams['source'] = '[' . $collectionDescription . ']';
     try {
       // Try to get description for contribution from membership
       $membership = civicrm_api3('Membership', 'getsingle', array(
         'contribution_recur_id' => $contributionRecur['id'],
       ));
       if (!empty($membership['source'])) {
-        $contributeParams['source'] = $collectionDescription . ' - ' . $membership['source'];
+        $contributeParams['source'] = '[' . $collectionDescription . '] ' . $membership['source'];
       }
     }
     catch (Exception $e) {
