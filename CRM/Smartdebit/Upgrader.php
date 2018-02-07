@@ -17,4 +17,12 @@ class CRM_Smartdebit_Upgrader extends CRM_Smartdebit_Upgrader_Base {
     return TRUE;
   }
 
+  public function upgrade_4701() {
+    $this->ctx->log->info('Renaming field regular_amount to default_amount in veda_smartdebit_mandates');
+    if (CRM_Core_DAO::checkFieldExists('veda_smartdebit_mandates', 'regular_amount')) {
+      CRM_Core_DAO::executeQuery("ALTER TABLE `veda_smartdebit_mandates` CHANGE `regular_amount` `default_amount` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL");
+    }
+    return TRUE;
+  }
+
 }

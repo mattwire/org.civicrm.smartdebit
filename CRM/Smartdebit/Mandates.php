@@ -62,7 +62,7 @@ class CRM_Smartdebit_Mandates {
       $smartDebitParams['county'] = $dao->county;
       $smartDebitParams['postcode'] = $dao->postcode;
       $smartDebitParams['first_amount'] = $dao->first_amount;
-      $smartDebitParams['regular_amount'] = $dao->regular_amount;
+      $smartDebitParams['default_amount'] = $dao->default_amount;
       $smartDebitParams['frequency_type'] = $dao->frequency_type;
       $smartDebitParams['frequency_factor'] = $dao->frequency_factor;
       $smartDebitParams['start_date'] = $dao->start_date;
@@ -107,7 +107,7 @@ class CRM_Smartdebit_Mandates {
       $smartDebitParams['county'] = $dao->county;
       $smartDebitParams['postcode'] = $dao->postcode;
       $smartDebitParams['first_amount'] = $dao->first_amount;
-      $smartDebitParams['regular_amount'] = $dao->regular_amount;
+      $smartDebitParams['default_amount'] = $dao->default_amount;
       $smartDebitParams['frequency_type'] = $dao->frequency_type;
       $smartDebitParams['frequency_factor'] = $dao->frequency_factor;
       $smartDebitParams['start_date'] = $dao->start_date;
@@ -169,7 +169,7 @@ class CRM_Smartdebit_Mandates {
             `county`,
             `postcode`,
             `first_amount`,
-            `regular_amount`,
+            `default_amount`,
             `frequency_type`,
             `frequency_factor`,
             `start_date`,
@@ -200,7 +200,7 @@ class CRM_Smartdebit_Mandates {
         9 => array(CRM_Utils_Array::value('county', $smartDebitRecord, 'NULL'), 'String'),
         10 => array(CRM_Utils_Array::value('postcode', $smartDebitRecord, 'NULL'), 'String'),
         11 => array(CRM_Smartdebit_Utils::getCleanSmartdebitAmount(CRM_Utils_Array::value('first_amount', $smartDebitRecord, 'NULL')), 'String'),
-        12 => array(CRM_Smartdebit_Utils::getCleanSmartdebitAmount(CRM_Utils_Array::value('regular_amount', $smartDebitRecord, 'NULL')), 'String'),
+        12 => array(CRM_Smartdebit_Utils::getCleanSmartdebitAmount(CRM_Utils_Array::value('default_amount', $smartDebitRecord, 'NULL')), 'String'),
         13 => array(CRM_Utils_Array::value('frequency_type', $smartDebitRecord, 'NULL'), 'String'),
         14 => array(CRM_Utils_Array::value('frequency_factor', $smartDebitRecord, 'NULL'), 'Int'),
         15 => array(CRM_Utils_Array::value('start_date', $smartDebitRecord, 'NULL'), 'String'),

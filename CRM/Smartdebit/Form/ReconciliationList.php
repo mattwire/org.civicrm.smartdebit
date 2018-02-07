@@ -109,7 +109,7 @@ SELECT ctrc.id contribution_recur_id,
   ctrc.frequency_unit,
   ctrc.frequency_interval,
   ctrc.financial_type_id,
-  csd.regular_amount,
+  csd.default_amount,
   csd.frequency_type,
   csd.frequency_factor,
   csd.current_state,
@@ -136,7 +136,7 @@ AND   opva.label = 'Direct Debit' ";
 
         if ($checkAmount) {
           // Check that amount in CiviCRM matches amount in Smart Debit
-          if ($dao->regular_amount != $dao->amount) {
+          if ($dao->default_amount != $dao->amount) {
             $difference['amount'] = TRUE;
           }
         }
@@ -223,7 +223,7 @@ AND   opva.label = 'Direct Debit' ";
           $listArray[$dao->smart_debit_id]['frequency_interval']    = $dao->frequency_interval;
           $listArray[$dao->smart_debit_id]['sd_frequency_factor']   = $dao->frequency_factor;
           $listArray[$dao->smart_debit_id]['amount']                = $dao->amount;
-          $listArray[$dao->smart_debit_id]['sd_amount']             = $dao->regular_amount;
+          $listArray[$dao->smart_debit_id]['sd_amount']             = $dao->default_amount;
           $listArray[$dao->smart_debit_id]['contribution_status_id'] = $contributionStatusOptions[$dao->contribution_status_id];
           $listArray[$dao->smart_debit_id]['sd_contribution_status_id'] = self::formatSDStatus($dao->current_state);
           $listArray[$dao->smart_debit_id]['transaction_id']        = $dao->trxn_id;
@@ -231,7 +231,7 @@ AND   opva.label = 'Direct Debit' ";
           $fixmeurl = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/fix/select', "cid=".$dao->contact_id."&reference_number=".$dao->reference_number,  TRUE, NULL, FALSE, TRUE, TRUE);
           if ($difference['amount'] || $difference['frequency'] || $difference['status']) {
             // Show fix me link if difference is amount, frequency or status
-            if (!empty($dao->regular_amount)) { // We don't support no amount at smartdebit
+            if (!empty($dao->default_amount)) { // We don't support no amount at smartdebit
               $listArray[$dao->smart_debit_id]['fix_me_url'] = $fixmeurl;
             }
           }
@@ -247,7 +247,7 @@ AND   opva.label = 'Direct Debit' ";
       $sql  = "
 SELECT contact.id as contact_id,
   contact.display_name,
-  csd1.regular_amount,
+  csd1.default_amount,
   csd1.frequency_type,
   csd1.frequency_factor,
   csd1.current_state,
@@ -263,10 +263,10 @@ LEFT JOIN civicrm_contact contact ON contact.id = csd1.payerReference
 WHERE ctrc.id IS NULL";
       // Filter records that have an amount recorded against them or not
       if ($hasAmount) {
-        $sql .= " AND (COALESCE(csd1.regular_amount, '') != '')";
+        $sql .= " AND (COALESCE(csd1.default_amount, '') != '')";
       }
       else {
-        $sql .= " AND (COALESCE(csd1.regular_amount, '') = '')";
+        $sql .= " AND (COALESCE(csd1.default_amount, '') = '')";
       }
       // Filter records with no valid contact ID
       if ($hasContact) {
@@ -295,7 +295,7 @@ WHERE ctrc.id IS NULL";
           $fixmeUrl = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/fix/select', "reference_number=".$dao->reference_number,  TRUE, NULL, FALSE, TRUE, TRUE);
         }
         // Add the record
-        if (!empty($dao->regular_amount)) { // We don't support no amount at smartdebit
+        if (!empty($dao->default_amount)) { // We don't support no amount at smartdebit
           $listArray[$dao->smart_debit_id]['fix_me_url'] = $fixmeUrl;
         }
         $listArray[$dao->smart_debit_id]['recordFound'] = $transactionRecordFound;
@@ -306,7 +306,7 @@ WHERE ctrc.id IS NULL";
         $listArray[$dao->smart_debit_id]['sd_start_date'] = $dao->start_date;
         $listArray[$dao->smart_debit_id]['sd_frequency_type'] = $dao->frequency_type;
         $listArray[$dao->smart_debit_id]['sd_frequency_factor'] = $dao->frequency_factor;
-        $listArray[$dao->smart_debit_id]['sd_amount'] = $dao->regular_amount;
+        $listArray[$dao->smart_debit_id]['sd_amount'] = $dao->default_amount;
         $listArray[$dao->smart_debit_id]['sd_contribution_status_id'] = self::formatSDStatus($dao->current_state);
         $listArray[$dao->smart_debit_id]['transaction_id'] = $dao->reference_number;
         $listArray[$dao->smart_debit_id]['sd_frequency'] = $dao->frequency_type;
@@ -393,7 +393,7 @@ AND   csd.id IS NULL LIMIT 100";
     $recurParams['contribution_recur_id'] = (!empty($params['contribution_recur_id']) ? $params['contribution_recur_id'] : NULL);
     $recurParams['frequency_type'] = $smartDebitRecord['frequency_type'];
     $recurParams['frequency_factor'] = $smartDebitRecord['frequency_factor'];
-    $recurParams['amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($smartDebitRecord['regular_amount']);
+    $recurParams['amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($smartDebitRecord['default_amount']);
     $recurParams['start_date'] = $smartDebitRecord['start_date'];
     $recurParams['next_sched_contribution'] = $smartDebitRecord['start_date'];
     $recurParams['trxn_id'] = $params['payer_reference'];

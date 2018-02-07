@@ -47,8 +47,8 @@
       <td>{$SDMandateArray.email_address}</td>
     </tr>
     <tr>
-      <td>{$form.regular_amount.label}</td>
-      <td>{$SDMandateArray.regular_amount}</td>
+      <td>{$form.default_amount.label}</td>
+      <td>{$SDMandateArray.default_amount}</td>
     </tr>
     <tr>
       <td>{$form.start_date.label}</td>

@@ -185,6 +185,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
     $smartDebitParams = self::preparePostArray($params);
     CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'validate');
+    self::checkSmartDebitParams($smartDebitParams);
 
     // Get the API Username and Password
     $username = $this->_paymentProcessor['user_name'];
@@ -629,13 +630,49 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   }
 
   /**
-   * Replace comma with space
-   * @param $pString
-   * @return mixed
+   * Get the currency for the transaction.
+   * ( Added to core in 4.7.31 )
+   *
+   * @param $params
+   *
+   * @return string
    */
-  public static function replaceCommaWithSpace($pString)
-  {
-    return str_replace(',', ' ', $pString);
+  public function getAmount($params) {
+    return self::formatAmount($params);
+  }
+
+  /**
+   * Get the currency for the transaction formatted for smartdebit
+   * Smartdebit requires that the amount is sent in "pence" eg. £12.37 would be 1237.
+   *
+   * @param $params
+   *
+   * @return int|string
+   */
+  public static function formatAmount($params) {
+    if (empty($params['amount'])) {
+      return 0;
+    }
+    else {
+      $amount = CRM_Utils_Money::format($params['amount'], NULL, NULL, TRUE);
+      return (int) preg_replace('/[^\d]/', '', strval($amount));
+    }
+  }
+
+  private static function checkSmartDebitParams(&$smartDebitParams) {
+    foreach ($smartDebitParams as $key => &$value) {
+      switch ($key) {
+        case 'variable_ddi[address_1]':
+        case 'variable_ddi[town]':
+          $value = str_replace(',', ' ', $value);
+          break;
+
+        case 'variable_ddi[first_amount]':
+        case 'variable_ddi[default_amount]':
+          $value = self::formatAmount(array('amount' => $value));
+          break;
+      }
+    }
   }
 
   /**
@@ -658,16 +695,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
     $collectionDate = self::getCollectionStartDate($params);
     $serviceUserId = NULL;
-    if (!empty($params['amount'])) {
-      $amount = $params['amount'];
-    }
-    elseif (!empty($params['total_amount'])) {
-      $amount = $params['total_amount'];
-    }
-    else {
-      $amount = 0;
-    }
-    $amount = CRM_Smartdebit_Api::encodeAmount($amount);
 
     if (isset($this->_paymentProcessor['signature'])) {
       $serviceUserId = $this->_paymentProcessor['signature'];
@@ -693,16 +720,15 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       'variable_ddi[payer_reference]' => $payerReference,
       'variable_ddi[first_name]' => $params['billing_first_name'],
       'variable_ddi[last_name]' => $params['billing_last_name'],
-      'variable_ddi[address_1]' => self::replaceCommaWithSpace($params['billing_street_address-5']),
-      'variable_ddi[town]' => self::replaceCommaWithSpace($params['billing_city-5']),
+      'variable_ddi[address_1]' => $params['billing_street_address-5'],
+      'variable_ddi[town]' => $params['billing_city-5'],
       'variable_ddi[postcode]' => $params['billing_postal_code-5'],
       'variable_ddi[country]' => $params['billing_country_id-5'],
       'variable_ddi[account_name]' => $params['account_holder'],
       'variable_ddi[sort_code]' => $params['bank_identification_number'],
       'variable_ddi[account_number]' => $params['bank_account_number'],
-      'variable_ddi[regular_amount]' => $amount,
-      'variable_ddi[first_amount]' => $amount,
-      'variable_ddi[default_amount]' => $amount,
+      'variable_ddi[first_amount]' => $params['amount'],
+      'variable_ddi[default_amount]' => $params['amount'],
       'variable_ddi[start_date]' => $collectionDate->format("Y-m-d"),
       'variable_ddi[email_address]' => self::getUserEmail($params),
     );
@@ -722,6 +748,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   public function doDirectPayment(&$params) {
     $smartDebitParams = self::preparePostArray($params);
     CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'create');
+    self::checkSmartDebitParams($smartDebitParams);
 
     // Get the API Username and Password
     $username = $this->_paymentProcessor['user_name'];
@@ -971,7 +998,8 @@ UPDATE civicrm_direct_debit SET
     $username = $paymentProcessor['user_name'];
     $password = $paymentProcessor['password'];
 
-    $amount = CRM_Smartdebit_Api::encodeAmount(isset($recurContributionParams['amount']) ? $recurContributionParams['amount'] : 0);
+    $amount = isset($recurContributionParams['amount']) ? $recurContributionParams['amount'] : 0;
+
     if (!empty($recurContributionParams['end_date'])) {
       $eDate = $recurContributionParams['end_date'];
     }
@@ -1013,6 +1041,7 @@ UPDATE civicrm_direct_debit SET
     }
 
     CRM_Smartdebit_Hook::alterVariableDDIParams($recurContributionParams, $smartDebitParams, 'update');
+    self::checkSmartDebitParams($smartDebitParams);
 
     $url = CRM_Smartdebit_Api::buildUrl($paymentProcessor, 'api/ddi/variable/' . $recurRecord['trxn_id'] . '/update');
     if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit changeSubscription: ' . $url . print_r($smartDebitParams, TRUE)); }
@@ -1063,7 +1092,9 @@ UPDATE civicrm_direct_debit SET
       'variable_ddi[reference_number]' => $reference,
     );
 
-    CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'cancel');
+    $recurParams = CRM_Utils_Array::crmArrayMerge($params, $contributionRecur);
+    CRM_Smartdebit_Hook::alterVariableDDIParams($recurParams, $smartDebitParams, 'cancel');
+    self::checkSmartDebitParams($smartDebitParams);
 
     $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/' . $reference . '/cancel');
     $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
@@ -1095,27 +1126,21 @@ UPDATE civicrm_direct_debit SET
     $username = $this->_paymentProcessor['user_name'];
     $password = $this->_paymentProcessor['password'];
     $reference = $params['subscriptionId'];
-    $firstName = $params['first_name'];
-    $lastName = $params['last_name'];
-    $streetAddress = $params['street_address'];
-    $city = $params['city'];
-    $postcode = $params['postal_code'];
-    $state = $params['state_province'];
-    $country = $params['country'];
 
     $smartDebitParams = array(
       'variable_ddi[service_user][pslid]' => $serviceUserId,
       'variable_ddi[reference_number]' => $reference,
-      'variable_ddi[first_name]' => $firstName,
-      'variable_ddi[last_name]' => $lastName,
-      'variable_ddi[address_1]' => self::replaceCommaWithSpace($streetAddress),
-      'variable_ddi[town]' => $city,
-      'variable_ddi[postcode]' => $postcode,
-      'variable_ddi[county]' => $state,
-      'variable_ddi[country]' => $country,
+      'variable_ddi[first_name]' => $params['first_name'],
+      'variable_ddi[last_name]' => $params['last_name'],
+      'variable_ddi[address_1]' => $params['street_address'],
+      'variable_ddi[town]' => $params['city'],
+      'variable_ddi[postcode]' => $params['postal_code'],
+      'variable_ddi[county]' => $params['state_province'],
+      'variable_ddi[country]' => $params['country'],
     );
 
     CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'updatebilling');
+    self::checkSmartDebitParams($smartDebitParams);
 
     $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/' . $reference . '/update');
     $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);

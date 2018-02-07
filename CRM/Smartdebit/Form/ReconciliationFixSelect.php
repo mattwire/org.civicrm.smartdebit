@@ -90,7 +90,7 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
     $el->freeze();
     $el = $this->addElement('text', 'email_address', 'Email Address', array('size' => 50, 'maxlength' => 255));
     $el->freeze();
-    $el = $this->addElement('text', 'regular_amount', 'Amount', array('size' => 50, 'maxlength' => 255));
+    $el = $this->addElement('text', 'default_amount', 'Amount', array('size' => 50, 'maxlength' => 255));
     $el->freeze();
     $el = $this->addElement('text', 'start_date', 'Start Date', array('size' => 50, 'maxlength' => 255));
     $el->freeze();

@@ -456,23 +456,4 @@ class CRM_Smartdebit_Api {
     return $post;
   }
 
-  /**
-   * Smartdebit API requires amount in pence.
-   * @param $amount
-   *
-   * @return int|string
-   */
-  public static function encodeAmount($amount) {
-    if (empty($amount)) {
-      return 0;
-    }
-    else {
-      // Set amount in pence if not already set that way.
-      // Format amount
-      $amount = number_format($amount, 2, '.', '');
-      $amount = (int) preg_replace('/[^\d]/', '', strval($amount));
-      return $amount;
-    }
-  }
-
 }

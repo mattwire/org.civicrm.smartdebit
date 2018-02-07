@@ -669,7 +669,7 @@ class CRM_Smartdebit_Sync
 
       $recurContributionOriginal = $recurContribution;
       // Update the recurring contribution
-      $recurContribution['amount'] = filter_var($smartDebitRecord['regular_amount'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+      $recurContribution['amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($smartDebitRecord['default_amount']);
       list($recurContribution['frequency_unit'], $recurContribution['frequency_interval']) =
         CRM_Smartdebit_Base::translateSmartdebitFrequencytoCiviCRM($smartDebitRecord['frequency_type'], $smartDebitRecord['frequency_factor']);
 
