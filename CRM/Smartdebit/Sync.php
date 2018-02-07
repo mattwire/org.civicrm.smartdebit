@@ -561,6 +561,8 @@ class CRM_Smartdebit_Sync
           if (strcmp(substr($contributionDetails['trxn_id'], strlen($contributionRecur['trxn_id']), 1), '/') == 0) {
             // Not identical but one of ours, so we'll create a new one
             if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit checkIfFirstPayment: Not identical,ours. Creating new contribution'); }
+            // Assign the id of the most recent contribution, we need this as a template to repeat the transaction
+            $newContribution['id'] = $contributionDetails['id'];
             return array(FALSE, $newContribution);
           }
         }
@@ -576,6 +578,7 @@ class CRM_Smartdebit_Sync
         // If $days == 0 it's a lifetime membership
         if (($dateDiff < $days) && ($days != 0)) {
           if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit checkIfFirstPayment: Within dates,Using existing contribution'); }
+          // Assign the id of the most recent contribution, we need this as a template to repeat the transaction
           $newContribution['id'] = $contributionDetails['id'];
           return array(TRUE, $newContribution);
         }
