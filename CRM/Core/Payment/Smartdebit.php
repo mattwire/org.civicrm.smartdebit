@@ -770,7 +770,9 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       return $params;
     }
     else {
-      throw new Exception($response['message'] . ': ' . CRM_Smartdebit_Api::formatResponseError($response['error']));
+      $message = CRM_Utils_Array::value('message', $response) . ': ' . CRM_Smartdebit_Api::formatResponseError(CRM_Utils_Array::value('error', $response));
+      Civi::log()->error('Smartdebit::doDirectPayment error: ' . $message . ' ' . print_r($smartDebitParams, TRUE));
+      throw new \Civi\Payment\Exception\PaymentProcessorException($message, CRM_Utils_Array::value('code', $response), $smartDebitParams);
     }
   }
 
