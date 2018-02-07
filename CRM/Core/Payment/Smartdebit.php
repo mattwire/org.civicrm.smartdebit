@@ -37,7 +37,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    * @var object
    * @static
    */
-  static private $_singleton = NULL;
+  private static $_singleton = NULL;
 
   /**
    * mode of operation: live or test
@@ -52,7 +52,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    * @param string $mode the mode of operation: live or test
    * @param $paymentProcessor
    */
-  function __construct($mode, &$paymentProcessor)
+  public function __construct($mode, &$paymentProcessor)
   {
     $this->_mode = $mode;
     $this->_paymentProcessor = $paymentProcessor;
@@ -64,11 +64,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    *
    * @param string $mode the mode of operation: live or test
    * @param $paymentProcessor
+   *
    * @return object
-   * @static
    *
    */
-  static function &singleton($mode, &$paymentProcessor, &$paymentForm = NULL, $force = FALSE)
+  public static function &singleton($mode, &$paymentProcessor, &$paymentForm = NULL, $force = FALSE)
   {
     $processorName = $paymentProcessor['name'];
     if (self::$_singleton[$processorName] === NULL) {
@@ -81,9 +81,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    * This function checks to see if we have the right config values
    *
    * @return string the error message if any
-   * @public
    */
-  function checkConfig()
+  public function checkConfig()
   {
     $error = array();
 
@@ -139,10 +138,12 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   }
 
   /**
-   * @param CRM_Core_Form $form
+   * @param \CRM_Core_Form $form
+   *
    * @return bool|void
+   * @throws \HTML_QuickForm_Error
    */
-  function buildForm(&$form)
+  public function buildForm(&$form)
   {
     if ($form->isSubmitted()) return;
 
@@ -170,12 +171,14 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   }
 
   /**
-   * Override custom PI validation
+   * Override custom Payment Instrument validation
    *  to validate payment details with SmartDebit
    * Sets appropriate parameters and calls Smart Debit API to validate a payment (does not setup the payment)
    *
    * @param array $params
    * @param array $errors
+   *
+   * @throws \Exception
    */
   public function validatePaymentInstrument($params, &$errors) {
     parent::validatePaymentInstrument($params, $errors);
@@ -259,6 +262,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
   /**
    * Override CRM_Core_Payment function
+   *
+   * @return string
    */
   public function getPaymentTypeName() {
     return 'direct_debit';
@@ -266,6 +271,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
   /**
    * Override CRM_Core_Payment function
+   *
+   * @return string
    */
   public function getPaymentTypeLabel() {
     return 'Direct Debit';
@@ -273,6 +280,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
   /**
    * Override CRM_Core_Payment function
+   *
+   * @return array
    */
   public function getPaymentFormFields() {
     return array(
@@ -414,7 +423,9 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
   /**
    * Get contact email for POSTing to Smart Debit API
+   *
    * @param $params
+   *
    * @return mixed
    */
   private static function getUserEmail(&$params)
@@ -461,9 +472,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     return CRM_Smartdebit_Base::firstCollectionDate($preferredCollectionDay);
   }
 
-  /**
-   * @param $params
-   */
   /**
    * @param $params
    *      collection_start_date: DateTime
@@ -524,7 +532,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    *
    * @return array (string Y,Q,M,W,O; int frequencyInterval)
    */
-  static function getCollectionFrequency($params)
+  private static function getCollectionFrequency($params)
   {
     // Smart Debit supports Y, Q, M, W parameters
     // We return 'O' if the payment is not recurring.  You should then supply an end date to smart debit
@@ -598,6 +606,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     return array($collectionFrequency, $frequencyInterval);
   }
 
+  /**
+   * @param array $params
+   *
+   * @return array
+   */
   private static function getCollectionFrequencyPostParams($params) {
     $collectionDate = self::getCollectionStartDate($params);
     list($collectionFrequency, $collectionInterval) = self::getCollectionFrequency($params);
@@ -700,13 +713,13 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   /**
    * Sets appropriate parameters and calls Smart Debit API to create a payment
    *
-   * @param array $params name value pair of contribution data
+   * @param array $params
    *
-   * @return array $result
-   * @access public
-   *
+   * @return array
+   * @throws \Civi\Payment\Exception\PaymentProcessorException
+   * @throws \Exception
    */
-  function doDirectPayment(&$params) {
+  public function doDirectPayment(&$params) {
     $smartDebitParams = self::preparePostArray($params);
     CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'create');
 
@@ -736,9 +749,13 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
   /**
    * As the recur transaction is created before payment, we need to update it with our params after payment
+   *
    * @param $params
+   *
+   * @return mixed
+   * @throws \CiviCRM_API3_Exception
    */
-  static function setRecurTransactionId($params) {
+  private static function setRecurTransactionId($params) {
     if (!empty($params['trxn_id'])) {
       // Common parameters
       $recurParams = array(
@@ -828,7 +845,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    *
    * @return bool|int|null|string
    */
-  static function getInitialContributionStatus($isRecur = FALSE) {
+  private static function getInitialContributionStatus($isRecur = FALSE) {
     $initialCompleted = (boolean) CRM_Smartdebit_Settings::getValue('initial_completed');
 
     if ($initialCompleted) {
@@ -842,9 +859,12 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
   /**
    * If we are forcing initial payment status to completed we have to update the membership status as well or it will stay in pending
+   *
    * @param $membershipId
+   *
+   * @throws \CiviCRM_API3_Exception
    */
-  static function updateMembershipStatus($membershipId) {
+  private static function updateMembershipStatus($membershipId) {
     $initialCompleted = (boolean) CRM_Smartdebit_Settings::getValue('initial_completed');
 
     if ($initialCompleted) {
@@ -865,9 +885,10 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
   /**
    * Record the response from SmartDebit after validatePayment()
-   * @param $direct_debit_response
+   *
+   * @param array $direct_debit_response
    */
-  static function recordSmartDebitResponse($direct_debit_response)
+  private static function recordSmartDebitResponse($direct_debit_response)
   {
     $sql = "
 UPDATE civicrm_direct_debit SET
@@ -899,22 +920,24 @@ UPDATE civicrm_direct_debit SET
   /**
    * Sets appropriate parameters for checking out to UCM Payment Collection
    *
-   * @param array $params name value pair of contribution datat
-   * @param $component
-   * @access public
+   * @param array $params
+   * @param string $component
    *
+   * @throws \Civi\Payment\Exception\PaymentProcessorException
+   * @throws \Exception
    */
-  function doTransferCheckout(&$params, $component)
+  public function doTransferCheckout(&$params, $component)
   {
     self::doDirectPayment($params);
   }
 
   /**
    * Change the subscription amount using the Smart Debit API
+   *
    * @param string $message
    * @param array $params
    *
-   * @return array|bool|object
+   * @throws \Exception
    */
   public function changeSubscriptionAmount(&$message = '', $params = array()) {
     // We don't use recur start_date as smartdebit start_date can change during the subscription
@@ -1009,11 +1032,13 @@ UPDATE civicrm_direct_debit SET
 
   /**
    * Cancel the Direct Debit Subscription using the Smart Debit API
-   * @param string $message
+   *
    * @param array $params
+   *
    * @return bool
+   * @throws \Exception
    */
-  function cancelSubscription($params = array())
+  public function cancelSubscription($params = array())
   {
     $serviceUserId = $this->_paymentProcessor['signature'];
     $username = $this->_paymentProcessor['user_name'];
@@ -1056,12 +1081,15 @@ UPDATE civicrm_direct_debit SET
   }
 
   /**
-   * Called when
+   * Called when ...
+   *
    * @param string $message
    * @param array $params
+   *
    * @return bool
+   * @throws \Exception
    */
-  function updateSubscriptionBillingInfo(&$message = '', $params = array())
+  public function updateSubscriptionBillingInfo(&$message = '', $params = array())
   {
     $serviceUserId = $this->_paymentProcessor['signature'];
     $username = $this->_paymentProcessor['user_name'];
@@ -1104,31 +1132,12 @@ UPDATE civicrm_direct_debit SET
   }
 
   /**
-   * Format response error for display to user
-   * @param $responseErrors
-   * @return string
+   * Get ID of first payment processor with class name "Payment_Smartdebit"
+   *
+   * @return int|bool
+   * @throws \CiviCRM_API3_Exception
    */
-  static function formatResponseError($responseErrors)
-  {
-    $errorMsg = '';
-    if (!is_array($responseErrors)) {
-      $errorMsg = $responseErrors . '<br />';
-      $errorMsg .= '<br />';
-    } else {
-      foreach ($responseErrors as $error) {
-        $errorMsg .= $error . '<br />';
-      }
-      $errorMsg .= '<br />';
-    }
-    $errorMsg .= 'Please correct the errors and try again';
-    return $errorMsg;
-  }
-
-  /**
-   * Get ID of payment processor with class name "Payment_Smartdebit"
-   * @return int
-   */
-  static function getSmartDebitPaymentProcessorID() {
+  public static function getSmartDebitPaymentProcessorID() {
     $result = civicrm_api3('PaymentProcessor', 'get', array(
       'sequential' => 1,
       'return' => array("id"),
@@ -1149,9 +1158,10 @@ UPDATE civicrm_direct_debit SET
   /**
    * Get the name of the payment processor
    * @param $ppId
+   *
    * @return string
    */
-  static function getSmartDebitPaymentProcessorName($ppId) {
+  public static function getSmartDebitPaymentProcessorName($ppId) {
     $paymentProcessorName = 'Unknown';
     try {
       $paymentProcessor = civicrm_api3('PaymentProcessor', 'getsingle', array(
