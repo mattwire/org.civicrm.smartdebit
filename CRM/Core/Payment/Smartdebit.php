@@ -1019,7 +1019,6 @@ UPDATE civicrm_direct_debit SET
 
     $smartDebitParams = array(
       'variable_ddi[service_user][pslid]' => $serviceUserId,
-      'variable_ddi[first_amount]' => $amount,
       'variable_ddi[default_amount]' => $amount,
     );
     if (!empty($startDate)) {
@@ -1029,9 +1028,7 @@ UPDATE civicrm_direct_debit SET
     if (!empty($endDate)) {
       $smartDebitParams['variable_ddi[end_date]'] = $endDate;
     }
-    else {
-      $smartDebitParams['variable_ddi[end_date]'] = '';
-    }
+
     if (!isset($recurContributionParams['frequency_unit'])) {
       $recurContributionParams['frequency_unit'] = $recurRecord['frequency_unit'];
     }
