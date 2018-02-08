@@ -51,7 +51,10 @@ class CRM_Smartdebit_Mandates {
     if ($refresh) {
       // Retrieve the mandate from Smartdebit, update the cache and return the retrieved mandate
       $payerContactDetails = CRM_Smartdebit_Api::getPayerContactDetails($transactionId);
-      CRM_Smartdebit_Mandates::updateCache($payerContactDetails);
+      if ($payerContactDetails) {
+        CRM_Smartdebit_Mandates::updateCache($payerContactDetails);
+        return reset($payerContactDetails);
+      }
     }
 
     // Return the retrieved mandate from the database
