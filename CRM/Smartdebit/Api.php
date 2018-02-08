@@ -317,6 +317,21 @@ class CRM_Smartdebit_Api {
           $smartDebitArray[] = $value['@attributes'];
         }
       }
+
+      foreach ($smartDebitArray as &$details) {
+        // This is the only API that returns regular_amount, everywhere else we use "default_amount" so change it before returning
+        if (isset($details['regular_amount'])) {
+          $details['default_amount'] = $details['regular_amount'];
+          unset($details['regular_amount']);
+        }
+        // Clean up first_amount/regular_amount which gets sent to us here with a currency symbol (eg. £85.00)
+        if (isset($details['first_amount'])) {
+          $details['first_amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($details['first_amount']);
+        }
+        if (isset($details['default_amount'])) {
+          $details['default_amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($details['default_amount']);
+        }
+      }
       return $smartDebitArray;
     }
     else {
