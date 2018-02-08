@@ -1,3 +1,12 @@
+## Release 1.22
+
+* Validate smartdebit params after hooks but before sending to smartdebit - add a checkSmartDebitParams function. Don't set regular_amount, use default_amount only. **Smartdebit requires amounts in pence (eg. £54.11=5411) but you should always set amounts with a decimal point (eg. 54.11) - it will be formatted for submission AFTER the hook.**
+* Improve error handling when submitting a new direct debit instruction and we get a failure response from Smartdebit.
+* UI only: Change contribution description flags to wrap in [] (eg. [SDCR])
+* Sync fixes:
+  * Make sure we assign contribution ID when we have found a previous contribution (previously failed to sync in some cases).
+  * Call completetransaction on first payments. Fix parameters for repeattransaction (previously failed to renew membership in some cases).
+
 ## Release 1.21
 
 * Handle situation where we already have a (not first-payment) contribution recorded for the transaction ID (update the contribution instead of trying to create a new one).
