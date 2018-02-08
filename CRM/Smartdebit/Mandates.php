@@ -8,7 +8,9 @@ class CRM_Smartdebit_Mandates {
 
   /**
    * Get total number of smartdebit mandates
+   *
    * @param bool $onlyWithRecurId Only retrieve smartdebit mandates which have a recurring contribution
+   *
    * @return integer
    */
   public static function count($onlyWithRecurId = FALSE) {
@@ -22,6 +24,9 @@ class CRM_Smartdebit_Mandates {
 
   /**
    * Batch task to retrieve payer contact details (mandates)
+   *
+   * @return array|bool
+   * @throws \Exception
    */
   public static function getFromSmartdebit() {
     Civi::log()->info('Smartdebit Sync: Retrieving Smart Debit Payer Contact Details.');
@@ -35,42 +40,45 @@ class CRM_Smartdebit_Mandates {
 
   /**
    * Get the smartdebit mandate from the cache by reference number
+   *
    * @param string $transactionId
    * @param bool $refresh Whether to refresh mandate from smartdebit or not
    *
-   * @return array $smartDebitParams
+   * @return array $payerContactDetails
+   * @throws \Exception
    */
   public static function getbyReference($transactionId, $refresh) {
     if ($refresh) {
-      // Update the cached mandate
+      // Retrieve the mandate from Smartdebit, update the cache and return the retrieved mandate
       $payerContactDetails = CRM_Smartdebit_Api::getPayerContactDetails($transactionId);
       CRM_Smartdebit_Mandates::updateCache($payerContactDetails);
     }
 
+    // Return the retrieved mandate from the database
     $sql = "SELECT * FROM `veda_smartdebit_mandates` WHERE reference_number=%1";
     $params = array(1 => array($transactionId, 'String'));
     $dao = CRM_Core_DAO::executeQuery($sql, $params);
     if ($dao->fetch()) {
-      $smartDebitParams['title'] = $dao->title;
-      $smartDebitParams['first_name'] = $dao->first_name;
-      $smartDebitParams['last_name'] = $dao->last_name;
-      $smartDebitParams['email_address'] = $dao->email_address;
-      $smartDebitParams['address_1'] = $dao->address_1;
-      $smartDebitParams['address_2'] = $dao->address_2;
-      $smartDebitParams['address_3'] = $dao->address_3;
-      $smartDebitParams['town'] = $dao->town;
-      $smartDebitParams['county'] = $dao->county;
-      $smartDebitParams['postcode'] = $dao->postcode;
-      $smartDebitParams['first_amount'] = $dao->first_amount;
-      $smartDebitParams['default_amount'] = $dao->default_amount;
-      $smartDebitParams['frequency_type'] = $dao->frequency_type;
-      $smartDebitParams['frequency_factor'] = $dao->frequency_factor;
-      $smartDebitParams['start_date'] = $dao->start_date;
-      $smartDebitParams['current_state'] = $dao->current_state;
-      $smartDebitParams['reference_number'] = $dao->reference_number;
-      $smartDebitParams['payerReference'] = $dao->payerReference;
-      $smartDebitParams['recur_id'] = $dao->recur_id;
-      return $smartDebitParams;
+      $payerContactDetails['title'] = $dao->title;
+      $payerContactDetails['first_name'] = $dao->first_name;
+      $payerContactDetails['last_name'] = $dao->last_name;
+      $payerContactDetails['email_address'] = $dao->email_address;
+      $payerContactDetails['address_1'] = $dao->address_1;
+      $payerContactDetails['address_2'] = $dao->address_2;
+      $payerContactDetails['address_3'] = $dao->address_3;
+      $payerContactDetails['town'] = $dao->town;
+      $payerContactDetails['county'] = $dao->county;
+      $payerContactDetails['postcode'] = $dao->postcode;
+      $payerContactDetails['first_amount'] = $dao->first_amount;
+      $payerContactDetails['default_amount'] = $dao->default_amount;
+      $payerContactDetails['frequency_type'] = $dao->frequency_type;
+      $payerContactDetails['frequency_factor'] = $dao->frequency_factor;
+      $payerContactDetails['start_date'] = $dao->start_date;
+      $payerContactDetails['current_state'] = $dao->current_state;
+      $payerContactDetails['reference_number'] = $dao->reference_number;
+      $payerContactDetails['payerReference'] = $dao->payerReference;
+      $payerContactDetails['recur_id'] = $dao->recur_id;
+      return $payerContactDetails;
     }
     return NULL;
   }
@@ -82,6 +90,7 @@ class CRM_Smartdebit_Mandates {
    * @param bool $onlyWithRecurId Only retrieve smartdebit mandates which have a recurring contribution
    *
    * @return array $smartDebitParams
+   * @throws \Exception
    */
   public static function getAll($refresh, $onlyWithRecurId=FALSE) {
     if ($refresh) {
@@ -126,6 +135,7 @@ class CRM_Smartdebit_Mandates {
    *
    * @param array $smartDebitPayerContactDetails (array of smart debit contact details : call CRM_Smartdebit_Api::getPayerContactDetails())
    * @param bool $truncate If true, truncate the table before inserting new records.
+   *
    * @return bool|int
    */
   public static function updateCache($smartDebitPayerContactDetails, $truncate = FALSE) {
@@ -140,7 +150,7 @@ class CRM_Smartdebit_Mandates {
       return FALSE;
     }
     // Insert mandates into table
-    foreach ($smartDebitPayerContactDetails as $key => $smartDebitRecord) {
+    foreach ($smartDebitPayerContactDetails as $smartDebitRecord) {
       if (!$truncate) {
         $deleteSql = "DELETE FROM `veda_smartdebit_mandates` WHERE reference_number='%1'";
         $deleteParams = array(1 => $smartDebitRecord['reference_number']);

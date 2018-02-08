@@ -11,10 +11,13 @@ class CRM_Smartdebit_Api {
 
   /**
    * Return API URL with base prepended
+   *
    * @param array $processorDetails Array of processor details from CRM_Core_Payment_Smartdebit::getProcessorDetails()
    * @param string $path
    * @param string $request
+   *
    * @return string
+   * @throws \Exception
    */
   public static function buildUrl($processorDetails, $path = '', $request = '') {
     if (empty($processorDetails['url_api'])) {
@@ -47,9 +50,10 @@ class CRM_Smartdebit_Api {
    * @param array $data POST data to send
    * @param string $username
    * @param string $password
+   *
    * @return array
    */
-  public static function requestPost($url, $data, $username, $password){
+  public static function requestPost($url, $data, $username, $password) {
     // Prepare data
     $data = self::encodePostParams($data);
 
@@ -161,8 +165,7 @@ class CRM_Smartdebit_Api {
    * @param array $responseErrors Array or string of errors
    * @return string
    */
-  static function formatResponseError($responseErrors)
-  {
+  static function formatResponseError($responseErrors) {
     if (!$responseErrors) {
       return NULL;
     }
@@ -180,12 +183,15 @@ class CRM_Smartdebit_Api {
   }
 
   /**
-   * Retrieve Audit Log from Smartdebit
-   * Called during daily sync job
-   * @param null $referenceNumber
-   * @return array|bool
+   * Retrieve Smartdebit System Status
+   *
+   * @param bool $test
+   *
+   * @return array
+   *
+   * @throws \Exception
    */
-  static function getSystemStatus($test = FALSE)
+  public static function getSystemStatus($test = FALSE)
   {
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails(NULL, $test);
     $username = CRM_Utils_Array::value('user_name', $userDetails);
@@ -229,10 +235,13 @@ class CRM_Smartdebit_Api {
   /**
    * Retrieve Audit Log from Smartdebit
    * Called during daily sync job
-   * @param null $referenceNumber
+   *
+   * @param string $referenceNumber
+   *
    * @return array|bool
+   * @throws \Exception
    */
-  static function getAuditLog($referenceNumber = NULL) {
+  public static function getAuditLog($referenceNumber = '') {
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
     $username = CRM_Utils_Array::value('user_name', $userDetails);
     $password = CRM_Utils_Array::value('password', $userDetails);
@@ -243,7 +252,7 @@ class CRM_Smartdebit_Api {
       . urlencode($pslid) . "&query[report_format]=XML");
 
     // Restrict to a single payer if we have a reference
-    if ($referenceNumber) {
+    if (!empty($referenceNumber)) {
       $url .= "&query[reference_number]=" . urlencode($referenceNumber);
     }
     $response = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
@@ -257,7 +266,7 @@ class CRM_Smartdebit_Api {
       }
       else {
         // Multiple records
-        foreach ($response['Data']['AuditDetails'] as $key => $value) {
+        foreach ($response['Data']['AuditDetails'] as $value) {
           $smartDebitArray[] = $value['@attributes'];
         }
       }
@@ -272,11 +281,13 @@ class CRM_Smartdebit_Api {
   /**
    * Retrieve Payer Contact Details from Smartdebit
    * Called during daily sync job
-   * @param null $referenceNumber
+   *
+   * @param string $referenceNumber
+   *
    * @return array|bool
+   * @throws \Exception
    */
-  static function getPayerContactDetails($referenceNumber = NULL)
-  {
+  public static function getPayerContactDetails($referenceNumber = '') {
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
     $username = CRM_Utils_Array::value('user_name', $userDetails);
     $password = CRM_Utils_Array::value('password', $userDetails);
@@ -287,7 +298,7 @@ class CRM_Smartdebit_Api {
       .urlencode($pslid)."&query[report_format]=XML");
 
     // Restrict to a single payer if we have a reference
-    if ($referenceNumber) {
+    if (!empty($referenceNumber)) {
       $url .= "&query[reference_number]=".urlencode($referenceNumber);
     }
     $response = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
@@ -295,12 +306,14 @@ class CRM_Smartdebit_Api {
     // Take action based upon the response status
     if ($response['success']) {
       $smartDebitArray = array();
-      // Cater for a single response
+      // Get Payer Details from response
       if (isset($response['Data']['PayerDetails']['@attributes'])) {
+        // A single response
         $smartDebitArray[] = $response['Data']['PayerDetails']['@attributes'];
       }
       else {
-        foreach ($response['Data']['PayerDetails'] as $key => $value) {
+        // Multiple responses
+        foreach ($response['Data']['PayerDetails'] as $value) {
           $smartDebitArray[] = $value['@attributes'];
         }
       }
@@ -308,16 +321,19 @@ class CRM_Smartdebit_Api {
     }
     else {
       self::reportError($response, $referenceNumber);
-      return false;
+      return FALSE;
     }
   }
 
   /**
    * Retrieve Collection Report from Smart Debit
+   *
    * @param $dateOfCollection
+   *
    * @return array|bool
+   * @throws \Exception
    */
-  static function getCollectionReport( $dateOfCollection ) {
+  public static function getCollectionReport($dateOfCollection) {
     if( empty($dateOfCollection)){
       CRM_Core_Session::setStatus(ts('Please select the collection date'), ts('Smart Debit'), 'error');
       return FALSE;
@@ -359,11 +375,13 @@ class CRM_Smartdebit_Api {
 
   /**
    * Get AUDDIS file from Smart Debit. $uri is retrieved using getAuddisList
-   * @param null $uri
+   *
+   * @param int $fileId
+   *
    * @return array|bool
+   * @throws \Exception
    */
-  static function getAuddisFile($fileId)
-  {
+  public static function getAuddisFile($fileId) {
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
     $username = CRM_Utils_Array::value('user_name', $userDetails);
     $password = CRM_Utils_Array::value('password', $userDetails);
@@ -396,11 +414,13 @@ class CRM_Smartdebit_Api {
 
   /**
    * Get ARUDD file from Smart Debit. $uri is retrieved using getAruddList
-   * @param null $uri
+   *
+   * @param int $fileId
+   *
    * @return array|bool
+   * @throws \Exception
    */
-  static function getAruddFile($fileId)
-  {
+  public static function getAruddFile($fileId) {
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
     $username = CRM_Utils_Array::value('user_name', $userDetails);
     $password = CRM_Utils_Array::value('password', $userDetails);
@@ -434,11 +454,11 @@ class CRM_Smartdebit_Api {
 
   /**
    * Encode POST params HTTP POST to Smartdebit
-   * @param $params
+   * @param array $params
    *
    * @return null|string
    */
-  static function encodePostParams($params) {
+  private static function encodePostParams($params) {
     if (empty($params)) {
       return NULL;
     }
