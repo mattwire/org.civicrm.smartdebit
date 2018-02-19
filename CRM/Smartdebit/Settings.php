@@ -1,5 +1,7 @@
 <?php
 
+use CRM_Smartdebit_ExtensionUtil as E;
+
 class CRM_Smartdebit_Settings {
 
   CONST TITLE = 'Smart Debit';
@@ -51,10 +53,11 @@ class CRM_Smartdebit_Settings {
    * @return mixed
    */
   public static function getValue($name) {
-    $settings = civicrm_api3('setting', 'get', array('return' => CRM_Smartdebit_Settings::getName($name,true)));
+    $className = E::CLASS_PREFIX . '_Settings';
+    $settings = civicrm_api3('setting', 'get', array('return' => $className::getName($name,true)));
     $domainID = CRM_Core_Config::domainID();
-    if (isset($settings['values'][$domainID][CRM_Smartdebit_Settings::getName($name,true)])) {
-      return $settings['values'][$domainID][CRM_Smartdebit_Settings::getName($name, true)];
+    if (isset($settings['values'][$domainID][$className::getName($name,true)])) {
+      return $settings['values'][$domainID][$className::getName($name, true)];
     }
     return '';
   }
