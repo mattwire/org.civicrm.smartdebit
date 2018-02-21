@@ -430,7 +430,7 @@ AND   csd.id IS NULL LIMIT 100";
     // A contribution with just the SD payer reference may exist if an older version of SmartDebit extension was used.
     // If we find one, we need to update it
     // If no contribution exists, we don't need to create one, as the sync job will do that for us.
-    $contribution = CRM_Smartdebit_Base::contributionExists($params['payer_reference']);
+    $contribution = self::contributionExists($params['payer_reference']);
     if ($contribution) {
       if (!empty($recurId)) {
         $contribution['contribution_recur_id'] = $recurId;
@@ -507,6 +507,26 @@ AND   csd.id IS NULL LIMIT 100";
         return CRM_Smartdebit_Api::SD_STATES[CRM_Smartdebit_Api::SD_STATE_REJECTED];
       default:
         return 'Unknown';
+    }
+  }
+
+  /**
+   * Check if contribution exists for given transaction Id. Return contribution, false otherwise.
+   *
+   * @param $transactionId
+   *
+   * @return array|bool
+   */
+  private static function contributionExists($transactionId) {
+    try {
+      $contribution = civicrm_api3('Contribution', 'getsingle', array(
+        'trxn_id' => $transactionId,
+      ));
+      return $contribution;
+    }
+    catch (Exception $e) {
+      // Contribution does not exist
+      return FALSE;
     }
   }
 }

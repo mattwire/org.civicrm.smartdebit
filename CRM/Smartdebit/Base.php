@@ -30,72 +30,57 @@
  */
 class CRM_Smartdebit_Base
 {
+
   /**
    * Generate a Direct Debit Reference (BACS reference)
+   *
    * @return string
    */
-
   public static function getDDIReference() {
     $tempDDIReference = CRM_Utils_String::createRandom(16, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
 
-    CRM_Core_DAO::executeQuery("
+    $insertSql = "
         INSERT INTO civicrm_direct_debit
         (ddi_reference, created)
         VALUES
         (%1, NOW())
-        ", array(1 => array((string)$tempDDIReference , 'String'))
-    );
+        ";
+    $insertParams = array(1 => array((string)$tempDDIReference , 'String'));
+    CRM_Core_DAO::executeQuery($insertSql, $insertParams);
 
     // Now get the ID for the record we've just created and create a sequenced DDI Reference Number
     $selectSql  = " SELECT id ";
     $selectSql .= " FROM civicrm_direct_debit cdd ";
     $selectSql .= " WHERE cdd.ddi_reference = %1 ";
-    $selectParams  = array( 1 => array( $tempDDIReference , 'String' ) );
-    $dao = CRM_Core_DAO::executeQuery( $selectSql, $selectParams );
+    $selectParams  = array( 1 => array($tempDDIReference , 'String'));
+    $dao = CRM_Core_DAO::executeQuery($selectSql, $selectParams);
     $dao->fetch();
 
     $directDebitId = $dao->id;
 
     // Replace the DDI Reference Number with our new unique sequenced version
-    $transactionPrefix = CRM_Smartdebit_Base::getTransactionPrefix();
-    $DDIReference      = $transactionPrefix . sprintf( "%08s", $directDebitId );
+    $transactionPrefix = CRM_Smartdebit_Settings::getValue('transaction_prefix');
+    $DDIReference      = $transactionPrefix . sprintf("%08s", $directDebitId);
 
     $updateSql  = " UPDATE civicrm_direct_debit cdd ";
     $updateSql .= " SET cdd.ddi_reference = %0 ";
     $updateSql .= " WHERE cdd.id = %1 ";
 
-    $updateParams = array( array( (string) $DDIReference , 'String' ),
-      array( (int)    $directDebitId, 'Int'    ),
+    $updateParams = array(
+      array((string) $DDIReference, 'String'),
+      array((int) $directDebitId, 'Int'),
     );
-
-    CRM_Core_DAO::executeQuery( $updateSql, $updateParams );
+    CRM_Core_DAO::executeQuery($updateSql, $updateParams);
 
     return $DDIReference;
   }
 
   /**
-   * Check if direct debit submission is completed
-   * @param $DDIReference
-   * @return bool
+   * @param $params
+   *
+   * @return array
    */
-  static function isDDSubmissionComplete( $DDIReference ) {
-    $isComplete = false;
-
-    $selectSql     =  " SELECT complete_flag ";
-    $selectSql     .= " FROM civicrm_direct_debit cdd ";
-    $selectSql     .= " WHERE cdd.ddi_reference = %1 ";
-    $selectParams  = array( 1 => array( $DDIReference , 'String' ) );
-    $dao           = CRM_Core_DAO::executeQuery( $selectSql, $selectParams );
-
-    if ( $dao->fetch() ) {
-      if ( $dao->complete_flag == 1 ) {
-        $isComplete = true;
-      }
-    }
-    return $isComplete;
-  }
-
-  static function getDDFormDetails($params) {
+  public static function getDDFormDetails($params) {
     $ddDetails = array();
 
     if (!empty($params['ddi_reference'])) {
@@ -127,7 +112,7 @@ WHERE ddi_reference = '{$params['ddi_reference']}'
     $ddDetails['bank_identification_number'] = CRM_Utils_Array::value('bank_identification_number', $params);
     $ddDetails['bank_name'] = CRM_Utils_Array::value('bank_name', $params, $ddDetails['bank_name']);
 
-    $ddDetails['sun'] = CRM_Smartdebit_Base::getSUN();
+    $ddDetails['sun'] = (int) CRM_Smartdebit_Settings::getValue('service_user_number');
 
     // Format as array of characters for display
     $ddDetails['sunParts'] = str_split($ddDetails['sun']);
@@ -148,8 +133,10 @@ WHERE ddi_reference = '{$params['ddi_reference']}'
    * And to setup the relevant Direct Debit Mandate Information
    *
    * @param $objects
+   *
+   * @throws \CiviCRM_API3_Exception
    */
-  static function completeDirectDebitSetup( $params )  {
+  public static function completeDirectDebitSetup( $params )  {
     // Create an activity to indicate Direct Debit Sign up
     CRM_Smartdebit_Base::createDDSignUpActivity($params);
 
@@ -166,9 +153,10 @@ WHERE  ddi_reference = %0";
   /**
    * Calculate the earliest possible collection date based on todays date plus the collection interval setting.
    * @param $collectionDay
+   *
    * @return DateTime
    */
-  static function firstCollectionDate($collectionDay) {
+  public static function firstCollectionDate($collectionDay) {
     // Initialise date objects with today's date
     $today                    = new DateTime();
     $earliestCollectionDate   = new DateTime();
@@ -207,10 +195,12 @@ WHERE  ddi_reference = %0";
 
   /**
    * Format collection day like 1st, 2nd, 3rd, 4th etc.
+   *
    * @param $collectionDay
+   *
    * @return string
    */
-  static function formatPreferredCollectionDay( $collectionDay ) {
+  private static function formatPreferredCollectionDay($collectionDay) {
     $ends = array( 'th'
     , 'st'
     , 'nd'
@@ -222,7 +212,7 @@ WHERE  ddi_reference = %0";
     , 'th'
     , 'th'
     );
-    if ( ( $collectionDay%100 ) >= 11 && ( $collectionDay%100 ) <= 13 )
+    if ((($collectionDay%100) >= 11) && (($collectionDay%100) <= 13))
       $abbreviation = $collectionDay . 'th';
     else
       $abbreviation = $collectionDay . $ends[$collectionDay % 10];
@@ -232,24 +222,26 @@ WHERE  ddi_reference = %0";
 
   /**
    * Function will return the possible array of collection days with formatted label
+   *
+   * @return mixed
    */
-  static function getCollectionDaysOptions() {
+  public static function getCollectionDaysOptions() {
     $intervalDate = new DateTime();
     $interval = (int) CRM_Smartdebit_Settings::getValue('collection_interval');
 
-    $intervalDate->modify( "+$interval day" );
-    $intervalDay = $intervalDate->format( 'd' );
+    $intervalDate->modify("+$interval day");
+    $intervalDay = $intervalDate->format('d');
 
     $collectionDays = CRM_Smartdebit_Settings::getValue('collection_days');
 
     // Split the array
-    $tempCollectionDaysArray  = explode( ',', $collectionDays );
+    $tempCollectionDaysArray  = explode(',', $collectionDays);
     $earlyCollectionDaysArray = array();
     $lateCollectionDaysArray  = array();
 
     // Build 2 arrays around next collection date
-    foreach( $tempCollectionDaysArray as $key => $value ){
-      if ( $value >= $intervalDay ) {
+    foreach($tempCollectionDaysArray as $key => $value){
+      if ($value >= $intervalDay) {
         $earlyCollectionDaysArray[] = $value;
       }
       else {
@@ -257,17 +249,19 @@ WHERE  ddi_reference = %0";
       }
     }
     // Merge arrays for select list
-    $allCollectionDays = array_merge( $earlyCollectionDaysArray, $lateCollectionDaysArray );
+    $allCollectionDays = array_merge($earlyCollectionDaysArray, $lateCollectionDaysArray);
 
     // Loop through and format each label
-    foreach( $allCollectionDays as $key => $value ){
-      $collectionDaysArray[$value] = self::formatPreferredCollectionDay( $value );
+    $collectionDaysArray = array();
+    foreach($allCollectionDays as $key => $value){
+      $collectionDaysArray[$value] = self::formatPreferredCollectionDay($value);
     }
     return $collectionDaysArray;
   }
 
   /**
    * Function will return the possible confirm by options
+   *
    * @return mixed
    */
   static function getConfirmByOptions() {
@@ -292,47 +286,47 @@ WHERE  ddi_reference = %0";
    * Create a Direct Debit Sign Up Activity for contact
    *
    * @param $params
+   *
    * @return mixed
+   * @throws \CiviCRM_API3_Exception
    */
-  static function createDDSignUpActivity( &$params ) {
-    if ( $params['confirmation_method'] == 'POST' ) {
-      $activityTypeLetterID = CRM_Smartdebit_Base::getActivityTypeLetter();
+  public static function createDDSignUpActivity($params) {
+    if ($params['confirmation_method'] == 'POST') {
+      $activityTypeLetterID = (int) CRM_Smartdebit_Settings::getValue('activity_type_letter');
       $activityLetterParams = array(
         'source_contact_id'  => $params['contactID'],
         'target_contact_id'  => $params['contactID'],
         'activity_type_id'   => $activityTypeLetterID,
-        'subject'            => sprintf("Direct Debit Confirmation Letter, Mandate ID : %s", $params['trxn_id'] ),
-        'activity_date_time' => date( 'YmdHis' ),
-        'status_id'          => 1,
-        'version'            => 3
+        'subject'            => sprintf("Direct Debit Confirmation Letter, Mandate ID : %s", $params['trxn_id']),
+        'activity_date_time' => date('YmdHis'),
+        'status_id'          => CRM_Core_PseudoConstant::getKey('CRM_Activity_DAO_Activity', 'activity_status_id', 'Scheduled'),
       );
 
-      civicrm_api( 'activity', 'create', $activityLetterParams);
+      civicrm_api3( 'activity', 'create', $activityLetterParams);
     }
 
-    $activityTypeID = CRM_Smartdebit_Base::getActivityType();
+    $activityTypeID = (int) CRM_Smartdebit_Settings::getValue('activity_type');
     $activityParams = array(
       'source_contact_id'  => $params['contactID'],
       'target_contact_id'  => $params['contactID'],
       'activity_type_id'   => $activityTypeID,
-      'subject'            => sprintf("Direct Debit Sign Up, Mandate ID : %s", $params['trxn_id'] ) ,
-      'activity_date_time' => date( 'YmdHis' ),
-      'status_id'          => 2,
-      'version'            => 3
+      'subject'            => sprintf("Direct Debit Sign Up, Mandate ID : %s", $params['trxn_id']),
+      'activity_date_time' => date('YmdHis'),
+      'status_id'          => CRM_Core_PseudoConstant::getKey('CRM_Activity_DAO_Activity', 'activity_status_id', 'Completed'),
     );
 
-    $result     = civicrm_api( 'activity','create', $activityParams );
-    $activityID = $result['id'];
-
-    return $activityID;
+    $activityResult = civicrm_api3('activity', 'create', $activityParams);
+    return $activityResult['id'];
   }
 
-  static function getCompanyName() {
-    $domain = CRM_Core_BAO_Domain::getDomain();
-    return $domain->name;
-  }
-
-  static function getCompanyAddress() {
+  /**
+   * Get domain address details
+   *
+   * @return array
+   *
+   * @throws \CRM_Core_Exception
+   */
+  public static function getCompanyAddress() {
     $companyAddress = array();
 
     $domain = CRM_Core_BAO_Domain::getDomain();
@@ -358,46 +352,14 @@ WHERE  ddi_reference = %0";
     return $companyAddress;
   }
 
-  static function getActivityType() {
-    return (int) CRM_Smartdebit_Settings::getValue('activity_type');
-  }
-
-  static function getActivityTypeLetter() {
-    return (int) CRM_Smartdebit_Settings::getValue('activity_type_letter');
-  }
-
-  static function getTransactionPrefix() {
-    return CRM_Smartdebit_Settings::getValue('transaction_prefix');
-  }
-
-  /**
-   * Function will return the SUN number broken down into individual characters passed as an array
-   */
-  static function getSUN() {
-    return (int) CRM_Smartdebit_Settings::getValue('service_user_number');
-  }
-
-  /**
-   * Function will return the Payment instrument to be used by DD payment processor
-   */
-  static function getDefaultPaymentInstrumentID() {
-    return (int) CRM_Smartdebit_Settings::getValue('payment_instrument_id');
-  }
-
-  /**
-   * Function will return the default Financial Type to be used by DD payment processor
-   */
-  static function getDefaultFinancialTypeID() {
-    return (int) CRM_Smartdebit_Settings::getValue('financial_type');
-  }
-
   /**
    * Translate Smart Debit Frequency Unit/Factor to CiviCRM frequency unit/interval (eg. W,1 = day,7)
    * @param $sdFrequencyUnit
    * @param $sdFrequencyFactor
+   *
    * @return array ($civicrm_frequency_unit, $civicrm_frequency_interval)
    */
-  static function translateSmartdebitFrequencytoCiviCRM($sdFrequencyUnit, $sdFrequencyFactor) {
+  public static function translateSmartdebitFrequencytoCiviCRM($sdFrequencyUnit, $sdFrequencyFactor) {
     if (empty($sdFrequencyFactor)) {
       $sdFrequencyFactor = 1;
     }
@@ -430,7 +392,7 @@ WHERE  ddi_reference = %0";
    * @return array
    * @throws \CiviCRM_API3_Exception
    */
-  static function createRecurContribution($recurParams) {
+  public static function createRecurContribution($recurParams) {
     // Mandatory Parameters
     // Amount
     if (empty($recurParams['amount'])) {
@@ -501,11 +463,11 @@ WHERE  ddi_reference = %0";
     }
     // Default value for payment_instrument id (payment method, eg. "Direct Debit")
     if (empty($recurParams['payment_instrument_id'])){
-      $recurParams['payment_instrument_id'] = CRM_Smartdebit_Base::getDefaultPaymentInstrumentID();
+      $recurParams['payment_instrument_id'] = (int) CRM_Smartdebit_Settings::getValue('payment_instrument_id');
     }
     // Default value for financial_type_id (eg. "Member dues")
     if (empty($recurParams['financial_type_id'])){
-      $recurParams['financial_type_id'] = CRM_Smartdebit_Base::getDefaultFinancialTypeID();
+      $recurParams['financial_type_id'] = (int) CRM_Smartdebit_Settings::getValue('financial_type');
     }
     // Default currency
     if (empty($recurParams['currency'])) {
@@ -570,9 +532,11 @@ WHERE  ddi_reference = %0";
   /**
    * Create/update a contribution for the direct debit.
    * @param $params
+   *
    * @return array|bool
+   * @throws \CiviCRM_API3_Exception
    */
-  static function createContribution($params) {
+  public static function createContribution($params) {
     // Mandatory Parameters
     // Amount
     if (empty($params['total_amount'])) {
@@ -607,11 +571,11 @@ WHERE  ddi_reference = %0";
     }
     // Default value for payment_instrument id (payment method, eg. "Direct Debit")
     if (empty($params['payment_instrument_id'])){
-      $params['payment_instrument_id'] = CRM_Smartdebit_Base::getDefaultPaymentInstrumentID();
+      $params['payment_instrument_id'] = (int) CRM_Smartdebit_Settings::getValue('payment_instrument_id');
     }
     // Default value for financial_type_id (eg. "Member dues")
     if (empty($params['financial_type_id'])){
-      $params['financial_type_id'] = CRM_Smartdebit_Base::getDefaultFinancialTypeID();
+      $params['financial_type_id'] = (int) CRM_Smartdebit_Settings::getValue('financial_type');
     }
     // Default currency
     if (empty($params['currency'])) {
@@ -661,22 +625,4 @@ WHERE  ddi_reference = %0";
     return $result;
   }
 
-  /**
-   * Check if contribution exists for given transaction Id. Return contribution, false otherwise.
-   *
-   * @param $transactionId
-   * @return array|bool
-   */
-  static function contributionExists($transactionId) {
-    try {
-      $contribution = civicrm_api3('Contribution', 'getsingle', array(
-        'trxn_id' => $transactionId,
-      ));
-      return $contribution;
-    }
-    catch (Exception $e) {
-      // Contribution does not exist
-      return FALSE;
-    }
-  }
 }
