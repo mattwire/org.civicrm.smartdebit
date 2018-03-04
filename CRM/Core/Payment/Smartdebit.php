@@ -713,6 +713,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       $payerReference = 'CIVICRMEXT';
     }
 
+    $billingID = $locationTypes = CRM_Core_BAO_LocationType::getBilling();
+
     // Construct params list to send to Smart Debit ...
     $smartDebitParams = array(
       'variable_ddi[service_user][pslid]' => $serviceUserId,
@@ -720,10 +722,10 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       'variable_ddi[payer_reference]' => $payerReference,
       'variable_ddi[first_name]' => CRM_Utils_Array::value('billing_first_name', $params),
       'variable_ddi[last_name]' => CRM_Utils_Array::value('billing_last_name', $params),
-      'variable_ddi[address_1]' => CRM_Utils_Array::value('billing_street_address-5', $params),
-      'variable_ddi[town]' => CRM_Utils_Array::value('billing_city-5', $params),
-      'variable_ddi[postcode]' => CRM_Utils_Array::value('billing_postal_code-5', $params),
-      'variable_ddi[country]' => CRM_Utils_Array::value('billing_country_id-5', $params),
+      'variable_ddi[address_1]' => CRM_Utils_Array::value('billing_street_address-' . $billingID, $params),
+      'variable_ddi[town]' => CRM_Utils_Array::value('billing_city-' . $billingID, $params),
+      'variable_ddi[postcode]' => CRM_Utils_Array::value('billing_postal_code-' . $billingID, $params),
+      'variable_ddi[country]' => CRM_Utils_Array::value('billing_country_id-' . $billingID, $params),
       'variable_ddi[account_name]' => CRM_Utils_Array::value('account_holder', $params),
       'variable_ddi[sort_code]' => CRM_Utils_Array::value('bank_identification_number', $params),
       'variable_ddi[account_number]' => CRM_Utils_Array::value('bank_account_number', $params),
