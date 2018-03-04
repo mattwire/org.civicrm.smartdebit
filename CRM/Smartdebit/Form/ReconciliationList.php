@@ -395,7 +395,7 @@ AND   csd.id IS NULL LIMIT 100";
     $recurParams['frequency_factor'] = $smartDebitRecord['frequency_factor'];
     $recurParams['amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($smartDebitRecord['default_amount']);
     $recurParams['start_date'] = $smartDebitRecord['start_date'];
-    $recurParams['next_sched_contribution'] = $smartDebitRecord['start_date'];
+    $recurParams['next_sched_contribution_date'] = $smartDebitRecord['start_date'];
     $recurParams['trxn_id'] = $params['payer_reference'];
 
     $auditlog = CRM_Smartdebit_Api::getAuditLog($params['payer_reference']);

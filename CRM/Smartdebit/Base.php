@@ -450,12 +450,12 @@ WHERE  ddi_reference = %0";
     else {
       $recurParams['start_date'] = CRM_Utils_Date::processDate($recurParams['start_date']);
     }
-    // Default to today for next_sched_contribution date
-    if (empty($recurParams['next_sched_contribution'])) {
-      $recurParams['next_sched_contribution'] = date('YmdHis');
+    // Default to today for next_sched_contribution_date
+    if (empty($recurParams['next_sched_contribution_date'])) {
+      $recurParams['next_sched_contribution_date'] = date('YmdHis');
     }
     else {
-      $recurParams['next_sched_contribution'] = CRM_Utils_Date::processDate($recurParams['next_sched_contribution']);
+      $recurParams['next_sched_contribution_date'] = CRM_Utils_Date::processDate($recurParams['next_sched_contribution_date']);
     }
     // Cycle day defaults to day of start date
     if (empty($recurParams['cycle_day'])) {
@@ -496,7 +496,7 @@ WHERE  ddi_reference = %0";
       'create_date' => $recurParams['create_date'],
       'modified_date' => $recurParams['modified_date'],
       'start_date' => $recurParams['start_date'],
-      'next_sched_contribution' => $recurParams['next_sched_contribution'],
+      'next_sched_contribution_date' => $recurParams['next_sched_contribution_date'],
       'amount' => $recurParams['amount'],
       'frequency_unit' => $recurParams['frequency_unit'],
       'frequency_interval' => $recurParams['frequency_interval'],
