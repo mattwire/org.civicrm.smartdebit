@@ -968,12 +968,13 @@ UPDATE civicrm_direct_debit SET
    * @param string $message
    * @param array $params
    *
+   * @return bool
    * @throws \Exception
    */
   public function changeSubscriptionAmount(&$message = '', $params = array()) {
     // We don't use recur start_date as smartdebit start_date can change during the subscription
     unset($params['start_date']);
-    self::changeSubscription($this->paymentProcessor, $params);
+    return self::changeSubscription($this->_paymentProcessor, $params);
   }
 
   /**
