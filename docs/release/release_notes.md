@@ -2,10 +2,28 @@
 
 * Validate smartdebit params after hooks but before sending to smartdebit - add a checkSmartDebitParams function. Don't set regular_amount, use default_amount only. **Smartdebit requires amounts in pence (eg. £54.11=5411) but you should always set amounts with a decimal point (eg. 54.11) - it will be formatted for submission AFTER the hook.**
 * Improve error handling when submitting a new direct debit instruction and we get a failure response from Smartdebit.
-* UI only: Change contribution description flags to wrap in [] (eg. [SDCR])
+* Use CiviCRM setting for SSL certificate validation
+* Don't hardcode billing address ID (get ID automatically from address types)
+* Populate next_sched_contribution_date instead of legacy next_sched_contribution
+* Fix PHP notice when amount is not set (eg. during payment validation)
+
+* Updating subscriptions:
+  * Don't pass through empty parameters to Smartdebit as they can be interpreted incorrectly (eg. empty end_date sets a date in the past).
+  * Fix crash when updating existing subscription.
+
+* UI changes:
+  * Change contribution description flags to wrap in [] (eg. [SDCR]).
+  * Make sure we only display smartdebit mandate once.
+  * Format mandate details a little bit more nicely on recurring contribution detail.
+
 * Sync fixes:
   * Make sure we assign contribution ID when we have found a previous contribution (previously failed to sync in some cases).
   * Call completetransaction on first payments. Fix parameters for repeattransaction (previously failed to renew membership in some cases).
+  * When retrieving mandates (payerDetails) from smartdebit, validate data.
+  * Return the retrieved mandate directly instead of querying the database as caching sometimes returns older details.
+
+* Non functional changes:
+  * Improve commenting / code style fixes.
 
 ## Release 1.21
 
