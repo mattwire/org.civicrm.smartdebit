@@ -1042,7 +1042,7 @@ UPDATE civicrm_direct_debit SET
       $smartDebitParams = array_merge($smartDebitParams, self::getCollectionFrequencyPostParams($recurContributionParams));
     }
 
-    CRM_Smartdebit_Hook::alterVariableDDIParams($recurContributionParams, $smartDebitParams, 'update');
+    CRM_Smartdebit_Hook::alterVariableDDIParams($recurContributionParams, $smartDebitParams, 'edit');
     self::checkSmartDebitParams($smartDebitParams);
 
     $url = CRM_Smartdebit_Api::buildUrl($paymentProcessor, 'api/ddi/variable/' . $recurRecord['trxn_id'] . '/update');
