@@ -57,27 +57,12 @@ class CRM_Smartdebit_Api {
     // Prepare data
     $data = self::encodePostParams($data);
 
-    $options = array(
-      CURLOPT_RETURNTRANSFER => true, // return web page
-      CURLOPT_HEADER => false, // don't return headers
-      CURLOPT_POST => true,
-      CURLOPT_USERPWD => $username . ':' . $password,
-      CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
-      CURLOPT_HTTPHEADER => array("Accept: application/xml"),
-      CURLOPT_USERAGENT => "CiviCRM Smartdebit Client", // Let Smartdebit see who we are
-      CURLOPT_SSL_VERIFYHOST => Civi::settings()->get('verifySSL') ? 2 : 0,
-      CURLOPT_SSL_VERIFYPEER => Civi::settings()->get('verifySSL'),
-    );
-
-    $session = curl_init($url);
-    curl_setopt_array($session, $options);
-
-    // Tell curl that this is the body of the POST
-    curl_setopt($session, CURLOPT_POSTFIELDS, $data);
-
-    // $output contains the output string
-    $output = curl_exec($session);
-    $header = curl_getinfo($session);
+    if (getenv('CIVICRM_UF') === 'UnitTests') {
+      list($header, $output, $error) = CRM_Smartdebit_Mock::post($url, $data, $username, $password);
+    }
+    else {
+      list($header, $output, $error) = self::post($url, $data, $username, $password);
+    }
 
     //Store the raw response for later as it's useful to see for integration and understanding
     $_SESSION["rawresponse"] = $output;
@@ -90,10 +75,10 @@ class CRM_Smartdebit_Api {
       $resultsArray['statuscode'] = -1;
     }
 
-    if(curl_errno($session)) {
+    if($error['code']) {
       $resultsArray['success'] = FALSE;
       $resultsArray['message'] = 'cURL Error';
-      $resultsArray['error'] = curl_error($session);
+      $resultsArray['error'] = $error['message'];
     }
     else {
       // Results are XML so turn this into a PHP Array (simplexml_load_string returns an object)
@@ -135,6 +120,35 @@ class CRM_Smartdebit_Api {
     }
     // Return the output
     return $resultsArray;
+  }
+
+  private static function post($url, $data, $username, $password) {
+    $options = array(
+      CURLOPT_RETURNTRANSFER => true, // return web page
+      CURLOPT_HEADER => false, // don't return headers
+      CURLOPT_POST => true,
+      CURLOPT_USERPWD => $username . ':' . $password,
+      CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
+      CURLOPT_HTTPHEADER => array("Accept: application/xml"),
+      CURLOPT_USERAGENT => "CiviCRM Smartdebit Client", // Let Smartdebit see who we are
+      CURLOPT_SSL_VERIFYHOST => Civi::settings()->get('verifySSL') ? 2 : 0,
+      CURLOPT_SSL_VERIFYPEER => Civi::settings()->get('verifySSL'),
+    );
+
+    $session = curl_init($url);
+    curl_setopt_array($session, $options);
+
+    // Tell curl that this is the body of the POST
+    curl_setopt($session, CURLOPT_POSTFIELDS, $data);
+
+    // $output contains the output string
+    $output = curl_exec($session);
+    $header = curl_getinfo($session);
+
+    $error['code'] = curl_errno($session);
+    $error['message'] = curl_error($session);
+
+    return array($header, $output, $error);
   }
 
   /**
