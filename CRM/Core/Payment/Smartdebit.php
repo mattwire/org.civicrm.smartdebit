@@ -153,13 +153,13 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     // Set preferred collection day default to the first choice.
     $collectionDaysArray = CRM_Smartdebit_Base::getCollectionDaysOptions();
     if (count($collectionDaysArray) > 0) {
-      $defaults['preferred_collection_day'] = reset(array_keys($collectionDaysArray));
+      $defaults['preferred_collection_day'] = CRM_Utils_Array::first(array_keys($collectionDaysArray));
     }
 
     // Set default confirmby option
     $confirmBy = CRM_Smartdebit_Base::getConfirmByOptions();
     if (count($confirmBy) > 0) {
-      $defaults['confirmation_method'] = reset(array_keys($confirmBy));
+      $defaults['confirmation_method'] = CRM_Utils_Array::first(array_keys($confirmBy));
     }
     $form->setDefaults($defaults);
 
