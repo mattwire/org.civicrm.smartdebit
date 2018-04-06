@@ -186,6 +186,59 @@ return array(
     ),
   ),
 
+  //days difference to check between current date and payment date
+  //to determine if this is first payment or not
+  //daily dd
+  'smartdebit_day_dd_days_difference' => array(
+    'group_name' => 'Smart Debit Settings',
+    'group' => 'smartdebit',
+    'name' => 'smartdebit_day_dd_days_difference',
+    'type' => 'String',
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'default' => '1',
+    'description' => 'Daily DD Days Difference',
+    'html_type' => 'Text',
+    'html_attributes' => array(
+      'size' => 50,
+    ),
+  ),
+
+  //monthly dd
+  'smartdebit_month_dd_days_difference' => array(
+    'group_name' => 'Smart Debit Settings',
+    'group' => 'smartdebit',
+    'name' => 'smartdebit_month_dd_days_difference',
+    'type' => 'String',
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'default' => '7',
+    'description' => 'Monthly DD Days Difference',
+    'html_type' => 'Text',
+    'html_attributes' => array(
+      'size' => 50,
+    ),
+  ),
+
+  //yearly dd
+  'smartdebit_year_dd_days_difference' => array(
+    'group_name' => 'Smart Debit Settings',
+    'group' => 'smartdebit',
+    'name' => 'smartdebit_year_dd_days_difference',
+    'type' => 'String',
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'default' => '30',
+    'description' => 'Yearly DD Days Difference',
+    'html_type' => 'Text',
+    'html_attributes' => array(
+      'size' => 50,
+    ),
+  ),
+
   //Confirm by
   'smartdebit_confirmby_post' => array(
     'group_name' => 'Smart Debit Settings',

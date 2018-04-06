@@ -653,15 +653,19 @@ class CRM_Smartdebit_Sync
    * @return int
    */
   private static function daysDifferenceForFrequency($frequencyUnit, $frequencyInterval) {
+    // Get days difference from settings
+    $setting_key = $frequencyUnit.'_dd_days_difference';
+    $daysDifference = CRM_Smartdebit_Settings::getValue($setting_key);
     switch ($frequencyUnit) {
       case 'day':
-        $days = $frequencyInterval * 1;
+        // Use default days difference if settings is empty
+        $days = $frequencyInterval * (empty($daysDifference) ? 1 : $daysDifference);
         break;
       case 'month':
-        $days = $frequencyInterval * 7;
+        $days = $frequencyInterval * (empty($daysDifference) ? 7 : $daysDifference);
         break;
       case 'year':
-        $days = $frequencyInterval * 30;
+        $days = $frequencyInterval * (empty($daysDifference) ? 30 : $daysDifference);
         break;
       case 'lifetime':
         $days = 0;

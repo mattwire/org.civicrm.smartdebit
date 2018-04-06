@@ -69,3 +69,18 @@ in CiviCRM will be "Pending", as it could fail.  However, this means that new me
  <br/>{ts}Must be a valid format per: <a href="http://www.php.net/manual/en/datetime.formats.php">Date and Time Formats</a>{/ts}
  <br/>{ts}Default value is '-1 year'{/ts}
 {/htxt}
+{htxt id='daily_dd_days_difference'}
+{ts}When members join or donate using Smart Debit, a contribution is created in CiviCRM. When we sync the payments from Smart Debit to CiviCRM, we should update the existing first contribution record, instead of creating a new contribution record. So to determine if the Smart Debit payment is first payment, we check if the initial contribution date and payment date falls within a range.{/ts}
+ <br/>
+{ts}Set the days difference to check between current date and payment date to determine if this is first payment or not for Daily DD payments.{/ts}
+{/htxt}
+{htxt id='monthly_dd_days_difference'}
+{ts}When members join or donate using Smart Debit, a contribution is created in CiviCRM. When we sync the payments from Smart Debit to CiviCRM, we should update the existing first contribution record, instead of creating a new contribution record. So to determine if the Smart Debit payment is first payment, we check if the initial contribution date and payment date falls within a range.{/ts}
+ <br/>
+{ts}Set the days difference to check between current date and payment date to determine if this is first payment or not for Monthly DD payments.{/ts}
+{/htxt}
+{htxt id='yearly_dd_days_difference'}
+{ts}When members join or donate using Smart Debit, a contribution is created in CiviCRM. When we sync the payments from Smart Debit to CiviCRM, we should update the existing first contribution record, instead of creating a new contribution record. So to determine if the Smart Debit payment is first payment, we check if the initial contribution date and payment date falls within a range.{/ts}
+ <br/>
+{ts}Set the days difference to check between current date and payment date to determine if this is first payment or not for Yearly DD payments.{/ts}
+{/htxt}
