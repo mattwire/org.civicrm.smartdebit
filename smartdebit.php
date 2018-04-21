@@ -331,7 +331,7 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
     'operator'   => NULL,
     'separator'  => NULL,
   );
-  _smartdebit_civix_insert_navigation_menu($menu, 'Administer', $item[0]);
+  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/CiviContribute', $item[0]);
 
   $item[] = array (
     'label' => ts('Settings', array('domain' => 'org.civicrm.smartdebit')),
@@ -341,7 +341,7 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
     'operator'   => NULL,
     'separator'  => NULL,
   );
-  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[1]);
+  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/Smart Debit', $item[1]);
 
   $item[] = array(
     'label' => ts('Manual Sync', array('domain' => 'org.civicrm.smartdebit')),
@@ -351,7 +351,7 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
     'operator'   => NULL,
     'separator'  => NULL,
   );
-  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[2]);
+  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/Smart Debit', $item[2]);
 
   $item[] =  array (
     'label' => ts('Reconcile Transactions', array('domain' => 'org.civicrm.smartdebit')),
@@ -361,7 +361,7 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
     'operator'   => NULL,
     'separator'  => NULL,
   );
-  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/Smart Debit', $item[3]);
+  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/Smart Debit', $item[3]);
 
   _smartdebit_civix_navigationMenu($menu);
 }
