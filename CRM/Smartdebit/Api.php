@@ -135,18 +135,20 @@ class CRM_Smartdebit_Api {
       CURLOPT_SSL_VERIFYPEER => Civi::settings()->get('verifySSL'),
     );
 
-    $session = curl_init($url);
-    curl_setopt_array($session, $options);
+    $curlSession = curl_init($url);
+    curl_setopt_array($curlSession, $options);
 
     // Tell curl that this is the body of the POST
-    curl_setopt($session, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($curlSession, CURLOPT_POSTFIELDS, $data);
 
     // $output contains the output string
-    $output = curl_exec($session);
-    $header = curl_getinfo($session);
+    $output = curl_exec($curlSession);
+    $header = curl_getinfo($curlSession);
 
-    $error['code'] = curl_errno($session);
-    $error['message'] = curl_error($session);
+    $error['code'] = curl_errno($curlSession);
+    $error['message'] = curl_error($curlSession);
+
+    curl_close($curlSession);
 
     return array($header, $output, $error);
   }
