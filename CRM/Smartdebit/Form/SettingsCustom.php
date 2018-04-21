@@ -55,30 +55,33 @@ class CRM_Smartdebit_Form_SettingsCustom extends CRM_Smartdebit_Form_Settings {
   public static function addSelectElement(&$form, $name, $setting) {
     switch ($name) {
       case 'payment_instrument_id':
-        $form->addSelect('payment_instrument_id',
+        $form->addSelect($name,
           array(
             'entity' => 'contribution',
-            'label' => ts('Default Payment Method'),
+            'label' => $setting['description'],
             'placeholder'  => NULL,
           )
         );
         break;
       case 'financial_type':
-        $form->addSelect('financial_type',
+        $form->addSelect($name,
           array(
             'entity' => 'contribution',
-            'label' => ts('Default Financial Type'),
+            'label' => $setting['description'],
             'placeholder'  => NULL,
           )
         );
         break;
       case 'activity_type':
-        $activityTypes = CRM_Activity_BAO_Activity::buildOptions('activity_type_id', 'create');
-        $form->addElement('select', 'activity_type', ts('Activity Type (Sign Up)'), array('' => ts('- select -')) + $activityTypes);
-        break;
       case 'activity_type_letter':
-        $activityTypes = CRM_Activity_BAO_Activity::buildOptions('activity_type_id', 'create');
-        $form->addElement('select', 'activity_type_letter', ts('Activity Type (Letter)'), array('' => ts('- select -')) + $activityTypes);
+        $form->addSelect($name,
+          array(
+            'entity' => 'activity',
+            'label' => $setting['description'],
+            'field' => 'activity_type_id',
+            'placeholder'  => NULL,
+          )
+        );
         break;
     }
   }
