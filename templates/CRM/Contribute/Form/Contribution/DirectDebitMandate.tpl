@@ -149,7 +149,7 @@
             you are entitled to a full and immediate refund of the amount paid from your bank or building society.{/ts}
           - {ts 1=$dd_details.company_address.company_name}If you receive a refund you are not entitled to, you must pay it back when %1 asks you to.{/ts}</li>
         <li>{ts 1=$dd_details.company_address.company_name}You can cancel a Direct Debit at any time by simply contacting your bank or building society. Written
-            confirmation may be required. Please also notify %1.{/ts}</li>
+            confirmation may be required. Please also notify us.{/ts}</li>
       </ul>
     </div>
     <div class="clear"></div>
