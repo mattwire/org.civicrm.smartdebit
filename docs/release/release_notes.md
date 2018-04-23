@@ -1,3 +1,13 @@
+## Release 1.23
+
+* Minor tweak to wording of mandate as requested by bank - *"Please also notify us".*
+* Close curl session after use (reduce resource usage in some cases).
+* Move Smartdebit menu to Administer->CiviContribute.
+* Settings Form addElement -> addSelect.
+* Fix PHP notice.
+* Add unit testing framework and support for mocking Smartdebit responses.
+* Change alterVariableDDIParams 'update' to 'edit' for consistency with CiviCRM core. **Note: This may break extensions that rely on this hook!**
+
 ## Release 1.22
 
 * Validate smartdebit params after hooks but before sending to smartdebit - add a checkSmartDebitParams function. Don't set regular_amount, use default_amount only. **Smartdebit requires amounts in pence (eg. £54.11=5411) but you should always set amounts with a decimal point (eg. 54.11) - it will be formatted for submission AFTER the hook.**
