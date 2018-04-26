@@ -96,6 +96,12 @@
       <div class="help">{$elementGroup.description}</div>
       <table class="form-layout-compressed">
         {foreach from=$elementGroup.elementNames item=elementName}
+        {if $elementName eq 'day_dd_days_difference'}
+          <tr>
+            <td><br /><strong>Days difference to check between current date and payment date to determine if this is first payment or not, during SD sync.</strong>
+            </td>
+          </tr>
+        {/if}
           <tr><td>
               {$form.$elementName.html}
               <label for="{$elementName}">{$form.$elementName.label} {help id=$elementName title=$form.$elementName.label}</label>
