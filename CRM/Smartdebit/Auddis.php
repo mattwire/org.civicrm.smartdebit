@@ -58,10 +58,14 @@ class CRM_Smartdebit_Auddis
    * Get List of AUDDIS files from Smartdebit for the past month.
    * If dateOfCollection is not specified it defaults to today.
    * FIXME: Move to CRM_Smartdebit_Api
-   * @param null $dateOfCollection
-   * @return bool|mixed
+   *
+   * @param string $dateOfCollectionStart
+   * @param string $dateOfCollectionEnd
+   *
+   * @return bool
+   * @throws \Exception
    */
-  public function getSmartdebitAuddisList($dateOfCollectionStart = null, $dateOfCollectionEnd = null) {
+  public function getSmartdebitAuddisList($dateOfCollectionStart = NULL, $dateOfCollectionEnd = NULL) {
     if (!isset($dateOfCollectionEnd)) {
       $endDate = new DateTime();
       $dateOfCollectionEnd = $endDate->format('Y-m-d'); // Today
@@ -93,10 +97,14 @@ class CRM_Smartdebit_Auddis
    * Get List of ARUDD files from Smartdebit for the past month.
    * If dateOfCollection is not specified it defaults to today.
    * FIXME: Move to CRM_Smartdebit_Api
-   * @param null $dateOfCollection
-   * @return bool|mixed
+   *
+   * @param string $dateOfCollectionStart
+   * @param string $dateOfCollectionEnd
+   *
+   * @return bool
+   * @throws \Exception
    */
-  public function getSmartdebitAruddList($dateOfCollectionStart = null, $dateOfCollectionEnd = null) {
+  public function getSmartdebitAruddList($dateOfCollectionStart = NULL, $dateOfCollectionEnd = NULL) {
     if (!isset($dateOfCollectionEnd)) {
       $endDate = new DateTime();
       $dateOfCollectionEnd = $endDate->format('Y-m-d'); // Today
@@ -134,7 +142,7 @@ class CRM_Smartdebit_Auddis
    *
    * @return bool True if successful, FALSE otherwise
    */
-  function getAuddisDates()
+  public function getAuddisDates()
   {
     $auddisDates = array();
     $processedAuddisDates = array();
@@ -166,12 +174,13 @@ class CRM_Smartdebit_Auddis
 
   /**
    * Parse returned data from smartdebit for an auddis record and add to processed/unprocessed array
-   * @param $auddis
-   * @param $processed
-   * @param $unprocessed
+   * @param array $auddis
+   * @param array $processed
+   * @param array $unprocessed
+   *
    * @return array
    */
-  static function parseAuddisFromSmartDebit($auddis, $processed, $unprocessed) {
+  private static function parseAuddisFromSmartDebit($auddis, $processed, $unprocessed) {
     if (isset($auddis['report_generation_date'])) {
       CRM_Smartdebit_Auddis::addAuddisRecord($auddis);
       $auddisDate = date('Y-m-d', strtotime($auddis['report_generation_date']));
@@ -191,7 +200,7 @@ class CRM_Smartdebit_Auddis
    *
    * @return bool True if successful, FALSE otherwise
    */
-  function getAruddDates() {
+  public function getAruddDates() {
     $aruddDates = array();
     $processedAruddDates = array();
 
@@ -220,12 +229,14 @@ class CRM_Smartdebit_Auddis
 
   /**
    * Parse returned data from smartdebit for an arudd record and add to processed/unprocessed array
-   * @param $auddis
-   * @param $processed
-   * @param $unprocessed
+   *
+   * @param array $auddis
+   * @param array $processed
+   * @param array $unprocessed
+   *
    * @return array
    */
-  static function parseAruddFromSmartDebit($arudd, $processed, $unprocessed) {
+  private static function parseAruddFromSmartDebit($arudd, $processed, $unprocessed) {
     if (isset($arudd['current_processing_date'])) {
       CRM_Smartdebit_Auddis::addAruddRecord($arudd);
       $aruddDate = date('Y-m-d', strtotime($arudd['current_processing_date']));
@@ -242,9 +253,11 @@ class CRM_Smartdebit_Auddis
   /**
    * Gets an array of Auddis IDs for processing
    *
+   * @param array $auddisDates
+   *
    * @return array
    */
-  function getAuddisIdsForProcessing($auddisDates = NULL) {
+  public function getAuddisIdsForProcessing($auddisDates = NULL) {
     $auddisIDs = array();
 
     if (!isset($auddisDates)) {
@@ -277,9 +290,12 @@ class CRM_Smartdebit_Auddis
 
   /**
    * Gets an array of Arudd IDs for processing
+   *
+   * @param array $aruddDates
+   *
    * @return array
    */
-  function getAruddIdsForProcessing($aruddDates = NULL) {
+  public function getAruddIdsForProcessing($aruddDates = NULL) {
     $aruddIDs = array();
 
     if (!isset($aruddDates)) {
@@ -313,10 +329,12 @@ class CRM_Smartdebit_Auddis
 
   /**
    * Return TRUE if auddis/arudd record has been processed, FALSE otherwise
-   * @param $auddisId
+   *
+   * @param string $auddisId
+   *
    * @return bool
    */
-  static function isAuddisRecordProcessed($auddisId) {
+  private static function isAuddisRecordProcessed($auddisId) {
     if (empty($auddisId)) {
       return FALSE;
     }
@@ -332,11 +350,13 @@ class CRM_Smartdebit_Auddis
 
   /**
    * Set state of auddis/arudd record to processed
-   * @param $auddisId
+   *
+   * @param string $auddisId
    * @param bool $processed
+   *
    * @return bool
    */
-  static function setAuddisRecordProcessed($auddisId, $processed = TRUE) {
+  public static function setAuddisRecordProcessed($auddisId, $processed = TRUE) {
     if (empty($auddisId)) {
       return FALSE;
     }
@@ -350,10 +370,11 @@ class CRM_Smartdebit_Auddis
   /**
    * Get an Auddis or Arudd record from the DB
    *
-   * @param $auddisId
+   * @param string $auddisId
+   *
    * @return bool
    */
-  static function getAuddisRecord($auddisId) {
+  private static function getAuddisRecord($auddisId) {
     if (empty($auddisId)) {
       return FALSE;
     }
@@ -371,7 +392,12 @@ class CRM_Smartdebit_Auddis
     return FALSE;
   }
 
-  static function addAuddisRecord($auddis)
+  /**
+   * @param array $auddis
+   *
+   * @return bool
+   */
+  private static function addAuddisRecord($auddis)
   {
     if (empty($auddis['report_generation_date']) || empty($auddis['auddis_id'])) {
       return FALSE;
@@ -409,6 +435,11 @@ VALUES (%1,%2,%3,%4)";
     return FALSE;
   }
 
+  /**
+   * @param array $arudd
+   *
+   * @return bool
+   */
   public static function addAruddRecord($arudd) {
     if (empty($arudd['current_processing_date']) || empty($arudd['arudd_id'])) {
       return FALSE;
