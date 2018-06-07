@@ -40,9 +40,10 @@ class CRM_Smartdebit_Sync
    * If $auddisIDs and $aruddIDs are not set all available AUDDIS/ARUDD records will be processed.
    *
    * @param bool $interactive
-   * @param null $auddisIDs
-   * @param null $aruddIDs
-   * @return bool|CRM_Queue_Runner
+   * @param array $auddisIDs
+   * @param array $aruddIDs
+   *
+   * @return \CRM_Queue_Runner
    */
   public static function getRunner($interactive=TRUE, $auddisIDs = NULL, $aruddIDs = NULL) {
     // Reset stats
@@ -164,6 +165,9 @@ class CRM_Smartdebit_Sync
     return $runner;
   }
 
+  /**
+   * @param $runner
+   */
   public static function runViaWeb($runner) {
     if ($runner) {
       // Run Everything in the Queue via the Web.
@@ -181,6 +185,9 @@ class CRM_Smartdebit_Sync
    * @param \CRM_Queue_TaskContext $ctx
    * @param $refresh
    * @param $onlyWithRecurId
+   *
+   * @return int
+   * @throws \Exception
    */
   public static function getMandates(CRM_Queue_TaskContext $ctx, $refresh, $onlyWithRecurId) {
     $mandates = CRM_Smartdebit_Mandates::getAll($refresh, $onlyWithRecurId);
@@ -192,11 +199,13 @@ class CRM_Smartdebit_Sync
     }
   }
 
-/**
+  /**
    * Sync the AUDDIS records with contacts
-   *
-   * @param CRM_Queue_TaskContext $ctx
+   * @param \CRM_Queue_TaskContext $ctx
    * @param $smartDebitAuddisIds
+   *
+   * @return int
+   * @throws \Exception
    */
   public static function syncSmartdebitAuddis(CRM_Queue_TaskContext $ctx, $smartDebitAuddisIds)
   {
@@ -225,10 +234,11 @@ class CRM_Smartdebit_Sync
   /**
    * Sync the ARUDD records with contacts
    *
-   * @param CRM_Queue_TaskContext $ctx
+   * @param \CRM_Queue_TaskContext $ctx
    * @param $smartDebitAruddIds
    *
    * @return int
+   * @throws \Exception
    */
   public static function syncSmartdebitArudd(CRM_Queue_TaskContext $ctx, $smartDebitAruddIds) {
     // Add contributions for rejected payments with the status of 'failed'
@@ -257,9 +267,12 @@ class CRM_Smartdebit_Sync
    * Synchronise smart debit payments with CiviCRM
    * We only create new contributions here, anything else has to be done manually using reconciliation
    *
-   * @param CRM_Queue_TaskContext $ctx
-   * @param $smartDebitPayerContacts
+   * @param \CRM_Queue_TaskContext $ctx
+   * @param $start
+   * @param $length
+   *
    * @return int
+   * @throws \Exception
    */
   public static function syncSmartdebitCollectionReports(CRM_Queue_TaskContext $ctx, $start, $length) {
     // Get batch of payments in the collection report to process
@@ -282,13 +295,15 @@ class CRM_Smartdebit_Sync
 
   /**
    * Process the collection/auddis/arudd record and add/update contributions as required
+   *
    * @param string $trxnId
    * @param string $receiveDate
    * @param bool $contributionSuccess
    * @param float $amount
    * @param string $collectionDescription
    *
-   * @return integer|bool
+   * @return bool|int
+   * @throws \CiviCRM_API3_Exception
    */
   private static function processCollection($trxnId, $receiveDate, $contributionSuccess, $amount, $collectionDescription) {
     if (empty($trxnId) || empty($receiveDate)) {
@@ -450,6 +465,7 @@ class CRM_Smartdebit_Sync
   /**
    * Wrapper around Contribution.repeattransaction API
    * This function will only be called when there is an existing (current or previous) contribution for the recurring contribution
+   *
    * @param $contributeParams
    *
    * @return array|bool
@@ -491,11 +507,14 @@ class CRM_Smartdebit_Sync
   /**
    * This function is used to process Auddis and Arudd records from an Auddis/Arudd file
    *
-   * @param $auddisId
-   * @param $auddisFile
-   * @param $refKey
-   * @param $dateKey
+   * @param string $auddisId
+   * @param string $auddisFile
+   * @param string $refKey
+   * @param string $dateKey
+   * @param string $collectionDescription
+   *
    * @return array|bool
+   * @throws \CiviCRM_API3_Exception
    */
   private static function processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey, $collectionDescription) {
     $errors = FALSE;
@@ -552,10 +571,11 @@ class CRM_Smartdebit_Sync
    * Function to check if the contribution is first contribution
    * for the recurring contribution record
    *
-   * @param $newContribution
-   * @param $contributionRecur
+   * @param array $newContribution
+   * @param array $contributionRecur
    *
    * @return array (bool: First Contribution, array: contributionrecord)
+   * @throws \CiviCRM_API3_Exception
    */
   private static function checkIfFirstPayment($newContribution, $contributionRecur) {
     if (empty($newContribution['contribution_recur_id'])) {
@@ -628,9 +648,11 @@ class CRM_Smartdebit_Sync
 
   /**
    * Return difference between two dates in format
-   * @param $date_1
-   * @param $date_2
+   *
+   * @param string $date_1
+   * @param string $date_2
    * @param string $differenceFormat
+   *
    * @return string
    */
   private static function dateDifference($date_1, $date_2, $differenceFormat = '%a')
@@ -648,8 +670,9 @@ class CRM_Smartdebit_Sync
    * Function to return number of days difference to check between current date
    * and payment date to determine if this is first payment or not
    *
-   * @param $frequencyUnit
-   * @param $frequencyInterval
+   * @param string $frequencyUnit
+   * @param int $frequencyInterval
+   *
    * @return int
    */
   private static function daysDifferenceForFrequency($frequencyUnit, $frequencyInterval) {
@@ -675,8 +698,11 @@ class CRM_Smartdebit_Sync
 
   /**
    * Helper function to trigger updateRecurringContributions via taskrunner
+   *
    * @param \CRM_Queue_TaskContext $ctx
-   * @param $smartDebitPayerContactDetails
+   *
+   * @return int
+   * @throws \CiviCRM_API3_Exception
    */
   public static function updateRecurringContributionsTask(CRM_Queue_TaskContext $ctx) {
     self::updateRecurringContributions();
@@ -685,8 +711,6 @@ class CRM_Smartdebit_Sync
 
   /**
    * Update parameters of CiviCRM recurring contributions that represent Smartdebit Direct Debit Mandates
-   *
-   * @param $smartDebitPayerContactDetails
    *
    * @throws \CiviCRM_API3_Exception
    */
