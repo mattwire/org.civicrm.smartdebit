@@ -52,8 +52,7 @@ function smartdebit_civicrm_xmlMenu(&$files) {
 function smartdebit_civicrm_install()
 {
   // On install, create a table for keeping track of online direct debits
-  CRM_Core_DAO::executeQuery("
-         CREATE TABLE IF NOT EXISTS `civicrm_direct_debit` (
+  $createSql = "CREATE TABLE IF NOT EXISTS `civicrm_direct_debit` (
         `id`                        int(10) unsigned NOT NULL auto_increment,
         `created`                   datetime NOT NULL,
         `data_type`                 varchar(16),
@@ -84,24 +83,21 @@ function smartdebit_civicrm_install()
         PRIMARY KEY  (`id`),
         KEY `entity_id` (`entity_id`),
         KEY `data_type` (`data_type`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;
-    ");
+        ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1";
+  CRM_Core_DAO::executeQuery($createSql);
 
   // Create a table to store AUDDIS/ARUDD dates
-  if (!CRM_Core_DAO::checkTableExists('veda_smartdebit_auddis')) {
-    $createSql = "CREATE TABLE `veda_smartdebit_auddis` (
+  $createSql = "CREATE TABLE IF NOT EXISTS `veda_smartdebit_auddis` (
                    `id` int(10) unsigned NOT NULL, 
                    `date` date DEFAULT NULL,
                    `type` tinyint DEFAULT NULL,
                    `processed` boolean DEFAULT FALSE,
                   PRIMARY KEY (`id`, `type`)
          ) ENGINE=InnoDB AUTO_INCREMENT=350 DEFAULT CHARSET=latin1";
-    CRM_Core_DAO::executeQuery($createSql);
-  }
+  CRM_Core_DAO::executeQuery($createSql);
 
   // Create a table to store imported collection reports (CRM_Smartdebit_Api::getCollectionReport())
-  if (!CRM_Core_DAO::checkTableExists('veda_smartdebit_collectionreports')) {
-    $createSql = "CREATE TABLE `veda_smartdebit_collectionreports` (
+  $createSql = "CREATE TABLE IF NOT EXISTS `veda_smartdebit_collectionreports` (
                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT, 
                    `transaction_id` varchar(255) DEFAULT NULL,
                    `contact` varchar(255) DEFAULT NULL,
@@ -111,12 +107,10 @@ function smartdebit_civicrm_install()
                    `receive_date` varchar(255) DEFAULT NULL,
                   PRIMARY KEY (`id`)
          ) ENGINE=InnoDB AUTO_INCREMENT=350 DEFAULT CHARSET=latin1";
-    CRM_Core_DAO::executeQuery($createSql);
-  }
+  CRM_Core_DAO::executeQuery($createSql);
 
   // This table is used to store the last set of successful imports
-  if (!CRM_Core_DAO::checkTableExists('veda_smartdebit_success_contributions')) {
-    $createSql = "CREATE TABLE `veda_smartdebit_success_contributions` (
+  $createSql = "CREATE TABLE IF NOT EXISTS `veda_smartdebit_success_contributions` (
                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT, 
                    `transaction_id` varchar(255) DEFAULT NULL,
                    `contribution_id` int(11) DEFAULT NULL,
@@ -126,12 +120,10 @@ function smartdebit_civicrm_install()
                    `frequency` varchar(255) DEFAULT NULL,
                   PRIMARY KEY (`id`)
          ) ENGINE=InnoDB AUTO_INCREMENT=350 DEFAULT CHARSET=latin1";
-    CRM_Core_DAO::executeQuery($createSql);
-  }
+  CRM_Core_DAO::executeQuery($createSql);
 
-  // If no civicrm_sd, then create that table
-  if (!CRM_Core_DAO::checkTableExists('veda_smartdebit_mandates')) {
-    $createSql = "CREATE TABLE `veda_smartdebit_mandates` (
+  // This table is used to store the cached smartdebit mandates
+  $createSql = "CREATE TABLE IF NOT EXISTS `veda_smartdebit_mandates` (
             `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
             `title` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
             `first_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -154,11 +146,10 @@ function smartdebit_civicrm_install()
             `recur_id` int(10) unsigned COMMENT 'ID of recurring contribution',
             PRIMARY KEY (`id`)
            ) ENGINE=InnoDB AUTO_INCREMENT=350 DEFAULT CHARSET=latin1";
+  CRM_Core_DAO::executeQuery($createSql);
 
-    CRM_Core_DAO::executeQuery($createSql);
-    $alterQuery = "alter table veda_smartdebit_mandates add index reference_number_idx(reference_number)";
-    CRM_Core_DAO::executeQuery($alterQuery);
-  }
+  $alterQuery = "ALTER TABLE veda_smartdebit_mandates ADD index reference_number_idx(reference_number)";
+  CRM_Core_DAO::executeQuery($alterQuery);
 
   _smartdebit_civix_civicrm_install();
 }
