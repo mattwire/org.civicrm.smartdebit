@@ -33,8 +33,17 @@ class CRM_Smartdebit_Form_DataSource extends CRM_Core_Form {
 
   public function buildQuickForm() {
     $this->assign('period', CRM_Smartdebit_Settings::getValue('cr_cache'));
-    // Add datepicker to select the end date
-    $this->add('datepicker', 'collection_date', ts('Collection Date'), array(), FALSE, array('time' => FALSE));
+
+    try {
+      $syncJob = civicrm_api3('Job', 'getsingle', [
+        'return' => ["is_active"],
+        'name' => "Sync from Smart Debit",
+        'options' => ['sort' => "is_active DESC", 'limit' => 1],
+      ]);
+      $this->assign('sync_active', CRM_Utils_Array::value('is_active', $syncJob, 0));
+    }
+    catch (Exception $e) {}
+
     $this->addButtons(array(
         array(
           'type' => 'submit',
@@ -43,7 +52,7 @@ class CRM_Smartdebit_Form_DataSource extends CRM_Core_Form {
         ),
       )
     );
-    CRM_Utils_System::setTitle('Synchronise CiviCRM with Smart Debit: Choose Date Range');
+    CRM_Utils_System::setTitle(ts('Synchronise CiviCRM with Smart Debit'));
   }
 
   /**
@@ -52,23 +61,12 @@ class CRM_Smartdebit_Form_DataSource extends CRM_Core_Form {
    * @throws \Exception
    */
   public function postProcess() {
-    $exportValues = $this->controller->exportValues();
-    $dateOfCollection = $exportValues['collection_date'];
+    // If no collection date specified we retrieve the daily collection report (just like scheduled sync)
+    $count = CRM_Smartdebit_CollectionReports::retrieveDaily();
 
     $queryParams = [];
-
-    // If no collection date specified we retrieve the daily collection report (just like scheduled sync)
-    // Otherwise, we retrieve all collection reports up to the cache period (default 1 year)
-    if (empty($dateOfCollection)) {
-      CRM_Smartdebit_CollectionReports::retrieveDaily();
-    }
-    else {
-      $dateOfCollection = date('Y-m-d', strtotime($dateOfCollection));
-      $queryParams['collection_date'] = urlencode($dateOfCollection);
-      CRM_Smartdebit_CollectionReports::retrieveAll($dateOfCollection);
-    }
-
-    $queryParams['reset']=1;
+    $queryParams['crcount'] = $count;
+    $queryParams['reset'] = 1;
     $url = CRM_Utils_System::url('civicrm/smartdebit/syncsd/select', $queryParams); // SyncSD form
     CRM_Utils_System::redirect($url);
   }

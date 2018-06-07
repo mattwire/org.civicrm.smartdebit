@@ -27,26 +27,72 @@
     {include file="CRM/common/formButtons.tpl" location="top"}
   </div>
 
-  <h2>Configuration</h2>
+  {if $apiStatus}
+    <h3>Smart Debit API Connection</h3>
+    <div>{$apiStatus}</div>
+    <div class="clear"></div>
+  {/if}
 
-  {foreach from=$elementGroups item=elementGroup}
-    <div class="clear">
-      <br />
-      <h3>{$elementGroup.title}</h3>
-      <div class="help">{$elementGroup.description}</div>
-      <table class="form-layout-compressed">
-        {foreach from=$elementGroup.elementNames item=elementName}
-          <tr><td>
-              {$form.$elementName.html}
-              <label for="{$elementName}">{$form.$elementName.label} {help id=$elementName title=$form.$elementName.label}</label>
-            </td></tr>
-        {/foreach}
-      </table>
-    </div>
-  {/foreach}
+  {if $sdStatus}
+    <h3>Smart Debit API Status</h3>
+    <table class="form-layout-compressed"><tbody>
+      <tr><td>
+          <label>Response</label>
+          {$sdStatus.statuscode} {$sdStatus.message} {$sdStatus.error}&nbsp;
+        </td></tr>
+      <tr><td>
+          <label>API Version</label>
+          {$sdStatus.api_version}
+        </td></tr>
+
+      <tr><td>
+          <label>Service Users</label>
+          {foreach from=$sdStatus.user.assigned_service_users.service_user item=pslid}
+            {$pslid}
+          {/foreach}
+        </td></tr>
+
+      </tbody></table>
+  {/if}
+
+  {if $sdStatusTest}
+    <h3>Smart Debit Test API Status</h3>
+    <table class="form-layout-compressed"><tbody>
+      <tr><td>
+          <label>Response</label>
+          {$sdStatusTest.statuscode} {$sdStatusTest.message} {$sdStatusTest.error}
+        </td></tr>
+      <tr><td>
+          <label>API Version</label>
+          {$sdStatusTest.api_version}
+        </td></tr>
+      <tr><td>
+          <label>Service Users</label>
+          {foreach from=$sdStatusTest.user.assigned_service_users.service_user item=pslid}
+            {$pslid}
+          {/foreach}
+        </td></tr>
+      </tbody></table>
+  {/if}
+
+  <h3>Mandates</h3>
+  <table class="form-layout-compressed"><tbody>
+    <tr><td>
+        <label>Cached Mandates</label>
+        {$sdMandateCount}
+    </td></tr>
+    </tbody></table>
+
+  <h3>Collection Reports</h3>
+  <table class="form-layout-compressed"><tbody>
+    <tr><td>
+        <label>Cached Collection Reports</label>
+        {$sdCRCount}
+    </td></tr>
+  </tbody></table>
 
   {* FOOTER *}
   <div class="crm-submit-buttons">
     {include file="CRM/common/formButtons.tpl" location="bottom"}
   </div>
-  </div>
+</div>

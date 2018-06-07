@@ -54,6 +54,13 @@ function civicrm_api3_smartdebit_updaterecurring($params) {
   return civicrm_api3_create_success();
 }
 
+/**
+ * API Smartdebit.getmandates
+ * @param $params
+ *
+ * @return array
+ * @throws \API_Exception
+ */
 function civicrm_api3_smartdebit_getmandates($params) {
   if (empty($params['refresh'])) {
     $params['refresh'] = FALSE;
@@ -83,5 +90,59 @@ function _civicrm_api3_smartdebit_getmandates_spec(&$spec) {
   $spec['trxn_id']['title'] = 'Transaction ID / Reference Number';
   $spec['trxn_id']['description'] = 'The Smartdebit "Reference Number" / CiviCRM Transaction ID (eg. WEB00000123)';
   $spec['trxn_id']['type'] = CRM_Utils_Type::T_STRING;
+}
+
+/**
+ * API Smartdebit.getcollectionreports
+ *
+ * @param $params
+ *
+ * @return array
+ * @throws \API_Exception
+ */
+function civicrm_api3_smartdebit_retrievecollectionreports($params) {
+  if (!isset($params['daily'])) {
+    $params['daily'] = TRUE;
+  }
+  if (!isset($params['collection_date'])) {
+    $params['collection_date'] = '';
+  }
+  if (!isset($params['collection_period'])) {
+    $params['collection_period'] = CRM_Smartdebit_Settings::getValue('cr_cache');
+  }
+
+  if ($params['daily']) {
+    $count = CRM_Smartdebit_CollectionReports::retrieveDaily($params['collection_date']);
+  }
+  else {
+    $count = CRM_Smartdebit_CollectionReports::retrieveAll($params['collection_date'], $params['collection_period']);
+  }
+  return array('count' => $count);
+}
+
+function _civicrm_api3_smartdebit_retrievecollectionreports_spec(&$spec) {
+  $spec['daily']['api.required'] = 1;
+  $spec['daily']['title'] = 'Retrieve Daily Report Only';
+  $spec['daily']['description'] = 'Whether to retrieve daily collection report or all (up to cache period)';
+  $spec['daily']['type'] = CRM_Utils_Type::T_BOOLEAN;
+  $spec['collection_date']['api.required'] = 0;
+  $spec['collection_date']['title'] = 'Collection date (eg. 2010-02-12)';
+  $spec['collection_date']['type'] = CRM_Utils_Type::T_STRING;
+  $spec['collection_period']['api.required'] = 0;
+  $spec['collection_period']['title'] = 'Collection period';
+  $spec['collection_period']['description'] = 'The period to retrieve collection reports for. Defaults to "-1 year". Must be valid per http://www.php.net/manual/en/datetime.formats.php';
+  $spec['collection_period']['type'] = CRM_Utils_Type::T_STRING;
+}
+
+function civicrm_api3_smartdebit_getcollectionreportscount($params) {
+  return array('count' => CRM_Smartdebit_CollectionReports::count());
+}
+
+function civicrm_api3_smartdebit_getcollectionreports($params) {
+  if (isset($params['options'])) {
+    $params['limit'] = CRM_Utils_Array::value('limit', $params['options'], 0);
+    $params['offset'] = CRM_Utils_Array::value('offset', $params['options'], 0);
+  }
+  return array('reports' => CRM_Smartdebit_CollectionReports::get($params));
 }
 

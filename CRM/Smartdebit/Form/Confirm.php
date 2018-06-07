@@ -88,24 +88,19 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
 
     $this->addButtons(array(
         array(
-          'type' => 'submit',
-          'name' => ts('Confirm Sync'),
-          'isDefault' => TRUE,
-        ),
-        array(
           'type' => 'cancel',
           'js' => array('onclick' => "location.href='{$redirectUrlBack}'; return false;"),
           'name' => ts('Cancel'),
-        )
+        ),
+        array(
+          'type' => 'submit',
+          'name' => ts('Confirm'),
+          'isDefault' => TRUE,
+        ),
       )
     );
 
-    if ($this->status) {
-      CRM_Utils_System::setTitle('Synchronise CiviCRM with Smart Debit: Results of Sync');
-    }
-    else {
-      CRM_Utils_System::setTitle('Synchronise CiviCRM with Smart Debit: Confirm Sync');
-    }
+    CRM_Utils_System::setTitle(ts('Synchronise CiviCRM with Smart Debit'));
   }
 
   public function postProcess() {

@@ -276,7 +276,11 @@ class CRM_Smartdebit_Sync
    */
   public static function syncSmartdebitCollectionReports(CRM_Queue_TaskContext $ctx, $start, $length) {
     // Get batch of payments in the collection report to process
-    $smartDebitPayments  = array_slice(CRM_Smartdebit_CollectionReports::getallPayments(), $start, $length, TRUE);
+    $collectionReportParams = [
+      'limit' => $length,
+      'offset' => $start
+    ];
+    $smartDebitPayments = CRM_Smartdebit_CollectionReports::get($collectionReportParams);
 
     // Import each transaction from smart debit
     foreach ($smartDebitPayments as $key => $sdPayment) {

@@ -63,7 +63,7 @@ in CiviCRM will be "Pending", as it could fail.  However, this means that new me
 {ts}Enabling this parameter will set the payment to completed immediately (it will still change to failed if it cannot be taken) and allow the
  memberships etc to become active.{/ts}
 {/htxt}
-{htxt id='smartdebit_cr_cache'}
+{htxt id='cr_cache'}
 {ts}How long should CiviCRM cache collection reports from SmartDebit?  The default is 1 year but you can change this to anything reasonable here -
  consider that a longer time will increase time it takes to sync as well as database size.{/ts}
  <br/>{ts}Must be a valid format per: <a href="http://www.php.net/manual/en/datetime.formats.php">Date and Time Formats</a>{/ts}

@@ -32,26 +32,6 @@ use CRM_Smartdebit_ExtensionUtil as E;
  */
 class CRM_Smartdebit_Form_SettingsCustom extends CRM_Smartdebit_Form_Settings {
 
-  public static function buildQuickFormPre(&$form) {
-    try {
-      $sdStatus = CRM_Smartdebit_Api::getSystemStatus(FALSE);
-      $sdStatusTest = CRM_Smartdebit_Api::getSystemStatus(TRUE);
-      $form->assign('sdStatus', $sdStatus);
-      $form->assign('sdStatusTest', $sdStatusTest);
-
-      // Get counts
-      $sdMandateCount = CRM_Smartdebit_Mandates::count();
-      $sdCRCount = CRM_Smartdebit_CollectionReports::count();
-      $form->assign('sdMandateCount', $sdMandateCount);
-      $form->assign('sdCRCount', $sdCRCount);
-    }
-    catch (Exception $e) {
-      // Do nothing here. Api will throw exception if API URL is not configured, which it won't be if
-      // Smartdebit payment processor has not been setup yet.
-      $form->assign('apiStatus', 'No Smartdebit payment processors are configured yet!');
-    }
-  }
-
   public static function addSelectElement(&$form, $name, $setting) {
     switch ($name) {
       case 'payment_instrument_id':

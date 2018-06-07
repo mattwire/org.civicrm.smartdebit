@@ -22,42 +22,17 @@
 | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
 +-------------------------------------------------------------------*}
 
-<h3>{ts}Select the date you wish to import data for:{/ts}</h3>
-<div class="crm-block crm-form-block crm-export-form-block">
+<h3>{ts}CiviCRM will retrieve the latest Collection Reports, AUDDIS and ARUDD records from Smartdebit and create/update related contribution records.{/ts}</h3>
+<div class="crm-block crm-form-block crm-smartdebit-sync-form-block">
   <div class="description">
-    <p>{ts}CiviCRM will attempt to retrieve Collection Reports, AUDDIS and ARUDD records from Smartdebit for a {$period} period ending with the date you specify here.{/ts}</p>
+    <h3>{ts}Automatic Synchronisation is {/ts}{if $sync_active}{ts}ENABLED{/ts}{else}{ts}DISABLED{/ts}{/if}</h3>
   </div>
   <div class="help">
-        <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}The Smartdebit scheduled job automatically synchronises and caches the latest daily collection report.
-          Collection reports older than {$period} will be removed from the local cache.{/ts}
-          <ul>
-            <li>{ts}If you specify a date here the local cache will be cleared and {$period} up to the specified date will be retrieved (this may take a few minutes).{/ts}</li>
-            <li>{ts}If you don't specify a date the cached data will not be modified and ONLY the latest daily report will be retrieved.{/ts}</li>
-            <li><strong>{ts}If you have recently installed the smartdebit extension you should specify today's date here to force an update of the local cache for the last {$period} period.{/ts}</strong></li>
-          </ul>
+        <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}The Smartdebit scheduled job automatically synchronises and caches the latest daily collection report.{/ts}
+          {ts 1=$period}Collection reports older than %1 will be removed from the local cache.{/ts}<br />
       </span>
   </div>
-  <div class="crm-block crm-form-block crm-campaignmonitor-sync-form-block">
-    <div class="crm-submit-buttons">
-      {include file="CRM/common/formButtons.tpl"}
-    </div>
+  <div class="crm-submit-buttons">
+    {include file="CRM/common/formButtons.tpl"}
   </div>
-
-  <div class="crm-block crm-form-block" >
-    <div class="label">Collection Date: </div>
-    <div class="content">
-      <input id="collection_date" name="collection_date" type="text" value="{$collection_date}"/>
-    </div>
-
-    <script type="text/javascript">
-      {literal}
-      // Date picker
-      var dateOptions = {
-        dateFormat: 'yy-mm-dd', time: false, allowClear: true
-      };
-      cj('#collection_date').crmDatepicker(dateOptions);
-    </script>
-    {/literal}
-  </div><br />
-  <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl" location="bottom"}</div>
 </div>

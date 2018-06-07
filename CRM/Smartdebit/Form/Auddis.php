@@ -270,7 +270,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
     );
 
     $this->addButtons($buttons);
-    CRM_Utils_System::setTitle('Synchronise CiviCRM with Smart Debit: View Results');
+    CRM_Utils_System::setTitle(ts('Synchronise CiviCRM with Smart Debit'));
 
     $summary['Contribution already processed']['count'] = CRM_Utils_Array::value('contribution_existing', $counts);
     $summary['Contribution already processed']['total'] = CRM_Utils_Money::format(CRM_Utils_Array::value('contribution_existing_amount', $counts));

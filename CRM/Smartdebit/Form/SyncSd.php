@@ -40,8 +40,12 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
    * Retrieves a list of available AUDDIS / ARUDD dates and displays them for selection
    */
   public function buildQuickForm() {
+    // Get number of retrieved collection reports
+    $collectionReportRetrievedCount = CRM_Utils_Request::retrieve('crcount', 'Integer', $this, FALSE);
+    $this->assign('collectionReportRetrievedCount', $collectionReportRetrievedCount);
+
     // Get date of collection (or set to today if not set)
-    $dateOfCollectionEnd = CRM_Utils_Request::retrieve('collection_date', 'String', $this, false);
+    $dateOfCollectionEnd = CRM_Utils_Request::retrieve('collection_date', 'String', $this, FALSE);
     if (empty($dateOfCollectionEnd)) {
       $now = new DateTime();
       $dateOfCollectionEnd = date('Y-m-d', (string)$now->getTimestamp()); // Today
@@ -132,7 +136,7 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
         array(
           'type' => 'back',
           'js' => array('onclick' => "location.href='{$redirectUrlBack}'; return false;"),
-          'name' => ts('Change Date Range'),
+          'name' => ts('Back'),
         ),
         array(
           'type' => 'submit',
@@ -141,7 +145,7 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
         ),
       )
     );
-    CRM_Utils_System::setTitle('Synchronise CiviCRM with Smart Debit: Choose data');
+    CRM_Utils_System::setTitle(ts('Synchronise CiviCRM with Smart Debit'));
     parent::buildQuickForm();
   }
 
