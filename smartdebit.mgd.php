@@ -55,6 +55,7 @@ return array(
   1 => array (
     'name' => 'Cron:SmartDebit.syncFromSmartDebit',
     'entity' => 'Job',
+    'update' => 'never',
     'params' => array (
       'version' => 3,
       'name' => 'Sync from Smart Debit',
