@@ -45,7 +45,7 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     $sync = CRM_Utils_Array::value('sync', $_GET, '');
     if ($sync) {
       // Do a sync
-      CRM_Smartdebit_Mandates::getFromSmartdebit();
+      CRM_Smartdebit_Mandates::retrieveAll();
 
       // Redirect back to this form
       $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/list', 'reset=1');

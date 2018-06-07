@@ -25,17 +25,17 @@ class CRM_Smartdebit_Mandates {
   /**
    * Batch task to retrieve payer contact details (mandates)
    *
-   * @return array|bool
+   * @return bool Number of mandates retrieved
    * @throws \Exception
    */
-  public static function getFromSmartdebit() {
+  public static function retrieveAll() {
     Civi::log()->info('Smartdebit Sync: Retrieving Smart Debit Payer Contact Details.');
     // Get list of payers from Smartdebit
     $smartDebitPayerContacts = CRM_Smartdebit_Api::getPayerContactDetails();
 
     // Update mandates table for reconciliation functions
     self::updateCache($smartDebitPayerContacts, TRUE);
-    return $smartDebitPayerContacts;
+    return count($smartDebitPayerContacts);
   }
 
   /**
@@ -98,7 +98,7 @@ class CRM_Smartdebit_Mandates {
   public static function getAll($refresh, $onlyWithRecurId=FALSE) {
     if ($refresh) {
       // Update the cached mandate
-      self::getFromSmartdebit();
+      self::retrieveAll();
     }
 
     $sql = "SELECT * FROM `veda_smartdebit_mandates`";
@@ -139,7 +139,7 @@ class CRM_Smartdebit_Mandates {
    * @param array $smartDebitPayerContactDetails (array of smart debit contact details : call CRM_Smartdebit_Api::getPayerContactDetails())
    * @param bool $truncate If true, truncate the table before inserting new records.
    *
-   * @return bool|int
+   * @return bool
    */
   public static function updateCache($smartDebitPayerContactDetails, $truncate = FALSE) {
     if ($truncate) {
@@ -223,8 +223,7 @@ class CRM_Smartdebit_Mandates {
       );
       CRM_Core_DAO::executeQuery($sql, $params);
     }
-    $mandateFetchedCount = count($smartDebitPayerContactDetails);
-    return $mandateFetchedCount;
+    return TRUE;
   }
 
 }

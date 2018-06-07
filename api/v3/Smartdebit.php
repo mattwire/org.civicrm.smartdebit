@@ -55,6 +55,18 @@ function civicrm_api3_smartdebit_updaterecurring($params) {
 }
 
 /**
+ * API Smartdebit.retrievemandates
+ * @param $params
+ *
+ * @return array
+ * @throws \API_Exception
+ */
+function civicrm_api3_smartdebit_retrievemandates($params) {
+  $count = CRM_Smartdebit_Mandates::retrieveAll();
+  return array('count' => $count);
+}
+
+/**
  * API Smartdebit.getmandates
  * @param $params
  *
