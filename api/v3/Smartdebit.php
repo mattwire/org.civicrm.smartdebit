@@ -105,6 +105,17 @@ function _civicrm_api3_smartdebit_getmandates_spec(&$spec) {
 }
 
 /**
+ * API Smartdebit.getmandatescount
+ *
+ * @param $params
+ *
+ * @return array
+ */
+function civicrm_api3_smartdebit_getmandatescount($params) {
+  return array('count' => CRM_Smartdebit_Mandates::count());
+}
+
+/**
  * API Smartdebit.getcollectionreports
  *
  * @param $params
@@ -146,10 +157,24 @@ function _civicrm_api3_smartdebit_retrievecollectionreports_spec(&$spec) {
   $spec['collection_period']['type'] = CRM_Utils_Type::T_STRING;
 }
 
+/**
+ * API Smartdebit.getcollectionreportscount
+ *
+ * @param $params
+ *
+ * @return array
+ */
 function civicrm_api3_smartdebit_getcollectionreportscount($params) {
   return array('count' => CRM_Smartdebit_CollectionReports::count());
 }
 
+/**
+ * API Smartdebit.getcollectionreports
+ *
+ * @param $params
+ *
+ * @return array
+ */
 function civicrm_api3_smartdebit_getcollectionreports($params) {
   if (isset($params['options'])) {
     $params['limit'] = CRM_Utils_Array::value('limit', $params['options'], 0);
