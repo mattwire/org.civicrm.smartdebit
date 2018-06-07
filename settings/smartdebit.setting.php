@@ -27,6 +27,9 @@ return array(
 
   //payment_instrument_id
   'smartdebit_payment_instrument_id' => array(
+    'admin_group' => 'smartdebit_general',
+    'admin_grouptitle' => 'General Settings',
+    'admin_groupdescription' => 'Check the description for each setting and make sure it is configured correctly.',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_payment_instrument_id',
@@ -42,6 +45,7 @@ return array(
 
   //financial_type
   'smartdebit_financial_type' => array(
+    'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_financial_type',
@@ -57,6 +61,7 @@ return array(
 
   //activity_type
   'smartdebit_activity_type' => array(
+    'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_activity_type',
@@ -72,6 +77,7 @@ return array(
 
   //activity_type_letter
   'smartdebit_activity_type_letter' => array(
+    'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_activity_type_letter',
@@ -87,6 +93,7 @@ return array(
 
   //collection_interval
   'smartdebit_collection_interval' => array(
+    'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_collection_interval',
@@ -104,6 +111,7 @@ return array(
 
   //collection_days
   'smartdebit_collection_days' => array(
+    'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_collection_days',
@@ -121,6 +129,7 @@ return array(
 
   //Advance notice period
   'smartdebit_notice_period' => array(
+    'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_notice_period',
@@ -138,6 +147,7 @@ return array(
 
   //service_user_number
   'smartdebit_service_user_number' => array(
+    'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_service_user_number',
@@ -155,6 +165,7 @@ return array(
 
   //transaction_prefix
   'smartdebit_transaction_prefix' => array(
+    'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_transaction_prefix',
@@ -172,6 +183,7 @@ return array(
 
   //initial_completed
   'smartdebit_initial_completed' => array(
+    'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_initial_completed',
@@ -188,6 +200,7 @@ return array(
 
   //Confirm by
   'smartdebit_confirmby_post' => array(
+    'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_confirmby_post',
@@ -204,6 +217,7 @@ return array(
 
   //Confirm by
   'smartdebit_confirmby_email' => array(
+    'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_confirmby_email',
@@ -219,7 +233,10 @@ return array(
   ),
 
 // Debug mode
-    'smartdebit_debug' => array(
+  'smartdebit_debug' => array(
+    'admin_group' => 'smartdebit_debug',
+    'admin_grouptitle' => 'Debug Settings',
+    'admin_groupdescription' => 'Settings that can be used for debugging.',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_debug',
@@ -236,6 +253,7 @@ return array(
 
   //Collection report cache retention period
   'smartdebit_cr_cache' => array(
+    'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
     'name' => 'smartdebit_cr_cache',

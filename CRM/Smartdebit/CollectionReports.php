@@ -10,21 +10,21 @@ class CRM_Smartdebit_CollectionReports {
   const COLLECTION_REPORT_BACKTRACK_DAYS = 7;
 
   /**
-   * Function to get the retrived collection report count
+   * Function to get the retrieved collection report count
    *
    * @return int
    */
   public static function count() {
-
     $count = CRM_Core_DAO::singleValueQuery("SELECT count(*) FROM `" . self::TABLENAME . "`");
     return $count;
   }
 
   /**
    * Batch task to retrieve daily collection reports
+   *  This will retrieve all collection reports for the past (COLLECTION_REPORT_BACKTRACK_DAYS default=7) days.
+   *  This allows us to handle server outages and collection reports only available after certain number of days.
    */
   public static function retrieveDaily() {
-    // FIXME: We should probably retry if this fails, but there is not a report for every day so would need to handle that too.
     // Get collection report for today
     Civi::log()->info('Smartdebit Sync: Retrieving Daily Collection Report.');
 
@@ -42,7 +42,7 @@ class CRM_Smartdebit_CollectionReports {
   }
 
   /**
-   * Function to get the all available payments in the collection reports
+   * Function to get all available payments in the collection reports
    *
    * @return array
    */
@@ -133,8 +133,9 @@ class CRM_Smartdebit_CollectionReports {
   /**
    * This gets all the collection reports for the time period ending $dateOfCollection and starting 'cr_cache' days/months earlier
    *
-   * @param $dateOfCollection
-   * @return array
+   * @param string $dateOfCollection - if empty it will be set to todays date.
+   *
+   * @throws \Exception
    */
   public static function getAll($dateOfCollection) {
     if( empty($dateOfCollection)){
