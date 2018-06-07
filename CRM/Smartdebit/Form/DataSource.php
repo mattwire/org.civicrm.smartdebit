@@ -49,29 +49,26 @@ class CRM_Smartdebit_Form_DataSource extends CRM_Core_Form {
   /**
    * Process the collection report
    *
-   * @return void
-   * @access public
+   * @throws \Exception
    */
   public function postProcess() {
-    $exportValues     = $this->controller->exportValues();
+    $exportValues = $this->controller->exportValues();
     $dateOfCollection = $exportValues['collection_date'];
 
-    $queryParams='';
-    // Set collection date, otherwise we'll default to todays date
-    if (!empty($dateOfCollection)) {
+    $queryParams = [];
+
+    // If no collection date specified we retrieve the daily collection report (just like scheduled sync)
+    // Otherwise, we retrieve all collection reports up to the cache period (default 1 year)
+    if (empty($dateOfCollection)) {
+      CRM_Smartdebit_CollectionReports::retrieveDaily();
+    }
+    else {
       $dateOfCollection = date('Y-m-d', strtotime($dateOfCollection));
-      $queryParams.='collection_date='.urlencode($dateOfCollection);
+      $queryParams['collection_date'] = urlencode($dateOfCollection);
+      CRM_Smartdebit_CollectionReports::retrieveAll($dateOfCollection);
     }
 
-    $collections = CRM_Smartdebit_CollectionReports::getAll($dateOfCollection);
-    if (!isset($collections['error'])) {
-      CRM_Smartdebit_CollectionReports::save($collections);
-    }
-
-    if (!empty($queryParams)){
-      $queryParams.='&';
-    }
-    $queryParams.='reset=1';
+    $queryParams['reset']=1;
     $url = CRM_Utils_System::url('civicrm/smartdebit/syncsd/select', $queryParams); // SyncSD form
     CRM_Utils_System::redirect($url);
   }

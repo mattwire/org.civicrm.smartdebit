@@ -137,13 +137,7 @@ class CRM_Smartdebit_CollectionReports {
    *
    * @throws \Exception
    */
-  public static function getAll($dateOfCollection) {
-    if( empty($dateOfCollection)){
-      $collections['error'] = 'Please specify a collection date';
-      return $collections;
-    }
-    $collections = array();
-
+  public static function retrieveAll($dateOfCollection) {
     // Empty the collection reports table
     $emptySql = "TRUNCATE TABLE veda_smartdebit_collectionreports";
     CRM_Core_DAO::executeQuery($emptySql);
@@ -156,13 +150,13 @@ class CRM_Smartdebit_CollectionReports {
 
     // Iterate back one day at a time requesting reports
     while ($dateCurrent > $dateStart) {
-      $newCollections = CRM_Smartdebit_Api::getCollectionReport($dateCurrent->format('Y-m-d'));
-      if (!isset($newCollections['error'])) {
-        $collections = array_merge($collections, $newCollections);
+      $collectionReports = CRM_Smartdebit_Api::getCollectionReport($dateCurrent->format('Y-m-d'));
+      if (!isset($collectionReports['error'])) {
+        // Save the retrieved collection reports
+        CRM_Smartdebit_CollectionReports::save($collectionReports);
       }
       $dateCurrent->modify('-1 day');
     }
-    return $collections;
   }
 
 }

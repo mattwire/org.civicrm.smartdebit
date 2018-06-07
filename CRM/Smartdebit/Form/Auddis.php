@@ -244,21 +244,15 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
     }
 
     // Create query url for continue
-    $queryParams = '';
-    if (!empty($queryParams)) { $queryParams.='&'; }
+    $queryParams = [];
     if (isset($auddisIDs)) {
-      $queryParams .= "auddisID=" . urlencode(implode(',',$auddisIDs));
+      $queryParams['auddisID'] = urlencode(implode(',', $auddisIDs));
     }
-    if (!empty($queryParams)) { $queryParams.='&'; }
     if (isset($aruddIDs)) {
-      $queryParams .= "aruddID=" . urlencode(implode(',',$aruddIDs));
+      $queryParams['aruddID'] = urlencode(implode(',',$aruddIDs));
     }
-    if (!empty($queryParams)) { $queryParams.='&'; }
-    $queryParams .= 'reset=1';
-
-    $bQueryParams = '';
-    if (!empty($bQueryParams)) { $bQueryParams.='&'; }
-    $bQueryParams.='reset=1';
+    $queryParams['reset'] = 1;
+    $bQueryParams = ['reset' => 1];
 
     $redirectUrlBack = CRM_Utils_System::url('civicrm/smartdebit/syncsd/select', $bQueryParams);
     $buttons[] = array(

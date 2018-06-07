@@ -150,24 +150,19 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
     $auddisDates = $params['includeAuddisDate'];
     $aruddDates = $params['includeAruddDate'];
 
-    // Make the query string to send in the url for the next page
-    $queryParams = '';
     // Get IDs for processing
     $auddisIDs = $this->_auddisProcessor->getAuddisIDsForProcessing($auddisDates);
     $aruddIDs = $this->_auddisProcessor->getAruddIDsForProcessing($aruddDates);
 
-    if (!empty($queryParams)) { $queryParams.='&'; }
+    // Make the query string to send in the url for the next page
+    $queryParams = [];
     if (isset($auddisIDs)) {
-      $queryParams .= "auddisID=" . urlencode(implode(',',$auddisIDs));
+      $queryParams['auddisID'] = urlencode(implode(',',$auddisIDs));
     }
-
-    if (!empty($queryParams)) { $queryParams.='&'; }
     if (isset($aruddIDs)) {
-      $queryParams .= "aruddID=" . urlencode(implode(',',$aruddIDs));
+      $queryParams['aruddID'] = urlencode(implode(',',$aruddIDs));
     }
-
-    if (!empty($queryParams)) { $queryParams.='&'; }
-    $queryParams .= 'reset=1';
+    $queryParams['reset'] = 1;
 
     CRM_Utils_System::redirect(CRM_Utils_System::url( 'civicrm/smartdebit/syncsd/auddis', $queryParams));
     parent::postProcess();

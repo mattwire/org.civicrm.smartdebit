@@ -58,7 +58,8 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     $this->assign('totalMandates', $count);
     if ($count == 0) {
       // Have not done a sync.  Display state and add button to perform sync
-      $queryParams = 'sync=1&reset=1';
+      $queryParams['sync'] = 1;
+      $queryParams['reset'] = 1;
       $redirectUrlContinue  = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/list', $queryParams);
       $buttons[] = array(
         'type' => 'next',
