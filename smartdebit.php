@@ -83,7 +83,7 @@ function smartdebit_civicrm_install()
         PRIMARY KEY  (`id`),
         KEY `entity_id` (`entity_id`),
         KEY `data_type` (`data_type`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1";
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
   CRM_Core_DAO::executeQuery($createSql);
 
   // Create a table to store AUDDIS/ARUDD dates
@@ -93,7 +93,7 @@ function smartdebit_civicrm_install()
                    `type` tinyint DEFAULT NULL,
                    `processed` boolean DEFAULT FALSE,
                   PRIMARY KEY (`id`, `type`)
-         ) ENGINE=InnoDB AUTO_INCREMENT=350 DEFAULT CHARSET=latin1";
+         ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
   CRM_Core_DAO::executeQuery($createSql);
 
   // Create a table to store imported collection reports (CRM_Smartdebit_Api::getCollectionReport())
@@ -105,8 +105,10 @@ function smartdebit_civicrm_install()
                    `amount` decimal(20,2) DEFAULT NULL,
                    `info` int(11) DEFAULT NULL,
                    `receive_date` varchar(255) DEFAULT NULL,
+                   `error_message` varchar(255) DEFAULT NULL,
+                   `success` tinyint NOT NULL,
                   PRIMARY KEY (`id`)
-         ) ENGINE=InnoDB AUTO_INCREMENT=350 DEFAULT CHARSET=latin1";
+         ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
   CRM_Core_DAO::executeQuery($createSql);
 
   // This table is used to store the last set of successful imports
@@ -119,7 +121,7 @@ function smartdebit_civicrm_install()
                    `amount` decimal(20,2) DEFAULT NULL,
                    `frequency` varchar(255) DEFAULT NULL,
                   PRIMARY KEY (`id`)
-         ) ENGINE=InnoDB AUTO_INCREMENT=350 DEFAULT CHARSET=latin1";
+         ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
   CRM_Core_DAO::executeQuery($createSql);
 
   // This table is used to store the cached smartdebit mandates
@@ -145,7 +147,7 @@ function smartdebit_civicrm_install()
             `payerReference` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
             `recur_id` int(10) unsigned COMMENT 'ID of recurring contribution',
             PRIMARY KEY (`id`)
-           ) ENGINE=InnoDB AUTO_INCREMENT=350 DEFAULT CHARSET=latin1";
+           ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
   CRM_Core_DAO::executeQuery($createSql);
 
   $alterQuery = "ALTER TABLE veda_smartdebit_mandates ADD index reference_number_idx(reference_number)";

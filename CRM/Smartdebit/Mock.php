@@ -14,33 +14,9 @@ class CRM_Smartdebit_Mock {
     switch ($api) {
       case 'api/data/dump':
         return self::mockPayerDetails($url, $data, $username, $password);
+      case '/api/ get_successful_collection_report':
+        return self::mockCollectionReports($url);
     }
-  }
-
-  /**
-   * Payer Details API
-   * Eg: https://secure.ddprocessing.co.uk/api/data/dump?query[service_user][pslid]=sdtest&query[report_format]=XML&query[reference_number]=TED00000128
-   * @param $query
-   * @param $data
-   * @param $username
-   * @param $password
-   */
-  private static function mockPayerDetails($url, $data, $username, $password) {
-    $query = self::getQuery($url);
-    $referenceNumber = $query['query[reference_number]'];
-    $header = self::getHeader($url);
-    $error = self::getError();
-
-    // This is the output from a single response:
-    $output = '<?xml version="1.0" encoding="UTF-8"?>
-<DataDump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="newbacs-advices.xsd">
-  <Data>
-    <PayerDetails town="bob" first_name="test" frequency_factor="1" email_address="admin@example.com" address_1="bob" county="" support_gift_aid="false" frequency_type="Y" last_name="test" postcode="ab123de" current_state="10" reference_number="' . $referenceNumber . '" address_2="" first_amount="&#163;55.83" payerReference="203" address_3="" regular_amount="&#163;55.83" start_date="2018-02-20" title=""/>
-  </Data>
-</DataDump>
-';
-
-    return array($header, $output, $error);
   }
 
   /**
@@ -111,6 +87,55 @@ class CRM_Smartdebit_Mock {
       'code' => $code,
       'message' => $message,
     );
+  }
+
+  private static function mockCollectionReports($url) {
+    $output = '<?xml version="1.0" encoding="UTF-8"?>
+<CollectionReport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Successes>
+<Success customer_id="1668701" amount="4.99" debit_date="16/01/2015 00:00" account_name="MRS A R
+PAYER" transaction_ref="" reference_number="ABC133184"/>
+</Successes>
+<Rejects>
+<Rejected customer_id="1765852" amount="4.99" debit_date="16/01/2015 00:00" account_name="MS M
+PAYER" error_message="" transaction_ref="" reference_number="ABC163640"/>
+</Rejects>
+<Summary>
+<CollectionDate>16/01/2015</CollectionDate>
+<Succesful number_submitted="1" amount_submitted="4.99"/>
+<Rejected amount_rejected="4.99" number_rejected="1"/>
+</Summary>
+</CollectionReport>';
+
+    $header = self::getHeader($url);
+    $error = self::getError();
+    return array($header, $output, $error);
+  }
+
+  /**
+   * Payer Details API
+   * Eg: https://secure.ddprocessing.co.uk/api/data/dump?query[service_user][pslid]=sdtest&query[report_format]=XML&query[reference_number]=TED00000128
+   * @param $query
+   * @param $data
+   * @param $username
+   * @param $password
+   */
+  private static function mockPayerDetails($url, $data, $username, $password) {
+    $query = self::getQuery($url);
+    $referenceNumber = $query['query[reference_number]'];
+    $header = self::getHeader($url);
+    $error = self::getError();
+
+    // This is the output from a single response:
+    $output = '<?xml version="1.0" encoding="UTF-8"?>
+<DataDump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="newbacs-advices.xsd">
+  <Data>
+    <PayerDetails town="bob" first_name="test" frequency_factor="1" email_address="admin@example.com" address_1="bob" county="" support_gift_aid="false" frequency_type="Y" last_name="test" postcode="ab123de" current_state="10" reference_number="' . $referenceNumber . '" address_2="" first_amount="&#163;55.83" payerReference="203" address_3="" regular_amount="&#163;55.83" start_date="2018-02-20" title=""/>
+  </Data>
+</DataDump>
+';
+
+    return array($header, $output, $error);
   }
 
 }

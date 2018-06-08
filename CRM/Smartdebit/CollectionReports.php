@@ -14,8 +14,11 @@ class CRM_Smartdebit_CollectionReports {
    *
    * @return int
    */
-  public static function count() {
-    $count = CRM_Core_DAO::singleValueQuery("SELECT count(*) FROM `" . self::TABLENAME . "`");
+  public static function count($params = array()) {
+    $sql = "SELECT count(*) FROM `" . self::TABLENAME . "`";
+    $sql .= self::whereClause($params);
+
+    $count = CRM_Core_DAO::singleValueQuery($sql);
     return $count;
   }
 
@@ -29,13 +32,8 @@ class CRM_Smartdebit_CollectionReports {
   public static function get($params) {
     $sql = "SELECT * FROM `" . self::TABLENAME . "`";
 
-    // Add optional limits
-    if (!empty($params['limit'])) {
-      $sql .= ' LIMIT ' . $params['limit'];
-    }
-    if (!empty($params['offset'])) {
-      $sql .= ' OFFSET ' . $params['offset'];
-    }
+    $sql .= self::limitClause($params);
+    $sql .= self::whereClause($params);
 
     $dao = CRM_Core_DAO::executeQuery($sql);
     $collectionReports = array();
@@ -185,6 +183,45 @@ class CRM_Smartdebit_CollectionReports {
       $dateCurrent->modify('-1 day');
     }
     return $count;
+  }
+
+  /**
+   * Add optional limits
+   *
+   * @param $params
+   *
+   * @return string
+   */
+  private static function limitClause($params) {
+    $limitClause = '';
+
+    if (!empty($params['limit'])) {
+      $limitClause .= ' LIMIT ' . $params['limit'];
+    }
+    if (!empty($params['offset'])) {
+      $limitClause .= ' OFFSET ' . $params['offset'];
+    }
+    return $limitClause;
+  }
+
+  /**
+   * Add option where clause
+   *
+   * @param $params
+   *
+   * @return string
+   */
+  private static function whereClause($params) {
+    $params['successes'] = CRM_Utils_Array::value('successes', $params, TRUE);
+    $params['rejects'] = CRM_Utils_Array::value('rejects', $params, FALSE);
+    $whereClause = '';
+    if ($params['successes'] && !$params['rejects']) {
+      $whereClause .= " WHERE success = 1";
+    }
+    elseif (!$params['successes'] && $params['rejects']) {
+      $whereClause .= " WHERE success = 0";
+    }
+    return $whereClause;
   }
 
 }

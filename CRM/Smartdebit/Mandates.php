@@ -6,6 +6,8 @@
  */
 class CRM_Smartdebit_Mandates {
 
+  const TABLENAME='veda_smartdebit_mandates';
+
   /**
    * Get total number of smartdebit mandates
    *
@@ -14,7 +16,7 @@ class CRM_Smartdebit_Mandates {
    * @return integer
    */
   public static function count($onlyWithRecurId = FALSE) {
-    $sql = "SELECT COUNT(*) FROM veda_smartdebit_mandates";
+    $sql = "SELECT COUNT(*) FROM `" . self::TABLENAME . "`";
     if ($onlyWithRecurId) {
       $sql .= " WHERE recur_id IS NOT NULL";
     }
@@ -58,7 +60,7 @@ class CRM_Smartdebit_Mandates {
     }
 
     // Return the retrieved mandate from the database
-    $sql = "SELECT * FROM `veda_smartdebit_mandates` WHERE reference_number=%1";
+    $sql = "SELECT * FROM `" . self::TABLENAME . "` WHERE reference_number=%1";
     $params = array(1 => array($transactionId, 'String'));
     $dao = CRM_Core_DAO::executeQuery($sql, $params);
     if ($dao->fetch()) {
@@ -101,7 +103,7 @@ class CRM_Smartdebit_Mandates {
       self::retrieveAll();
     }
 
-    $sql = "SELECT * FROM `veda_smartdebit_mandates`";
+    $sql = "SELECT * FROM `" . self::TABLENAME . "`";
     if ($onlyWithRecurId) {
       $sql .= " WHERE recur_id IS NOT NULL";
     }
@@ -144,7 +146,7 @@ class CRM_Smartdebit_Mandates {
   public static function updateCache($smartDebitPayerContactDetails, $truncate = FALSE) {
     if ($truncate) {
       // if the civicrm_sd table exists, then empty it
-      $emptySql = "TRUNCATE TABLE `veda_smartdebit_mandates`";
+      $emptySql = "TRUNCATE TABLE `" . self::TABLENAME . "`";
       CRM_Core_DAO::executeQuery($emptySql);
     }
 
@@ -155,7 +157,7 @@ class CRM_Smartdebit_Mandates {
     // Insert mandates into table
     foreach ($smartDebitPayerContactDetails as $smartDebitRecord) {
       if (!$truncate) {
-        $deleteSql = "DELETE FROM `veda_smartdebit_mandates` WHERE reference_number='%1'";
+        $deleteSql = "DELETE FROM `" . self::TABLENAME . "` WHERE reference_number='%1'";
         $deleteParams = array(1 => $smartDebitRecord['reference_number']);
         CRM_Core_DAO::executeQuery($deleteSql);
       }
@@ -170,7 +172,7 @@ class CRM_Smartdebit_Mandates {
         $recurId = NULL;
       }
 
-      $sql = "INSERT INTO `veda_smartdebit_mandates`(
+      $sql = "INSERT INTO `" . self::TABLENAME . "`(
             `title`,
             `first_name`,
             `last_name`, 
