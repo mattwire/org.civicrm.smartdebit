@@ -118,7 +118,33 @@ class CRM_Smartdebit_CollectionReports {
   }
 
   /**
-   * Batch task to retrieve daily collection reports
+   * Function to retrieve daily collection reports between two dates
+   *
+   * @param DateTime $dateStart
+   * @param DateTime $dateEnd
+   *
+   * @return int
+   * @throws \Exception
+   */
+  private static function retrieve($dateStart, $dateEnd) {
+    $dateCurrent = clone $dateEnd;
+    $count = 0;
+    while ($dateCurrent > $dateStart) {
+      $collectionReports = CRM_Smartdebit_Api::getCollectionReport($dateCurrent->format('Y-m-d'));
+      if (!isset($collectionReports['error'])) {
+        // Save the retrieved collection reports
+        CRM_Smartdebit_CollectionReports::save($collectionReports);
+        $newCount = count($collectionReports);
+        CRM_Smartdebit_Utils::log('Smartdebit: Retrieved collection report for ' . $dateCurrent->format('Y-m-d') . ' with ' . $newCount . ' collections.', TRUE);
+        $count += $newCount;
+      }
+      $dateCurrent->modify("-1 day");
+    }
+    return $count;
+  }
+
+  /**
+   * Function to retrieve daily collection reports
    *  This will retrieve all collection reports for the past (COLLECTION_REPORT_BACKTRACK_DAYS default=7) days.
    *  This allows us to handle server outages and collection reports only available after certain number of days.
    *
@@ -129,25 +155,16 @@ class CRM_Smartdebit_CollectionReports {
    */
   public static function retrieveDaily($collectionDate = NULL) {
     // Get collection report for today
-    Civi::log()->info('Smartdebit Sync: Retrieving Daily Collection Report.');
+    Civi::log()->info('Smartdebit Sync: Retrieving Daily Collection Reports.');
 
-    $dateCurrent = new \DateTime($collectionDate);
-
+    $dateEnd = new \DateTime($collectionDate);
+    $dateStart = clone $dateEnd;
     // Collection report is available only after 3 days
     // So we will not get any results if we check for the current date
     // Hence checking collection report for the past 7 days
-    $backtrackDays = self::COLLECTION_REPORT_BACKTRACK_DAYS;
-    $count = 0;
-    for ($i = 0; $i < $backtrackDays; $i++) {
-      $dateCurrent->modify("-1 day");
-      $collectionReports = CRM_Smartdebit_Api::getCollectionReport($dateCurrent->format('Y-m-d'));
-      if (!isset($collectionReports['error'])) {
-        // Save the retrieved collection reports
-        CRM_Smartdebit_CollectionReports::save($collectionReports);
-        $count += count($collectionReports);
-      }
-    }
-    return $count;
+    $dateStart->modify('-' . self::COLLECTION_REPORT_BACKTRACK_DAYS . ' day');
+
+    return self::retrieve($dateStart, $dateEnd);
   }
 
   /**
@@ -161,28 +178,19 @@ class CRM_Smartdebit_CollectionReports {
    * @throws \Exception
    */
   public static function retrieveAll($collectionDate, $period) {
+    Civi::log()->info('Smartdebit Sync: Retrieving ALL Collection Reports up to ' . $collectionDate . ' for period: ' . $period);
+
     // Empty the collection reports table
     $emptySql = "TRUNCATE TABLE veda_smartdebit_collectionreports";
     CRM_Core_DAO::executeQuery($emptySql);
 
     // Get a collection report for every day of the month
-    $dateEnd = new DateTime($collectionDate);
+    $dateEnd = new \DateTime($collectionDate);
     $dateStart = clone $dateEnd;
     $dateStart->modify($period);
-    $dateCurrent = clone $dateEnd;
 
     // Iterate back one day at a time requesting reports
-    $count = 0;
-    while ($dateCurrent > $dateStart) {
-      $collectionReports = CRM_Smartdebit_Api::getCollectionReport($dateCurrent->format('Y-m-d'));
-      if (!isset($collectionReports['error'])) {
-        // Save the retrieved collection reports
-        CRM_Smartdebit_CollectionReports::save($collectionReports);
-        $count += count($collectionReports);
-      }
-      $dateCurrent->modify('-1 day');
-    }
-    return $count;
+    return self::retrieve($dateStart, $dateEnd);
   }
 
   /**

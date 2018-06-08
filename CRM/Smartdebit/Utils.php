@@ -240,4 +240,20 @@ class CRM_Smartdebit_Utils {
     $numeric_filtered = filter_var($amount, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
     return($numeric_filtered);
   }
+
+  /**
+   * Output log messsages
+   *
+   * @param $logMessage
+   * @param $debug
+   */
+  public static function log($logMessage, $debug) {
+    if (!$debug) {
+      Civi::log()->info($logMessage);
+    }
+    elseif ($debug && (CRM_Smartdebit_Settings::getValue('debug'))) {
+      Civi::log()->debug($logMessage);
+    }
+  }
+
 }
