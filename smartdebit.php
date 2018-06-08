@@ -106,7 +106,7 @@ function smartdebit_civicrm_install()
                    `info` int(11) DEFAULT NULL,
                    `receive_date` varchar(255) DEFAULT NULL,
                    `error_message` varchar(255) DEFAULT NULL,
-                   `success` tinyint NOT NULL,
+                   `success` tinyint unsigned NOT NULL,
                   PRIMARY KEY (`id`)
          ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
   CRM_Core_DAO::executeQuery($createSql);

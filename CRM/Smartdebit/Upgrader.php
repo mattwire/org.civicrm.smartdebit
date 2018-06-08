@@ -32,7 +32,7 @@ class CRM_Smartdebit_Upgrader extends CRM_Smartdebit_Upgrader_Base {
     }
     $this->ctx->log->info('Adding column "success" to ' . CRM_Smartdebit_CollectionReports::TABLENAME);
     if (!CRM_Core_DAO::checkFieldExists(CRM_Smartdebit_CollectionReports::TABLENAME, 'success')) {
-      CRM_Core_DAO::executeQuery("ALTER TABLE `".CRM_Smartdebit_CollectionReports::TABLENAME."` ADD COLUMN `success` tinyint NOT NULL");
+      CRM_Core_DAO::executeQuery("ALTER TABLE `".CRM_Smartdebit_CollectionReports::TABLENAME."` ADD COLUMN `success` tinyint unsigned NOT NULL");
       CRM_Core_DAO::executeQuery("UPDATE `".CRM_Smartdebit_CollectionReports::TABLENAME."` SET success=1");
     }
     $this->ctx->log->info('Removing column "info" from ' . CRM_Smartdebit_CollectionReports::TABLENAME);
