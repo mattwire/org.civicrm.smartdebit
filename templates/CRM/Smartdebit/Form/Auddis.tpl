@@ -65,7 +65,6 @@
             <th style="text-align: right"><b>{ts}Total{/ts}</th>
         </tr>
         {foreach from=$newAuddisRecords item=auddis}
-            {assign var=reason value='reason-code'}
             <tr>
                 <td>{$auddis.reference}</td>
                 <td>
@@ -78,7 +77,7 @@
                     {/if}
                 </td>
                 <td>{$auddis.frequency}</td>
-                <td>{$auddis.$reason}</td>
+                <td>{$auddis.reason}</td>
                 <td>{$auddis.start_date|crmDate}</td>
                 <td style="text-align: right">{$auddis.amount|crmMoney}</td>
             </tr>
@@ -95,16 +94,17 @@
     <br>
     <h3>{ts}Rejected Contributions in the ARUDD{/ts}</h3>
     <table class="form-layout">
-        <tr>
+        {foreach from=$newAruddRecords item=arudd}
+            {if $arudd.arudd_date}
+                <tr><th colspan="5"><strong>ARUDD Report: {$arudd.arudd_date|crmDate}</strong></th></tr>
+                        <tr>
             <th><b>{ts}Reference{/ts}</th>
             <th><b>{ts}Contact{/ts}</th>
-            <th><b>{ts}Frequency{/ts}</th>
             <th><b>{ts}Reason code{/ts}</th>
             <th><b>{ts}Original Processing Date{/ts}</th>
             <th style="text-align: right"><b>{ts}Total{/ts}</th>
         </tr>
-        {foreach from=$newAruddRecords item=arudd}
-            {assign var=reason value='reason-code'}
+            {/if}
             <tr>
                 <td>{$arudd.reference}</td>
                 <td>
@@ -116,9 +116,8 @@
                         {$arudd.contact_id}
                     {/if}
                 </td>
-                <td>{$arudd.frequency}</td>
-                <td>{$arudd.$reason}</td>
-                <td>{$arudd.start_date|crmDate}</td>
+                <td>{$arudd.reason}</td>
+                <td>{$arudd.date|crmDate}</td>
                 <td style="text-align: right">{$arudd.amount|crmMoney}</td>
             </tr>
         {/foreach}

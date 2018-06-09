@@ -40,8 +40,8 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
  */
 
   function buildQuickForm() {
-    $auddisIDs = array_filter(explode(',', CRM_Utils_Request::retrieve('auddisID', 'String', $this, false)));
-    $aruddIDs = array_filter(explode(',', CRM_Utils_Request::retrieve('aruddID', 'String', $this, false)));
+    $auddisIDs = array_filter(explode(',', urldecode(CRM_Utils_Request::retrieve('auddisID', 'String', $this, false))));
+    $aruddIDs = array_filter(explode(',', urldecode(CRM_Utils_Request::retrieve('aruddID', 'String', $this, false))));
 
     // Display the rejected payments
     $newAuddisRecords = array();
@@ -82,7 +82,7 @@ WHERE ctrc.trxn_id = %1
             $newAuddisRecords[$counts['auddis']]['amount'] = 0;
           }
           $newAuddisRecords[$counts['auddis']]['reference'] = $value['reference'];
-          $newAuddisRecords[$counts['auddis']]['reason-code'] = $value['reason-code'];
+          $newAuddisRecords[$counts['auddis']]['reason'] = $value['reason-code'];
           $counts['auddis_amount'] += $newAuddisRecords[$counts['auddis']]['amount'];
           $counts['auddis']++;
         }
@@ -100,10 +100,11 @@ WHERE ctrc.trxn_id = %1
     if (!empty($aruddIDs)) {
       foreach ($aruddIDs as $aruddID) {
         $aruddFile = CRM_Smartdebit_Api::getAruddFile($aruddID);
+        $newAruddRecords[$counts['arudd']]['arudd_date'] = $aruddFile['arudd_date'];
         unset($aruddFile['arudd_date']);
         foreach ($aruddFile as $inside => $value) {
           $sql = "
-SELECT ctrc.id contribution_recur_id, ctrc.contact_id, ctrc.amount, ctrc.trxn_id, ctrc.frequency_unit, ctrc.frequency_interval, contact.display_name
+SELECT ctrc.contact_id, contact.display_name
 FROM civicrm_contribution_recur ctrc
 LEFT JOIN civicrm_contact contact ON (ctrc.contact_id = contact.id)
 WHERE ctrc.trxn_id = %1
@@ -113,21 +114,16 @@ WHERE ctrc.trxn_id = %1
           $dao = CRM_Core_DAO::executeQuery($sql, $params);
           $rejectedIds[] = "'" . $value['ref'] . "' ";
           if ($dao->fetch()) {
-            $newAruddRecords[$counts['arudd']]['contribution_recur_id'] = $dao->contribution_recur_id;
             $newAruddRecords[$counts['arudd']]['contact_id'] = $dao->contact_id;
             $newAruddRecords[$counts['arudd']]['contact_name'] = $dao->display_name;
-            $newAruddRecords[$counts['arudd']]['start_date'] = date('Y-m-d', strtotime($value['originalProcessingDate']));
-            $newAruddRecords[$counts['arudd']]['frequency'] = $dao->frequency_interval . ' ' . $dao->frequency_unit;
-            $newAruddRecords[$counts['arudd']]['amount'] = $dao->amount;
-            $newAruddRecords[$counts['arudd']]['transaction_id'] = $dao->trxn_id;
             $counts['arudd_matched']++;
           } else {
             $newAruddRecords[$counts['arudd']]['contact_id'] = $value['payerReference'];
-            $newAruddRecords[$counts['arudd']]['start_date'] = $value['originalProcessingDate'];
-            $newAruddRecords[$counts['arudd']]['amount'] = $value['valueOf'];
           }
+          $newAruddRecords[$counts['arudd']]['date'] = $value['originalProcessingDate'];
+          $newAruddRecords[$counts['arudd']]['amount'] = $value['valueOf'];
           $newAruddRecords[$counts['arudd']]['reference'] = $value['ref'];
-          $newAruddRecords[$counts['arudd']]['reason-code'] = $value['returnDescription'];
+          $newAruddRecords[$counts['arudd']]['reason'] = $value['returnDescription'];
           $counts['arudd_amount'] += $newAruddRecords[$counts['arudd']]['amount'];
           $counts['arudd']++;
         }
@@ -182,7 +178,8 @@ WHERE ctrc.trxn_id IN ($validIdsString)
 
       while ($dao->fetch()) {
         $matchTrxnIds[] = "'" . trim($dao->trxn_id) . "' ";
-        $params = array('contribution_recur_id' => $dao->contribution_recur_id,
+        $params = array(
+          'contribution_recur_id' => $dao->contribution_recur_id,
           'contact_id' => $dao->contact_id,
           'contact_name' => $dao->display_name,
           'receive_date' => date('Y-m-d', strtotime($dao->sd_receive_date)),
