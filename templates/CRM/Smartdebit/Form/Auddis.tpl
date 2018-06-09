@@ -54,7 +54,7 @@
         </tr>
     </table>
     <br>
-    <h3>{ts}Rejected Contribution in the AUDDIS{/ts}</h3>
+    <h3>{ts}Rejected Contributions in the AUDDIS{/ts}</h3>
     <table class="form-layout">
         <tr style="background-color: #CDE8FE;">
             <td><b>{ts}Reference{/ts}</td>
@@ -93,7 +93,7 @@
         </tr>
     </table>
     <br>
-    <h3>{ts}Rejected Contribution in the ARUDD{/ts}</h3>
+    <h3>{ts}Rejected Contributions in the ARUDD{/ts}</h3>
     <table class="form-layout">
         <tr style="background-color: #CDE8FE;">
             <td><b>{ts}Reference{/ts}</td>

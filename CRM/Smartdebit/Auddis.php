@@ -96,7 +96,6 @@ class CRM_Smartdebit_Auddis
   /**
    * Get List of ARUDD files from Smartdebit for the past month.
    * If dateOfCollection is not specified it defaults to today.
-   * FIXME: Move to CRM_Smartdebit_Api
    *
    * @param string $dateOfCollectionStart
    * @param string $dateOfCollectionEnd
