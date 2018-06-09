@@ -44,8 +44,9 @@ class CRM_Smartdebit_Form_Diagnostics extends CRM_Core_Form {
       // Get counts
       $counts['mandatewithrecur'] = CRM_Smartdebit_Mandates::count(TRUE);
       $counts['mandatenorecur'] = CRM_Smartdebit_Mandates::count(FALSE) - $counts['mandatewithrecur'];
-      $counts['collectionreportsuccess'] = CRM_Smartdebit_CollectionReports::count(array('successes' => TRUE, 'rejects' => FALSE));
-      $counts['collectionreportfailed'] = CRM_Smartdebit_CollectionReports::count(array('successes' => FALSE, 'rejects' => TRUE));
+      $counts['collectionssuccess'] = CRM_Smartdebit_CollectionReports::count(array('successes' => TRUE, 'rejects' => FALSE));
+      $counts['collectionsrejected'] = CRM_Smartdebit_CollectionReports::count(array('successes' => FALSE, 'rejects' => TRUE));
+      $counts['collectionreports'] = CRM_Smartdebit_CollectionReports::countReports();
       $this->assign('sdcounts', $counts);
       $collectionReports = CRM_Smartdebit_CollectionReports::getReports(array('limit' => 10));
       $this->assign('collectionreports', $collectionReports);

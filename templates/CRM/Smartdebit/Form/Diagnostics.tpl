@@ -91,12 +91,16 @@
   <table class="form-layout-compressed"><tbody>
     <tr><td>
         <label>Cached Successful Collections:</label>
-        {$sdcounts.collectionreportsuccess}
+        {$sdcounts.collectionssuccess}
     </td></tr>
     <tr><td>
         <label>Cached Failed Collections:</label>
-        {$sdcounts.collectionreportfailed}
+        {$sdcounts.collectionsrejected}
     </td></tr>
+    <tr><td>
+        <label>Cached Collection Reports:</label>
+        {$sdcounts.collectionreports}
+      </td></tr>
   </tbody></table>
 
   <h3>Latest Collection Reports</h3>
