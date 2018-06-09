@@ -191,3 +191,23 @@ function _civicrm_api3_smartdebit_getcollectionreports_spec(&$spec) {
   $spec['rejects']['title'] = 'Get rejected collections';
   $spec['rejects']['type'] = CRM_Utils_Type::T_BOOLEAN;
 }
+
+function civicrm_api3_smartdebit_clearcache($params) {
+  if (!empty($params['mandates'])) {
+    CRM_Smartdebit_Mandates::delete();
+  }
+  if (!empty($params['collections'])) {
+    CRM_Smartdebit_CollectionReports::delete();
+  }
+
+  return TRUE;
+}
+
+function _civicrm_api3_smartdebit_clearcache_spec(&$spec) {
+  $spec['mandates']['api.required'] = 0;
+  $spec['mandates']['title'] = 'Clear cached mandates';
+  $spec['mandates']['type'] = CRM_Utils_Type::T_BOOLEAN;
+  $spec['collections']['api.required'] = 0;
+  $spec['collections']['title'] = 'Clear cached collections';
+  $spec['collections']['type'] = CRM_Utils_Type::T_BOOLEAN;
+}

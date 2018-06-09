@@ -83,6 +83,17 @@ ON DUPLICATE KEY UPDATE
   }
 
   /**
+   * Delete collections and collection reports(s) from CiviCRM
+   */
+  public static function delete() {
+    // if the civicrm_sd table exists, then empty it
+    $sql = "TRUNCATE TABLE `" . self::TABLENAME . "`";
+    CRM_Core_DAO::executeQuery($sql);
+    $sql = "TRUNCATE TABLE `" . self::TABLESUMMARY . "`";
+    CRM_Core_DAO::executeQuery($sql);
+  }
+
+  /**
    * Function to get the retrieved collection report count
    *
    * @return int Number of collection reports

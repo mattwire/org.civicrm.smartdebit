@@ -150,8 +150,10 @@ class CRM_Smartdebit_Mandates {
     if ($reference) {
       $sql = "DELETE FROM `" . self::TABLENAME . "` WHERE reference_number='" . $reference . "'";
     }
-    // if the civicrm_sd table exists, then empty it
-    $sql = "TRUNCATE TABLE `" . self::TABLENAME . "`";
+    else {
+      // if the civicrm_sd table exists, then empty it
+      $sql = "TRUNCATE TABLE `" . self::TABLENAME . "`";
+    }
     CRM_Core_DAO::executeQuery($sql);
   }
 
