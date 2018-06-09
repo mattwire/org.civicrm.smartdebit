@@ -47,10 +47,10 @@
                 <td style="text-align: right">{$sum.total}</td>
             </tr>
         {/foreach}
-        <tr style="background-color: #CDE8FE;">
-            <td><b>{ts}Total{/ts}</td>
-            <td style="text-align: right">{$summaryNumber}</td>
-            <td style="text-align: right">{$totalSummaryAmount}</td>
+        <tr>
+            <td><strong>{ts}Total{/ts}</strong></td>
+            <td style="text-align: right"><strong>{$summaryNumber}</strong></td>
+            <td style="text-align: right"><strong>{$totalSummaryAmount}</strong></td>
         </tr>
     </table>
     <br>
@@ -192,7 +192,7 @@
                     {/if}
                 </td>
                 <td>{$row.frequency}</td>
-                <td>{$row.start_date|crmDate}</td>
+                <td>{$row.receive_date|crmDate}</td>
                 <td style ="text-align: right">{$row.amount|crmMoney}</td>
             </tr>
         {/foreach}

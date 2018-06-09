@@ -55,10 +55,11 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
         unset($auddisFile['auddis_date']);
         foreach ($auddisFile as $inside => $value) {
           $sql = "
-          SELECT ctrc.id as contribution_recur_id ,ctrc.contact_id , cont.display_name ,ctrc.start_date , ctrc.amount, ctrc.trxn_id , ctrc.frequency_unit, ctrc.frequency_interval
-          FROM civicrm_contribution_recur ctrc
-          LEFT JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id)
-          WHERE ctrc.trxn_id = %1";
+SELECT ctrc.id as contribution_recur_id, ctrc.contact_id, ctrc.amount, ctrc.trxn_id, ctrc.frequency_unit, ctrc.frequency_interval, contact.display_name
+FROM civicrm_contribution_recur ctrc
+LEFT JOIN civicrm_contact contact ON (ctrc.contact_id = contact.id)
+WHERE ctrc.trxn_id = %1
+          ";
 
           $params = array(1 => array($value['reference'], 'String'));
           $dao = CRM_Core_DAO::executeQuery($sql, $params);
@@ -68,7 +69,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
             $newAuddisRecords[$counts['auddis']]['contribution_recur_id'] = $dao->contribution_recur_id;
             $newAuddisRecords[$counts['auddis']]['contact_id'] = $dao->contact_id;
             $newAuddisRecords[$counts['auddis']]['contact_name'] = $dao->display_name;
-            $newAuddisRecords[$counts['auddis']]['start_date'] = date('Y-m-d', strtotime($dao->start_date));
+            $newAuddisRecords[$counts['auddis']]['start_date'] = date('Y-m-d', strtotime($value['effective-date']));
             $newAuddisRecords[$counts['auddis']]['frequency'] = $dao->frequency_interval . ' ' . $dao->frequency_unit;
             $newAuddisRecords[$counts['auddis']]['amount'] = $dao->amount;
             $newAuddisRecords[$counts['auddis']]['transaction_id'] = $dao->trxn_id;
@@ -102,10 +103,11 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
         unset($aruddFile['arudd_date']);
         foreach ($aruddFile as $inside => $value) {
           $sql = "
-          SELECT ctrc.id contribution_recur_id ,ctrc.contact_id , cont.display_name ,ctrc.start_date , ctrc.amount, ctrc.trxn_id , ctrc.frequency_unit, ctrc.frequency_interval
-          FROM civicrm_contribution_recur ctrc
-          LEFT JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id)
-          WHERE ctrc.trxn_id = %1";
+SELECT ctrc.id contribution_recur_id, ctrc.contact_id, ctrc.amount, ctrc.trxn_id, ctrc.frequency_unit, ctrc.frequency_interval, contact.display_name
+FROM civicrm_contribution_recur ctrc
+LEFT JOIN civicrm_contact contact ON (ctrc.contact_id = contact.id)
+WHERE ctrc.trxn_id = %1
+          ";
 
           $params = array(1 => array($value['ref'], 'String'));
           $dao = CRM_Core_DAO::executeQuery($sql, $params);
@@ -114,7 +116,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
             $newAruddRecords[$counts['arudd']]['contribution_recur_id'] = $dao->contribution_recur_id;
             $newAruddRecords[$counts['arudd']]['contact_id'] = $dao->contact_id;
             $newAruddRecords[$counts['arudd']]['contact_name'] = $dao->display_name;
-            $newAruddRecords[$counts['arudd']]['start_date'] = date('Y-m-d', strtotime($dao->start_date));
+            $newAruddRecords[$counts['arudd']]['start_date'] = date('Y-m-d', strtotime($value['originalProcessingDate']));
             $newAruddRecords[$counts['arudd']]['frequency'] = $dao->frequency_interval . ' ' . $dao->frequency_unit;
             $newAruddRecords[$counts['arudd']]['amount'] = $dao->amount;
             $newAruddRecords[$counts['arudd']]['transaction_id'] = $dao->trxn_id;
@@ -168,11 +170,14 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
 
       // Get list of transactionIDs that have matching recurring contributions in CiviCRM and Smartdebit
       $validIdsString = implode(',', $validIds);
-      $sql = "SELECT ctrc.id contribution_recur_id ,ctrc.contact_id , cont.display_name ,ctrc.start_date , sdpayments.amount, ctrc.trxn_id , ctrc.frequency_unit, ctrc.payment_instrument_id, ctrc.contribution_status_id, ctrc.frequency_interval
-      FROM civicrm_contribution_recur ctrc
-      INNER JOIN " . CRM_Smartdebit_CollectionReports::TABLENAME . " sdpayments ON sdpayments.transaction_id = ctrc.trxn_id
-      INNER JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id)
-      WHERE ctrc.trxn_id IN ($validIdsString)";
+      $sql = "
+SELECT ctrc.id contribution_recur_id, ctrc.contact_id, cont.display_name, ctrc.trxn_id, ctrc.frequency_unit, ctrc.payment_instrument_id, 
+  ctrc.contribution_status_id, ctrc.frequency_interval, sdpayments.amount as sd_amount, sdpayments.receive_date as sd_receive_date
+FROM civicrm_contribution_recur ctrc
+INNER JOIN " . CRM_Smartdebit_CollectionReports::TABLENAME . " sdpayments ON sdpayments.transaction_id = ctrc.trxn_id
+INNER JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id)
+WHERE ctrc.trxn_id IN ($validIdsString)
+      ";
       $dao = CRM_Core_DAO::executeQuery($sql);
 
       while ($dao->fetch()) {
@@ -180,16 +185,16 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
         $params = array('contribution_recur_id' => $dao->contribution_recur_id,
           'contact_id' => $dao->contact_id,
           'contact_name' => $dao->display_name,
-          'start_date' => date('Y-m-d', strtotime($dao->start_date)),
+          'receive_date' => date('Y-m-d', strtotime($dao->sd_receive_date)),
           'frequency' => $dao->frequency_interval . ' ' . $dao->frequency_unit,
-          'amount' => $dao->amount,
+          'amount' => $dao->sd_amount,
           'contribution_status_id' => $dao->contribution_status_id,
           'transaction_id' => $dao->trxn_id,
         );
 
         $listArray[$counts['contribution_matched']] = $params;
         $counts['contribution_matched']++;
-        $counts['contribution_matched_amount'] += $dao->amount;
+        $counts['contribution_matched_amount'] += $dao->sd_amount;
       }
       //Store the list of matched transaction IDs in settings table for use later
       if (!empty($matchTrxnIds)) {
@@ -199,11 +204,12 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
 
     // Find the contributions that have already been processed
     $contributionQuery = "
-        SELECT cc.contact_id, cont.display_name, cc.total_amount, cc.trxn_id, ctrc.start_date, ctrc.frequency_unit, ctrc.frequency_interval
-        FROM `civicrm_contribution` cc
-        LEFT JOIN civicrm_contribution_recur ctrc ON (ctrc.id = cc.contribution_recur_id)
-        INNER JOIN civicrm_contact cont ON (cc.contact_id = cont.id)
-        WHERE cc.`trxn_id` IN ( $contributionTrxnIdsList )";
+SELECT cc.contact_id, cc.total_amount, cc.trxn_id, cc.receive_date as cc_receive_date, ctrc.frequency_unit, ctrc.frequency_interval, contact.display_name
+FROM `civicrm_contribution` cc
+LEFT JOIN civicrm_contribution_recur ctrc ON (ctrc.id = cc.contribution_recur_id)
+INNER JOIN civicrm_contact contact ON (cc.contact_id = contact.id)
+WHERE cc.`trxn_id` IN ( $contributionTrxnIdsList )
+    ";
     $dao = CRM_Core_DAO::executeQuery($contributionQuery);
     $existArray = array();
     $counts['contribution_existing'] = 0;
@@ -212,7 +218,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
     while ($dao->fetch()) {
       $existArray[$counts['contribution_existing']]['contact_id'] = $dao->contact_id;
       $existArray[$counts['contribution_existing']]['contact_name'] = $dao->display_name;
-      $existArray[$counts['contribution_existing']]['start_date'] = date('Y-m-d', strtotime($dao->start_date));
+      $existArray[$counts['contribution_existing']]['receive_date'] = date('Y-m-d', strtotime($dao->cc_receive_date));
       $existArray[$counts['contribution_existing']]['frequency'] = $dao->frequency_interval . ' ' . $dao->frequency_unit;
       $existArray[$counts['contribution_existing']]['amount'] = $dao->total_amount;
       $existArray[$counts['contribution_existing']]['transaction_id'] = $dao->trxn_id;
