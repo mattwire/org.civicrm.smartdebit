@@ -40,6 +40,7 @@ class CRM_Smartdebit_Sync
    * If $auddisIDs and $aruddIDs are not set all available AUDDIS/ARUDD records will be processed.
    *
    * @param bool $interactive
+   *    If TRUE, don't sync daily collectionreport (you should do this before calling, eg via manual sync), redirect after completion to show results
    * @param array $auddisIDs
    * @param array $aruddIDs
    *
@@ -69,10 +70,12 @@ class CRM_Smartdebit_Sync
     );
     $queue->createItem($task);
 
-    // Get collection reports
-    // Do not call via queue, as we need to collection reports
-    // ready for the sync process queue
-    CRM_Smartdebit_CollectionReports::retrieveDaily();
+    if (!$interactive) {
+      // We only retrieve collection reports when running in unattended (ie. scheduled sync) mode.
+      // Get collection reports
+      // Do not call via queue, as we need the collection reports for the sync process queue
+      CRM_Smartdebit_CollectionReports::retrieveDaily();
+    }
 
     // Set the Number of Rounds
     // We need to set the rounds based on collection report and not mandates
@@ -95,11 +98,11 @@ class CRM_Smartdebit_Sync
       $i++;
     }
 
-    Civi::log()->info('Smartdebit Sync: Retrieving AUDDIS reports.');
     // Get auddis/arudd IDs for last month if none specified.
     $auddisProcessor = new CRM_Smartdebit_Auddis();
 
     if (!isset($auddisIDs)) {
+      Civi::log()->info('Smartdebit Sync: Retrieving AUDDIS reports.');
       // Get list of auddis records from smart debit
       if ($auddisProcessor->getSmartdebitAuddisList()) {
         // Get list of auddis dates, convert them to IDs
@@ -117,8 +120,8 @@ class CRM_Smartdebit_Sync
       $queue->createItem($task);
     }
 
-    Civi::log()->info('Smartdebit Sync: Retrieving ARUDD reports.');
     if (!isset($aruddIDs)) {
+      Civi::log()->info('Smartdebit Sync: Retrieving ARUDD reports.');
       // Get list of auddis records from smart debit
       if ($auddisProcessor->getSmartdebitAruddList()) {
         // Get list of auddis dates, convert them to IDs
