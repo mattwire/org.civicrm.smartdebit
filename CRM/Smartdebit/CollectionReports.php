@@ -198,11 +198,11 @@ ON DUPLICATE KEY UPDATE
     $dateCurrent = clone $dateEnd;
     $count = 0;
     while ($dateCurrent > $dateStart) {
-      $collectionReports = CRM_Smartdebit_Api::getCollectionReport($dateCurrent->format('Y-m-d'));
-      if (!isset($collectionReports['error'])) {
+      $collections = CRM_Smartdebit_Api::getCollectionReport($dateCurrent->format('Y-m-d'));
+      if (!isset($collections['error'])) {
         // Save the retrieved collection reports
-        CRM_Smartdebit_CollectionReports::save($collectionReports);
-        $newCount = count($collectionReports);
+        CRM_Smartdebit_CollectionReports::save($collections);
+        $newCount = count($collections);
         CRM_Smartdebit_Utils::log('Smartdebit: Retrieved collection report for ' . $dateCurrent->format('Y-m-d') . ' with ' . $newCount . ' collections.', TRUE);
         $count += $newCount;
       }

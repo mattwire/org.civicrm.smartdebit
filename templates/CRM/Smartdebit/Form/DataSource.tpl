@@ -32,6 +32,8 @@
           {ts 1=$period}Collection reports older than %1 will be removed from the local cache.{/ts}<br />
       </span>
   </div>
+  {$form.retrieve_collectionreport.label}
+  {$form.retrieve_collectionreport.html}
   <div class="crm-submit-buttons">
     {include file="CRM/common/formButtons.tpl"}
   </div>

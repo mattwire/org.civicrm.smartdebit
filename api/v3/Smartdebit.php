@@ -183,3 +183,11 @@ function civicrm_api3_smartdebit_getcollectionreports($params) {
   return array('reports' => CRM_Smartdebit_CollectionReports::get($params));
 }
 
+function _civicrm_api3_smartdebit_getcollectionreports_spec(&$spec) {
+  $spec['successes']['api.required'] = 0;
+  $spec['successes']['title'] = 'Get successful collections';
+  $spec['successes']['type'] = CRM_Utils_Type::T_BOOLEAN;
+  $spec['rejects']['api.required'] = 0;
+  $spec['rejects']['title'] = 'Get rejected collections';
+  $spec['rejects']['type'] = CRM_Utils_Type::T_BOOLEAN;
+}

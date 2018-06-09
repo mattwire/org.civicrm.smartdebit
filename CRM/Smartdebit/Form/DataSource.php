@@ -44,6 +44,7 @@ class CRM_Smartdebit_Form_DataSource extends CRM_Core_Form {
     }
     catch (Exception $e) {}
 
+    $this->add('checkbox', 'retrieve_collectionreport', ts('Retrieve latest daily collection report from SmartDebit?'));
     $this->addButtons(array(
         array(
           'type' => 'submit',
@@ -55,17 +56,23 @@ class CRM_Smartdebit_Form_DataSource extends CRM_Core_Form {
     CRM_Utils_System::setTitle(ts('Synchronise CiviCRM with Smart Debit'));
   }
 
+  public function setDefaultValues() {
+    $defaults['retrieve_collectionreport'] = TRUE;
+    return $defaults;
+  }
+
   /**
    * Process the collection report
    *
    * @throws \Exception
    */
   public function postProcess() {
-    // If no collection date specified we retrieve the daily collection report (just like scheduled sync)
-    $count = CRM_Smartdebit_CollectionReports::retrieveDaily();
-
+    $params = $this->controller->exportValues();
+    if (!empty($params['retrieve_collectionreport'])) {
+      // If no collection date specified we retrieve the daily collection report (just like scheduled sync)
+      CRM_Smartdebit_CollectionReports::retrieveDaily();
+    }
     $queryParams = [];
-    $queryParams['crcount'] = $count;
     $queryParams['reset'] = 1;
     $url = CRM_Utils_System::url('civicrm/smartdebit/syncsd/select', $queryParams); // SyncSD form
     CRM_Utils_System::redirect($url);

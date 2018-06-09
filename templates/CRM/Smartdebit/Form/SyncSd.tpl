@@ -25,7 +25,25 @@
 <div class="crm-block crm-form-block crm-smartdebit-sync-form-block">
   <div class="description">
     <h3>{ts}Showing available dates from <strong>{$dateOfCollectionStart}</strong> to <strong>{$dateOfCollectionEnd}</strong>{/ts}</h3>
-    <h3>{ts 1=$collectionReportRetrievedCount}Number of Collection Reports Retrieved: <strong>%1</strong>{/ts}</h3>
+    <h3>Latest Collection Report</h3>
+    <table class="form-layout-compressed"><tbody>
+      <tr>
+        <th>{ts}Collection Date{/ts}</th>
+        <th>{ts}Successful Amount{/ts}</th>
+        <th>{ts}Successful Number{/ts}</th>
+        <th>{ts}Rejected Amount{/ts}</th>
+        <th>{ts}Rejected Number{/ts}</th>
+      </tr>
+      {foreach from=$collectionreports item=report}
+        <tr>
+          <td>{$report.collection_date|crmDate}</td>
+          <td>{$report.success_amount|crmMoney}</td>
+          <td>{$report.success_number}</td>
+          <td>{$report.reject_amount|crmMoney}</td>
+          <td>{$report.reject_number}</td>
+        </tr>
+      {/foreach}
+      </tbody></table>
   </div>
   <div class="help">
     <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}Terms:{/ts}</span>

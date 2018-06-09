@@ -40,9 +40,8 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
    * Retrieves a list of available AUDDIS / ARUDD dates and displays them for selection
    */
   public function buildQuickForm() {
-    // Get number of retrieved collection reports
-    $collectionReportRetrievedCount = CRM_Utils_Request::retrieve('crcount', 'Integer', $this, FALSE);
-    $this->assign('collectionReportRetrievedCount', $collectionReportRetrievedCount);
+    // Get details of latest collection report
+    $this->assign('collectionreports', CRM_Smartdebit_CollectionReports::getReports(array('limit' => 1)));
 
     // Get date of collection (or set to today if not set)
     $dateOfCollectionEnd = CRM_Utils_Request::retrieve('collection_date', 'String', $this, FALSE);
