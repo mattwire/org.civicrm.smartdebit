@@ -61,7 +61,7 @@
             <th><b>{ts}Contact (SD Contact ID){/ts}</th>
             <th><b>{ts}Frequency{/ts}</th>
             <th><b>{ts}Reason code{/ts}</th>
-            <th><b>{ts}Receive Date{/ts}</th>
+            <th><b>{ts}Effective Date{/ts}</th>
             <th style="text-align: right"><b>{ts}Total{/ts}</th>
         </tr>
         {foreach from=$newAuddisRecords item=auddis}
@@ -100,7 +100,7 @@
             <th><b>{ts}Contact{/ts}</th>
             <th><b>{ts}Frequency{/ts}</th>
             <th><b>{ts}Reason code{/ts}</th>
-            <th><b>{ts}Receive Date{/ts}</th>
+            <th><b>{ts}Original Processing Date{/ts}</th>
             <th style="text-align: right"><b>{ts}Total{/ts}</th>
         </tr>
         {foreach from=$newAruddRecords item=arudd}
