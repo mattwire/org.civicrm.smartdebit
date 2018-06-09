@@ -62,14 +62,6 @@ class CRM_Smartdebit_Sync
     $emptySql = "TRUNCATE TABLE veda_smartdebit_success_contributions";
     CRM_Core_DAO::executeQuery($emptySql);
 
-    // Get collection report
-    $task = new CRM_Queue_Task(
-      array('CRM_Smartdebit_Sync', 'getMandates'),
-      array(TRUE, TRUE),
-      "Refreshing Mandates from Smartdebit"
-    );
-    $queue->createItem($task);
-
     if (!$interactive) {
       // We only retrieve collection reports when running in unattended (ie. scheduled sync) mode.
       // Get collection reports
@@ -288,7 +280,7 @@ class CRM_Smartdebit_Sync
     // Import each transaction from smart debit
     foreach ($smartDebitPayments as $key => $sdPayment) {
       // Check we have a mandate for the payment
-      if (!CRM_Smartdebit_Mandates::getbyReference($sdPayment['transaction_id'], FALSE)) {
+      if (!CRM_Smartdebit_Mandates::getbyReference($sdPayment['transaction_id'], TRUE)) {
         if (CRM_Smartdebit_Settings::getValue('debug')) {
           Civi::log()->debug('Smartdebit syncSmartdebitRecords: No mandate available for ' . $sdPayment['transaction_id']);
         }
