@@ -108,7 +108,7 @@
             <tr>
                 <td>{$arudd.reference}</td>
                 <td>
-                    {if $arudd.contact_name gt 0}
+                    {if $arudd.contact_name}
                         {assign var=contactId value=$arudd.contact_id}
                         {capture assign=contactViewURL}{crmURL p='civicrm/contact/view' q="reset=1&cid=$contactId"}{/capture}
                         <a href="{$contactViewURL}">{$arudd.contact_name}</a>

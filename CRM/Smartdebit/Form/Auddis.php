@@ -104,7 +104,7 @@ WHERE ctrc.trxn_id = %1
         unset($aruddFile['arudd_date']);
         foreach ($aruddFile as $inside => $value) {
           $sql = "
-SELECT ctrc.contact_id, contact.display_name
+SELECT ctrc.contact_id as contact_id, contact.display_name as display_name
 FROM civicrm_contribution_recur ctrc
 LEFT JOIN civicrm_contact contact ON (ctrc.contact_id = contact.id)
 WHERE ctrc.trxn_id = %1
