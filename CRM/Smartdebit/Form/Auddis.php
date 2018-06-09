@@ -68,7 +68,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
             $newAuddisRecords[$counts['auddis']]['contribution_recur_id'] = $dao->contribution_recur_id;
             $newAuddisRecords[$counts['auddis']]['contact_id'] = $dao->contact_id;
             $newAuddisRecords[$counts['auddis']]['contact_name'] = $dao->display_name;
-            $newAuddisRecords[$counts['auddis']]['start_date'] = $dao->start_date;
+            $newAuddisRecords[$counts['auddis']]['start_date'] = date('Y-m-d', strtotime($dao->start_date));
             $newAuddisRecords[$counts['auddis']]['frequency'] = $dao->frequency_interval . ' ' . $dao->frequency_unit;
             $newAuddisRecords[$counts['auddis']]['amount'] = $dao->amount;
             $newAuddisRecords[$counts['auddis']]['transaction_id'] = $dao->trxn_id;
@@ -114,7 +114,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
             $newAruddRecords[$counts['arudd']]['contribution_recur_id'] = $dao->contribution_recur_id;
             $newAruddRecords[$counts['arudd']]['contact_id'] = $dao->contact_id;
             $newAruddRecords[$counts['arudd']]['contact_name'] = $dao->display_name;
-            $newAruddRecords[$counts['arudd']]['start_date'] = $dao->start_date;
+            $newAruddRecords[$counts['arudd']]['start_date'] = date('Y-m-d', strtotime($dao->start_date));
             $newAruddRecords[$counts['arudd']]['frequency'] = $dao->frequency_interval . ' ' . $dao->frequency_unit;
             $newAruddRecords[$counts['arudd']]['amount'] = $dao->amount;
             $newAruddRecords[$counts['arudd']]['transaction_id'] = $dao->trxn_id;
@@ -143,7 +143,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
     $dao = CRM_Core_DAO::executeQuery($selectQuery);
     while ($dao->fetch()) {
       $sdTrxnIds[] = "'" . $dao->trxn_id . "' ";
-      $contributionTrxnIdsList .= ", '" . $dao->trxn_id . '/' . CRM_Utils_Date::processDate($dao->receive_date) . "' ";
+      $contributionTrxnIdsList .= ", '" . $dao->trxn_id . '/' . $dao->receive_date . "' ";
     }
 
     $contributionQuery = "
@@ -180,7 +180,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
         $params = array('contribution_recur_id' => $dao->contribution_recur_id,
           'contact_id' => $dao->contact_id,
           'contact_name' => $dao->display_name,
-          'start_date' => $dao->start_date,
+          'start_date' => date('Y-m-d', strtotime($dao->start_date)),
           'frequency' => $dao->frequency_interval . ' ' . $dao->frequency_unit,
           'amount' => $dao->amount,
           'contribution_status_id' => $dao->contribution_status_id,
@@ -212,7 +212,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
     while ($dao->fetch()) {
       $existArray[$counts['contribution_existing']]['contact_id'] = $dao->contact_id;
       $existArray[$counts['contribution_existing']]['contact_name'] = $dao->display_name;
-      $existArray[$counts['contribution_existing']]['start_date'] = $dao->start_date;
+      $existArray[$counts['contribution_existing']]['start_date'] = date('Y-m-d', strtotime($dao->start_date));
       $existArray[$counts['contribution_existing']]['frequency'] = $dao->frequency_interval . ' ' . $dao->frequency_unit;
       $existArray[$counts['contribution_existing']]['amount'] = $dao->total_amount;
       $existArray[$counts['contribution_existing']]['transaction_id'] = $dao->trxn_id;
@@ -237,7 +237,7 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
         $missingArray[$counts['contribution_missing']]['contact_id'] = $dao->contact_id;
         $missingArray[$counts['contribution_missing']]['amount'] = $dao->amount;
         $missingArray[$counts['contribution_missing']]['transaction_id'] = $dao->trxn_id;
-        $missingArray[$counts['contribution_missing']]['receive_date'] = $dao->receive_date;
+        $missingArray[$counts['contribution_missing']]['receive_date'] = date('Y-m-d', strtotime($dao->receive_date));
         $counts['contribution_missing']++;
         $counts['contribution_missing_amount']+=$dao->amount;
       }
