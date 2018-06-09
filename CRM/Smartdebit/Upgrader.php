@@ -41,4 +41,31 @@ class CRM_Smartdebit_Upgrader extends CRM_Smartdebit_Upgrader_Base {
     }
     return TRUE;
   }
+
+  public function upgrade_4703() {
+    $this->ctx->log->info('Creating table to store collection report summaries: ' . CRM_Smartdebit_CollectionReports::TABLENAME);
+    // Create a table to store imported collectionreport summaries
+    $sql = "CREATE TABLE IF NOT EXISTS `" . CRM_Smartdebit_CollectionReports::TABLESUMMARY . "` (
+                   `collection_date` date UNIQUE NOT NULL,
+                   `success_amount` decimal(20,2) DEFAULT NULL,
+                   `success_number` int DEFAULT NULL,
+                   `reject_amount` decimal(20,2) DEFAULT NULL,
+                   `reject_number` int DEFAULT NULL,
+                  PRIMARY KEY (`collection_date`)
+         ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
+    CRM_Core_DAO::executeQuery($sql);
+
+    // Rename veda_smartdebit_collectionreports to veda_smartdebit_collections
+    $this->ctx->log->info('Renaming table veda_smartdebit_collectionreports to ' . CRM_Smartdebit_CollectionReports::TABLENAME);
+    if (!CRM_Core_DAO::checkTableExists(CRM_Smartdebit_CollectionReports::TABLENAME)) {
+      CRM_Core_DAO::executeQuery("RENAME TABLE veda_smartdebit_collectionreports TO " . CRM_Smartdebit_CollectionReports::TABLENAME);
+    }
+
+    // Add unique constraint to veda_smartdebit_collections
+    $this->ctx->log->info('Add unique constraint to ' . CRM_Smartdebit_CollectionReports::TABLENAME);
+    if (!CRM_Core_DAO::checkConstraintExists(CRM_Smartdebit_CollectionReports::TABLENAME, 'UC_Collection')) {
+      CRM_Core_DAO::executeQuery("ALTER TABLE " . CRM_Smartdebit_CollectionReports::TABLENAME . " ADD CONSTRAINT UC_Collection UNIQUE (transaction_id,amount,receive_date)");
+    }
+  }
+
 }

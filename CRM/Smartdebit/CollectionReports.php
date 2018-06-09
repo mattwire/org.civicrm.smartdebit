@@ -6,13 +6,14 @@
  */
 class CRM_Smartdebit_CollectionReports {
 
-  const TABLENAME='veda_smartdebit_collectionreports';
+  const TABLENAME='veda_smartdebit_collections';
+  const TABLESUMMARY='veda_smartdebit_collectionreportsummary';
   const COLLECTION_REPORT_BACKTRACK_DAYS = 7;
 
   /**
    * Function to get the retrieved collection report count
    *
-   * @return int
+   * @return int Number of collection reports
    */
   public static function count($params = array()) {
     $sql = "SELECT count(*) FROM `" . self::TABLENAME . "`";
@@ -32,8 +33,8 @@ class CRM_Smartdebit_CollectionReports {
   public static function get($params) {
     $sql = "SELECT * FROM `" . self::TABLENAME . "`";
 
-    $sql .= self::limitClause($params);
     $sql .= self::whereClause($params);
+    $sql .= self::limitClause($params);
 
     $dao = CRM_Core_DAO::executeQuery($sql);
     $collectionReports = array();
@@ -51,59 +52,126 @@ class CRM_Smartdebit_CollectionReports {
    * @param $collections
    */
   public static function save($collections) {
-    if(!empty($collections)){
+    if (!empty($collections)) {
       foreach ($collections as $key => $value) {
-        $resultCollection = array(
-          'transaction_id' => $value['reference_number'],
-          'contact'        => $value['account_name'],
-          'contact_id'     => $value['customer_id'],
-          'amount'         => $value['amount'],
-          'receive_date'   => !empty($value['debit_date']) ? date('YmdHis', strtotime(str_replace('/', '-', $value['debit_date']))) : NULL,
+        $collectionValues = array(
+          'transaction_id' => '"' . CRM_Utils_Array::value('reference_number', $value) . '"',
+          'contact' => '"' . CRM_Utils_Array::value('account_name', $value) . '"',
+          'contact_id' => '"' . CRM_Utils_Array::value('customer_id', $value) . '"',
+          'amount' => CRM_Utils_Array::value('amount', $value),
+          'receive_date' => date('YmdHis', strtotime(str_replace('/', '-', CRM_Utils_Array::value('debit_date', $value)))),
+          'error_message' => '"' . CRM_Utils_Array::value('error_message', $value) . '"',
+          'success' => CRM_Utils_Array::value('success', $value),
         );
-        // Don't add collection report to cache more than once
-        if (!self::exists($resultCollection)) {
-          $insertValue[] = " ( \"" . implode('", "', $resultCollection) . "\" )";
-        }
-      }
 
-      if (isset($insertValue)) {
-        $sql = " INSERT INTO `" . self::TABLENAME . "`
-              (`transaction_id`, `contact`, `contact_id`, `amount`, `receive_date`)
-              VALUES " . implode(', ', $insertValue) . "
-              ";
+        $sql = "
+INSERT INTO " . self::TABLENAME . "
+  (`transaction_id`, `contact`, `contact_id`, `amount`, `receive_date`, `error_message`, `success`)
+VALUES (" . implode(', ', $collectionValues) . ")
+ON DUPLICATE KEY UPDATE
+  transaction_id = VALUES(transaction_id),
+  contact = VALUES(contact),
+  contact_id = VALUES(contact_id),
+  amount = VALUES(amount),
+  receive_date = VALUES(receive_date),
+  error_message = VALUES(error_message),
+  success = VALUES(success)
+  ";
         CRM_Core_DAO::executeQuery($sql);
       }
     }
   }
 
   /**
-   * Check if we already have a saved collection report
+   * Function to get the retrieved collection report count
    *
-   * @param $collectionReport
-   *
-   * @return bool
+   * @return int Number of collection reports
    */
-  private static function exists($collectionReport) {
-    $whereClause = '';
-    foreach ($collectionReport as $key => $value) {
-      if (!empty($value)) {
-        $where[] = "{$key}='{$value}'";
-      }
-    }
-    if (isset($where)) {
-      $whereClause = 'WHERE ' . implode(' AND ', $where);
-    }
+  public static function countReports() {
+    $sql = "SELECT count(*) FROM `" . self::TABLESUMMARY . "`";
 
-    $sql = "SELECT id FROM `" . self::TABLENAME . "` {$whereClause}";
-    $dao = CRM_Core_DAO::executeQuery($sql);
-    if ($dao->fetch()) {
-      return TRUE;
-    }
-    return FALSE;
+    $count = CRM_Core_DAO::singleValueQuery($sql);
+    return $count;
   }
 
   /**
-   * Remove all collection report date from veda_smartdebit_collectionreports that is older than cache time
+   * Function to get all available payments in the collection reports
+   *
+   * @param $params (limit => 0, offset => 0)
+   *
+   * @return array
+   */
+  public static function getReports($params) {
+    $sql = "SELECT * FROM `" . self::TABLESUMMARY . "`";
+    $sql .= " ORDER BY collection_date DESC";
+    $sql .= self::limitClause($params);
+
+    $dao = CRM_Core_DAO::executeQuery($sql);
+    $collectionReports = array();
+    while ($dao->fetch()) {
+      $payment = $dao->toArray();
+      $payment['collection_date'] = date('Y-m-d', strtotime($payment['collection_date']));
+      $collectionReports[] = $payment;
+    }
+    return $collectionReports;
+  }
+
+  /**
+   * Save details of collection report
+   *
+   * @param $summary
+   *
+   * @return bool
+   */
+  public static function saveReport($summary) {
+    if (empty($summary)) {
+      return FALSE;
+    }
+    /*array (
+      'CollectionDate' => '01/06/2018',
+      'Succesful' =>
+        array (
+          '@attributes' =>
+            array (
+              'amount_submitted' => '69371.29',
+              'number_submitted' => '11751',
+            ),
+        ),
+      'Rejected' =>
+        array (
+          '@attributes' =>
+            array (
+              'amount_rejected' => '536.00',
+              'number_rejected' => '73',
+            ),
+        ),
+    )*/
+
+    $summaryValues = [
+      1 => date('YmdHis', strtotime(str_replace('/', '-', CRM_Utils_Array::value('CollectionDate', $summary)))),
+      2 => CRM_Utils_Array::value('amount_submitted', $summary['Succesful']['@attributes']),
+      3 => CRM_Utils_Array::value('number_submitted', $summary['Succesful']['@attributes']),
+      4 => CRM_Utils_Array::value('amount_rejected', $summary['Rejected']['@attributes']),
+      5 => CRM_Utils_Array::value('number_rejected', $summary['Rejected']['@attributes']),
+    ];
+
+    $sql = "
+INSERT INTO " . self::TABLESUMMARY . "
+  (collection_date, success_amount, success_number, reject_amount, reject_number)
+VALUES (" . implode(', ', $summaryValues) . ")
+ON DUPLICATE KEY UPDATE
+  collection_date = VALUES(collection_date),
+  success_amount = VALUES(success_amount),
+  success_number = VALUES(success_number),
+  reject_amount = VALUES(reject_amount),
+  reject_number = VALUES(reject_number)
+  ";
+
+    CRM_Core_DAO::executeQuery($sql);
+  }
+
+  /**
+   * Remove all collection report date from veda_smartdebit_collections that is older than cache time
    *
    * @return bool
    */
@@ -111,7 +179,7 @@ class CRM_Smartdebit_CollectionReports {
     $date = new DateTime();
     $date->modify(CRM_Smartdebit_Settings::getValue('cr_cache'));
     $dateString = $date->format('Ymd') . '000000';
-    $query = "DELETE FROM `veda_smartdebit_collectionreports` WHERE receive_date < %1";
+    $query = "DELETE FROM `" . self::TABLENAME . "` WHERE receive_date < %1";
     $params = array(1 => array($dateString, 'String'));
     CRM_Core_DAO::executeQuery($query, $params);
     return TRUE;
@@ -155,10 +223,12 @@ class CRM_Smartdebit_CollectionReports {
    */
   public static function retrieveDaily($collectionDate = NULL) {
     // Get collection report for today
-    Civi::log()->info('Smartdebit Sync: Retrieving Daily Collection Reports.');
 
     $dateEnd = new \DateTime($collectionDate);
     $dateStart = clone $dateEnd;
+
+    Civi::log()->info('Smartdebit Sync: Retrieving Daily Collection Report for ' . SELF::COLLECTION_REPORT_BACKTRACK_DAYS . ' days to '. $dateEnd->format('Y-m-d'));
+
     // Collection report is available only after 3 days
     // So we will not get any results if we check for the current date
     // Hence checking collection report for the past 7 days
@@ -181,7 +251,7 @@ class CRM_Smartdebit_CollectionReports {
     Civi::log()->info('Smartdebit Sync: Retrieving ALL Collection Reports up to ' . $collectionDate . ' for period: ' . $period);
 
     // Empty the collection reports table
-    $emptySql = "TRUNCATE TABLE veda_smartdebit_collectionreports";
+    $emptySql = "TRUNCATE TABLE " . self::TABLENAME;
     CRM_Core_DAO::executeQuery($emptySql);
 
     // Get a collection report for every day of the month
@@ -213,7 +283,7 @@ class CRM_Smartdebit_CollectionReports {
   }
 
   /**
-   * Add option where clause
+   * Add optional where clause
    *
    * @param $params
    *

@@ -96,8 +96,8 @@ function smartdebit_civicrm_install()
          ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
   CRM_Core_DAO::executeQuery($createSql);
 
-  // Create a table to store imported collection reports (CRM_Smartdebit_Api::getCollectionReport())
-  $createSql = "CREATE TABLE IF NOT EXISTS `veda_smartdebit_collectionreports` (
+  // Create a table to store imported collections (CRM_Smartdebit_Api::getCollectionReport())
+  $createSql = "CREATE TABLE IF NOT EXISTS `" . CRM_Smartdebit_CollectionReports::TABLENAME . "` (
                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT, 
                    `transaction_id` varchar(255) DEFAULT NULL,
                    `contact` varchar(255) DEFAULT NULL,
@@ -108,6 +108,18 @@ function smartdebit_civicrm_install()
                    `error_message` varchar(255) DEFAULT NULL,
                    `success` tinyint unsigned NOT NULL,
                   PRIMARY KEY (`id`)
+                  CONSTRAINT UC_Collection UNIQUE (transaction_id, amount, receive_date)
+         ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
+  CRM_Core_DAO::executeQuery($createSql);
+
+  // Create a table to store imported collectionreport summaries
+  $createSql = "CREATE TABLE IF NOT EXISTS `" . CRM_Smartdebit_CollectionReports::TABLESUMMARY . "` (
+                   `collection_date` date UNIQUE NOT NULL,
+                   `success_amount` decimal(20,2) DEFAULT NULL,
+                   `success_number` int DEFAULT NULL,
+                   `reject_amount` decimal(20,2) DEFAULT NULL,
+                   `reject_number` int DEFAULT NULL,
+                  PRIMARY KEY (`collection_date`)
          ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
   CRM_Core_DAO::executeQuery($createSql);
 
@@ -125,7 +137,7 @@ function smartdebit_civicrm_install()
   CRM_Core_DAO::executeQuery($createSql);
 
   // This table is used to store the cached smartdebit mandates
-  $createSql = "CREATE TABLE IF NOT EXISTS `veda_smartdebit_mandates` (
+  $createSql = "CREATE TABLE IF NOT EXISTS `" . CRM_Smartdebit_Mandates::TABLENAME . "` (
             `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
             `title` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
             `first_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,

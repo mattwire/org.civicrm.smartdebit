@@ -53,7 +53,7 @@ class CRM_Smartdebit_Api {
    *
    * @return array
    */
-  public static function requestPost($url, $data, $username, $password) {
+  public static function requestPost($url, $data, $username, $password, $format='XML') {
     // Prepare data
     $data = self::encodePostParams($data);
 
@@ -63,9 +63,6 @@ class CRM_Smartdebit_Api {
     else {
       list($header, $output, $error) = self::post($url, $data, $username, $password);
     }
-
-    //Store the raw response for later as it's useful to see for integration and understanding
-    $_SESSION["rawresponse"] = $output;
 
     // Set return values
     if (isset($header['http_code'])) {
@@ -79,16 +76,26 @@ class CRM_Smartdebit_Api {
       $resultsArray['success'] = FALSE;
       $resultsArray['message'] = 'cURL Error';
       $resultsArray['error'] = $error['message'];
+      Civi::log()->debug('Smartdebit requestPost: ' . $resultsArray['message'] . ' : ' . $resultsArray['error']);
     }
     else {
-      // Results are XML so turn this into a PHP Array (simplexml_load_string returns an object)
-      $resultsArray = json_decode(json_encode((array) simplexml_load_string($output)),1);
+      // Decode main output
+      switch ($format) {
+        case 'XML':
+          // Results are XML so turn this into a PHP Array (simplexml_load_string returns an object)
+          $resultsArray = json_decode(json_encode((array) simplexml_load_string($output)),1);
+          break;
+
+        case 'CSV':
+          $resultsArray['Data'] = str_getcsv($output, "\r\n"); //parse the rows into an array
+          break;
+      }
+
       if (!isset($resultsArray['error'])) {
         $resultsArray['error'] = NULL;
       }
 
       // Determine if the call failed or not
-      $resultsArray['statuscode'] = $header['http_code'];
       switch ($header['http_code']) {
         case 200:
           $resultsArray['message'] = 'OK';
@@ -295,68 +302,6 @@ class CRM_Smartdebit_Api {
   }
 
   /**
-   * Retrieve Payer Contact Details from Smartdebit
-   * Called during daily sync job
-   *
-   * @param string $referenceNumber
-   *
-   * @return array|bool
-   * @throws \Exception
-   */
-  public static function getPayerContactDetails($referenceNumber = '') {
-    $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
-    $username = CRM_Utils_Array::value('user_name', $userDetails);
-    $password = CRM_Utils_Array::value('password', $userDetails);
-    $pslid = CRM_Utils_Array::value('signature', $userDetails);
-
-    // Send payment POST to the target URL
-    $url = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/data/dump', "query[service_user][pslid]="
-      .urlencode($pslid)."&query[report_format]=XML");
-
-    // Restrict to a single payer if we have a reference
-    if (!empty($referenceNumber)) {
-      $url .= "&query[reference_number]=".urlencode($referenceNumber);
-    }
-    $response = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
-
-    // Take action based upon the response status
-    if ($response['success']) {
-      $smartDebitArray = array();
-      // Get Payer Details from response
-      if (isset($response['Data']['PayerDetails']['@attributes'])) {
-        // A single response
-        $smartDebitArray[] = $response['Data']['PayerDetails']['@attributes'];
-      }
-      else {
-        // Multiple responses
-        foreach ($response['Data']['PayerDetails'] as $value) {
-          $smartDebitArray[] = $value['@attributes'];
-        }
-      }
-
-      foreach ($smartDebitArray as &$details) {
-        // This is the only API that returns regular_amount, everywhere else we use "default_amount" so change it before returning
-        if (isset($details['regular_amount'])) {
-          $details['default_amount'] = $details['regular_amount'];
-          unset($details['regular_amount']);
-        }
-        // Clean up first_amount/regular_amount which gets sent to us here with a currency symbol (eg. £85.00)
-        if (isset($details['first_amount'])) {
-          $details['first_amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($details['first_amount']);
-        }
-        if (isset($details['default_amount'])) {
-          $details['default_amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($details['default_amount']);
-        }
-      }
-      return $smartDebitArray;
-    }
-    else {
-      self::reportError($response, $referenceNumber);
-      return FALSE;
-    }
-  }
-
-  /**
    * Retrieve Collection Report from Smart Debit
    *
    * @param $dateOfCollection
@@ -365,7 +310,7 @@ class CRM_Smartdebit_Api {
    * @throws \Exception
    */
   public static function getCollectionReport($dateOfCollection) {
-    if( empty($dateOfCollection)){
+    if (empty($dateOfCollection)) {
       CRM_Core_Session::setStatus(ts('Please select the collection date'), ts('Smart Debit'), 'error');
       return FALSE;
     }
@@ -381,20 +326,49 @@ class CRM_Smartdebit_Api {
 
     // Take action based upon the response status
     if ($response['success']) {
-      if (!isset($response['Successes']['Success']) || !isset($response['Rejects'])) {
+      if (!isset($response['Successes']) && !isset($response['Rejects'])) {
+        // No collection report for this date
         $collections['error'] = $response['Summary'];
         return $collections;
       }
-      // Cater for a single response
-      if (isset($response['Successes']['Success']['@attributes'])) {
-        $collections[] = $response['Successes']['Success']['@attributes'];
-      }
       else {
-        foreach ($response['Successes']['Success'] as $key => $value) {
-          $collections[] = $value['@attributes'];
+        // We got a collection report with one or more responses.
+        CRM_Smartdebit_CollectionReports::saveReport(CRM_Utils_Array::value('Summary', $response));
+
+        // Successful collections
+        if (isset($response['Successes']['Success']['@attributes'])) {
+          // Cater for a single response
+          $successes[]['@attributes'] = $response['Successes']['Success']['@attributes'];
         }
+        else {
+          // Multiple responses
+          $successes = $response['Successes']['Success'];
+        }
+
+        // Rejected collections
+        if (isset($response['Rejects']['Rejected']['@attributes'])) {
+          // Cater for a single response
+          $rejects[]['@attributes'] = $response['Rejects']['Rejected']['@attributes'];
+        }
+        else {
+          // Multiple responses
+          $rejects = $response['Rejects']['Rejected'];
+        }
+
+        foreach ($successes as $key => $value) {
+          $collection = $value['@attributes'];
+          $collection['success'] = 1;
+          $collections[] = $collection;
+        }
+
+        foreach ($rejects as $key => $value) {
+          $collection = $value['@attributes'];
+          $collection['success'] = 0;
+          $collections[] = $collection;
+        }
+
+        return $collections;
       }
-      return $collections;
     }
     else {
       $url = CRM_Utils_System::url('civicrm/smartdebit/syncsd', 'reset=1'); // DataSource Form

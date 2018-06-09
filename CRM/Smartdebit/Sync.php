@@ -65,7 +65,7 @@ class CRM_Smartdebit_Sync
     $task = new CRM_Queue_Task(
       array('CRM_Smartdebit_Sync', 'getMandates'),
       array(TRUE, TRUE),
-      "Syncing Mandates from Smartdebit"
+      "Refreshing Mandates from Smartdebit"
     );
     $queue->createItem($task);
 
@@ -87,7 +87,7 @@ class CRM_Smartdebit_Sync
       $task    = new CRM_Queue_Task(
         array('CRM_Smartdebit_Sync', 'syncSmartdebitCollectionReports'),
         array($start, self::BATCH_COUNT),
-        "Syncing collection reports from Smartdebit - {$counter} of {$count}"
+        "Syncing Smartdebit collections to CiviCRM contributions - {$counter} of {$count}"
       );
 
       // Add the Task to the Queue

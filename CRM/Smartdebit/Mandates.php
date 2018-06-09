@@ -31,13 +31,10 @@ class CRM_Smartdebit_Mandates {
    * @throws \Exception
    */
   public static function retrieveAll() {
-    Civi::log()->info('Smartdebit Sync: Retrieving Smart Debit Payer Contact Details.');
+    Civi::log()->info('Smartdebit: Retrieving all Mandates.');
     // Get list of payers from Smartdebit
-    $smartDebitPayerContacts = CRM_Smartdebit_Api::getPayerContactDetails();
-
-    // Update mandates table for reconciliation functions
-    self::updateCache($smartDebitPayerContacts, TRUE);
-    return count($smartDebitPayerContacts);
+    self::retrieve();
+    return self::count();
   }
 
   /**
@@ -52,11 +49,7 @@ class CRM_Smartdebit_Mandates {
   public static function getbyReference($transactionId, $refresh) {
     if ($refresh) {
       // Retrieve the mandate from Smartdebit, update the cache and return the retrieved mandate
-      $payerContactDetails = CRM_Smartdebit_Api::getPayerContactDetails($transactionId);
-      if ($payerContactDetails) {
-        CRM_Smartdebit_Mandates::updateCache($payerContactDetails);
-        return reset($payerContactDetails);
-      }
+      self::retrieve($transactionId);
     }
 
     // Return the retrieved mandate from the database
@@ -89,8 +82,8 @@ class CRM_Smartdebit_Mandates {
   }
 
   /**
-   * Get the smartdebit mandate from the cache by reference number
-   * @param string $transactionId
+   * Get the smartdebit mandates from the cache by reference number
+   *
    * @param bool $refresh Whether to refresh mandate from smartdebit or not
    * @param bool $onlyWithRecurId Only retrieve smartdebit mandates which have a recurring contribution
    *
@@ -99,8 +92,22 @@ class CRM_Smartdebit_Mandates {
    */
   public static function getAll($refresh, $onlyWithRecurId=FALSE) {
     if ($refresh) {
-      // Update the cached mandate
-      self::retrieveAll();
+      if ($onlyWithRecurId) {
+        // If the mandate doesn't have a recur ID then it's not reconciled in CiviCRM so we don't sync it from Smartdebit.
+        $sql = "SELECT reference_number FROM `" . self::TABLENAME . "`";
+        if ($onlyWithRecurId) {
+          $sql .= " WHERE recur_id IS NOT NULL";
+        }
+        $dao = CRM_Core_DAO::executeQuery($sql);
+        while ($dao->fetch()) {
+          self::retrieve($dao->reference_number);
+        }
+      }
+      else {
+        // Update the cached mandates from Smartdebit
+        // WARNING: This will pull down ALL mandates from smartdebit which in some cases can be really big (>50k) - it can take a long time
+        self::retrieveAll();
+      }
     }
 
     $sql = "SELECT * FROM `" . self::TABLENAME . "`";
@@ -135,31 +142,54 @@ class CRM_Smartdebit_Mandates {
   }
 
   /**
+   * Delete mandate(s) from CiviCRM
+   *
+   * @param string $reference (Transaction ID)
+   */
+  public static function delete($reference = '') {
+    if ($reference) {
+      $sql = "DELETE FROM `" . self::TABLENAME . "` WHERE reference_number='" . $reference . "'";
+    }
+    // if the civicrm_sd table exists, then empty it
+    $sql = "TRUNCATE TABLE `" . self::TABLENAME . "`";
+    CRM_Core_DAO::executeQuery($sql);
+  }
+
+  /**
    * Update Smartdebit Mandates in table veda_smartdebit_mandates for further analysis
    * This table is only used by Reconciliation functions
    *
-   * @param array $smartDebitPayerContactDetails (array of smart debit contact details : call CRM_Smartdebit_Api::getPayerContactDetails())
-   * @param bool $truncate If true, truncate the table before inserting new records.
+   * @param array $smartDebitPayerContactDetails (array of smart debit contact details)
    *
    * @return bool
    */
-  public static function updateCache($smartDebitPayerContactDetails, $truncate = FALSE) {
-    if ($truncate) {
-      // if the civicrm_sd table exists, then empty it
-      $emptySql = "TRUNCATE TABLE `" . self::TABLENAME . "`";
-      CRM_Core_DAO::executeQuery($emptySql);
-    }
-
+  public static function save($smartDebitPayerContactDetails, $format) {
     // Get payer contact details
     if (empty($smartDebitPayerContactDetails)) {
       return FALSE;
     }
+
+    $csvFirstRow = TRUE;
     // Insert mandates into table
-    foreach ($smartDebitPayerContactDetails as $smartDebitRecord) {
-      if (!$truncate) {
-        $deleteSql = "DELETE FROM `" . self::TABLENAME . "` WHERE reference_number='%1'";
-        $deleteParams = array(1 => $smartDebitRecord['reference_number']);
-        CRM_Core_DAO::executeQuery($deleteSql);
+    foreach ($smartDebitPayerContactDetails as $smartDebitValues) {
+      if ($format === 'CSV') {
+        // We do the CSV parsing here to avoid running out of memory on really large datasets (> 50k)
+        if ($csvFirstRow) {
+          // Headers row
+          $columnNames = str_getcsv($smartDebitValues, ',');
+          $columnNames = array_map('trim', $columnNames);
+          $csvFirstRow = FALSE;
+          continue;
+        }
+
+        $csvValues = str_getcsv($smartDebitValues, ',');
+        for ($index = 0; $index < count($columnNames); $index++) {
+          $smartDebitRecord[$columnNames[$index]] = $csvValues[$index];
+        }
+      }
+      else {
+        // XML format, we don't need to make any changes
+        $smartDebitRecord = $smartDebitValues;
       }
 
       // Get the recurring contribution for this mandate
@@ -170,6 +200,20 @@ class CRM_Smartdebit_Mandates {
       catch (CiviCRM_API3_Exception $e) {
         // Couldn't find a matching recur Id
         $recurId = NULL;
+      }
+
+      // Clean up retrieved data before saving to database
+      // This is the only API that returns regular_amount, everywhere else we use "default_amount" so change it before returning
+      if (isset($smartDebitRecord['regular_amount'])) {
+        $smartDebitRecord['default_amount'] = $smartDebitRecord['regular_amount'];
+        unset($smartDebitRecord['regular_amount']);
+      }
+      // Clean up first_amount/regular_amount which gets sent to us here with a currency symbol (eg. £85.00)
+      if (isset($smartDebitRecord['first_amount'])) {
+        $smartDebitRecord['first_amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($smartDebitRecord['first_amount']);
+      }
+      if (isset($smartDebitRecord['default_amount'])) {
+        $smartDebitRecord['default_amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($smartDebitRecord['default_amount']);
       }
 
       $sql = "INSERT INTO `" . self::TABLENAME . "`(
@@ -226,6 +270,78 @@ class CRM_Smartdebit_Mandates {
       CRM_Core_DAO::executeQuery($sql, $params);
     }
     return TRUE;
+  }
+
+  /**
+   * Retrieve Payer Contact Details from Smartdebit
+   * Called during daily sync job
+   *
+   * @param string $referenceNumber
+   *
+   * @return array|bool
+   * @throws \Exception
+   */
+  public static function retrieve($referenceNumber = '') {
+    $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
+    $username = CRM_Utils_Array::value('user_name', $userDetails);
+    $password = CRM_Utils_Array::value('password', $userDetails);
+    $pslid = CRM_Utils_Array::value('signature', $userDetails);
+
+    // Originally we did everything in XML format, but for sites with > 50000 mandates the report is too big
+    // and we get server timeouts.  It's not possible to retrieve partial results (either one or all) so we switch
+    // to CSV which takes around 60seconds for 50000 mandates.
+    $format = 'CSV';
+
+    // Send payment POST to the target URL
+    switch($format) {
+      case 'XML':
+        $url = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/data/dump', "query[service_user][pslid]="
+          .urlencode($pslid)."&query[report_format]=XML");
+        break;
+
+      case 'CSV':
+        $url = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/data/dump', "query[service_user][pslid]="
+          .urlencode($pslid)."&query[report_format]=CSV" . "&query[include_header]=true");
+        break;
+    }
+
+    // Restrict to a single payer if we have a reference
+    if (!empty($referenceNumber)) {
+      $url .= "&query[reference_number]=".urlencode($referenceNumber);
+    }
+    $response = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password, $format);
+
+    // Take action based upon the response status
+    if ($response['success']) {
+      $smartDebitArray = array();
+
+      switch ($format) {
+        case 'XML':
+          // Get Payer Details from response
+          if (isset($response['Data']['PayerDetails']['@attributes'])) {
+            // A single response
+            $smartDebitArray[] = $response['Data']['PayerDetails']['@attributes'];
+          }
+          else {
+            // Multiple responses
+            foreach ($response['Data']['PayerDetails'] as $value) {
+              $smartDebitArray[] = $value['@attributes'];
+            }
+          }
+          break;
+
+        case 'CSV':
+          $smartDebitArray = $response['Data'];
+          break;
+      }
+
+      self::delete($referenceNumber);
+      return self::save($smartDebitArray, $format);
+    }
+    else {
+      CRM_Smartdebit_Api::reportError($response, $referenceNumber);
+      return FALSE;
+    }
   }
 
 }

@@ -33,7 +33,7 @@
  * @throws API_Exception
  */
 function civicrm_api3_smartdebit_sync($params) {
-  return civicrm_api3_job_process_smartdebit($params);
+  return civicrm_api3('Job', 'process_smartdebit', $params);
 }
 
 /**

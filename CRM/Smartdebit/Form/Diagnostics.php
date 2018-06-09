@@ -42,10 +42,13 @@ class CRM_Smartdebit_Form_Diagnostics extends CRM_Core_Form {
       $this->assign('sdStatusTest', $sdStatusTest);
 
       // Get counts
-      $sdMandateCount = CRM_Smartdebit_Mandates::count();
-      $sdCRCount = CRM_Smartdebit_CollectionReports::count();
-      $this->assign('sdMandateCount', $sdMandateCount);
-      $this->assign('sdCRCount', $sdCRCount);
+      $counts['mandatewithrecur'] = CRM_Smartdebit_Mandates::count(TRUE);
+      $counts['mandatenorecur'] = CRM_Smartdebit_Mandates::count(FALSE) - $counts['mandatewithrecur'];
+      $counts['collectionreportsuccess'] = CRM_Smartdebit_CollectionReports::count(array('successes' => TRUE, 'rejects' => FALSE));
+      $counts['collectionreportfailed'] = CRM_Smartdebit_CollectionReports::count(array('successes' => FALSE, 'rejects' => TRUE));
+      $this->assign('sdcounts', $counts);
+      $collectionReports = CRM_Smartdebit_CollectionReports::getReports(array('limit' => 10));
+      $this->assign('collectionreports', $collectionReports);
     } catch (Exception $e) {
       // Do nothing here. Api will throw exception if API URL is not configured, which it won't be if
       // Smartdebit payment processor has not been setup yet.

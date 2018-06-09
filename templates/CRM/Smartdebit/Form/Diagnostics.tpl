@@ -78,18 +78,46 @@
   <h3>Mandates</h3>
   <table class="form-layout-compressed"><tbody>
     <tr><td>
-        <label>Cached Mandates</label>
-        {$sdMandateCount}
+        <label>Cached Mandates linked to recurring contributions:</label>
+        {$sdcounts.mandatewithrecur}
     </td></tr>
+    <tr><td>
+        <label>Cached Mandates with no recurring contribution:</label>
+        {$sdcounts.mandatenorecur}
+      </td></tr>
     </tbody></table>
 
-  <h3>Collection Reports</h3>
+  <h3>Collections</h3>
   <table class="form-layout-compressed"><tbody>
     <tr><td>
-        <label>Cached Collection Reports</label>
-        {$sdCRCount}
+        <label>Cached Successful Collections:</label>
+        {$sdcounts.collectionreportsuccess}
+    </td></tr>
+    <tr><td>
+        <label>Cached Failed Collections:</label>
+        {$sdcounts.collectionreportfailed}
     </td></tr>
   </tbody></table>
+
+  <h3>Latest Collection Reports</h3>
+  <table class="form-layout-compressed"><tbody>
+    <tr>
+      <th>{ts}Collection Date{/ts}</th>
+      <th>{ts}Successful Amount{/ts}</th>
+      <th>{ts}Successful Number{/ts}</th>
+      <th>{ts}Rejected Amount{/ts}</th>
+      <th>{ts}Rejected Number{/ts}</th>
+    </tr>
+    {foreach from=$collectionreports item=report}
+      <tr>
+        <td>{$report.collection_date|crmDate}</td>
+        <td>{$report.success_amount|crmMoney}</td>
+        <td>{$report.success_number}</td>
+        <td>{$report.reject_amount|crmMoney}</td>
+        <td>{$report.reject_number}</td>
+      </tr>
+    {/foreach}
+    </tbody></table>
 
   {* FOOTER *}
   <div class="crm-submit-buttons">
