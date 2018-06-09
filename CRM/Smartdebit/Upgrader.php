@@ -66,6 +66,7 @@ class CRM_Smartdebit_Upgrader extends CRM_Smartdebit_Upgrader_Base {
     if (!CRM_Core_DAO::checkConstraintExists(CRM_Smartdebit_CollectionReports::TABLENAME, 'UC_Collection')) {
       CRM_Core_DAO::executeQuery("ALTER TABLE " . CRM_Smartdebit_CollectionReports::TABLENAME . " ADD CONSTRAINT UC_Collection UNIQUE (transaction_id,amount,receive_date)");
     }
+    return TRUE;
   }
 
 }
