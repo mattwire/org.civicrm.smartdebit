@@ -234,6 +234,16 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
   );
   _smartdebit_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/Smart Debit', $item[1]);
 
+  $item[] = array(
+    'label' => ts('View Results of last Sync', array('domain' => 'org.civicrm.smartdebit')),
+    'name'  => 'View Results of last Sync',
+    'url'   => 'civicrm/smartdebit/syncsd/confirm?state=done',
+    'permission' => 'access CiviContribute',
+    'operator'   => NULL,
+    'separator'  => 1,
+  );
+  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/Smart Debit', $item[2]);
+
   $item[] =  array (
     'label' => ts('Reconcile Transactions', array('domain' => 'org.civicrm.smartdebit')),
     'name' => 'Reconcile Transactions',
@@ -241,16 +251,6 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
     'permission' => 'administer CiviCRM',
     'operator'   => NULL,
     'separator'  => 1,
-  );
-  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/Smart Debit', $item[2]);
-
-  $item[] = array (
-    'label' => ts('General Setup', array('domain' => 'org.civicrm.smartdebit')),
-    'name'       => 'General Setup',
-    'url'        => 'civicrm/admin/smartdebit/settings?reset=1',
-    'permission' => 'administer CiviCRM',
-    'operator'   => NULL,
-    'separator'  => NULL,
   );
   _smartdebit_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/Smart Debit', $item[3]);
 
@@ -263,6 +263,16 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
     'separator'  => NULL,
   );
   _smartdebit_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/Smart Debit', $item[4]);
+
+  $item[] = array (
+    'label' => ts('General Setup', array('domain' => 'org.civicrm.smartdebit')),
+    'name'       => 'General Setup',
+    'url'        => 'civicrm/admin/smartdebit/settings?reset=1',
+    'permission' => 'administer CiviCRM',
+    'operator'   => NULL,
+    'separator'  => NULL,
+  );
+  _smartdebit_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/Smart Debit', $item[5]);
 
   _smartdebit_civix_navigationMenu($menu);
 }
