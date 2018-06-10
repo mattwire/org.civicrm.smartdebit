@@ -346,6 +346,7 @@ class CRM_Smartdebit_Sync
         'financial_type_id' => $contributionRecur['financial_type_id'],
         'payment_instrument_id' => $contributionRecur['payment_instrument_id'],
         'receive_date' => CRM_Utils_Date::processDate($receiveDate),
+        'is_email_receipt' => FALSE, // We don't want to send out email receipts for contributions. That's handled by Smartdebit or by CiviCRM scheduled reminders/rules if required.
       );
 
     // Check if the contribution is first payment
@@ -471,7 +472,7 @@ class CRM_Smartdebit_Sync
    */
   private static function repeatTransaction($contributeParams) {
     if (empty($contributeParams['id'])) {
-      Civi::log()->error('Smartdebit repeatTransaction: Missing mandatory parameter $contributeParams[\'id\']');
+      Civi::log()->error('Smartdebit repeatTransaction: Missing mandatory parameter $contributeParams["id"]');
       return FALSE;
     }
     try {
