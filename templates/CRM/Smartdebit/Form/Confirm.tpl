@@ -108,21 +108,33 @@
         <thead>
         <tr>
           <th>Transaction ID</th>
-          <th>Contact Name</th>
+          <th>Contact</th>
           <th>Amount</th>
+          <th>Frequency</th>
+          <th>Receive Date</th>
         </tr>
         </thead>
         <tbody>
-        {foreach from=$rejectedids item=row}
+        {foreach from=$rejects item=row}
           <tr class="{cycle values="odd-row,even-row"}">
             <td>
-              <a href="/civicrm/contact/view/contribution?reset=1&id={$row.id}&cid={$row.cid}&action=view&context=contribution&selectedChild=contribute">{$row.trxn_id}</a>
+              {if $row.contribution_id gt 0}
+                {assign var=contactId value=$row.contact_id}
+                {assign var=contributionId value=$row.contribution_id}
+                {capture assign=contributionViewURL}{crmURL p='civicrm/contact/view/contribution' q="action=view&reset=1&id=$contributionId&cid=$contactId"}{/capture}
+                <a href="{$contributionViewURL}" target="_blank">{$row.transaction_id}</a>
+              {/if}
             </td>
             <td>
-              <a href="/civicrm/contact/view?reset=1&cid={$row.cid}">{$row.display_name}</a>
+              {if $row.contact_id gt 0}
+                {assign var=contactId value=$row.contact_id}
+                {capture assign=contactViewURL}{crmURL p='civicrm/contact/view' q="reset=1&cid=$contactId"}{/capture}
+                <a href="{$contactViewURL}" target="_blank">{$row.contact_name}</a>
+              {/if}
             </td>
-            <td align="right">{$row.total_amount}</td>
-            <td>{$row.status}</td>
+            <td align="right">{$row.amount|crmMoney}</td>
+            <td>{$row.frequency}</td>
+            <td>{$row.receive_date}</td>
           </tr>
         {/foreach}
         {if $summary.reject.amount}

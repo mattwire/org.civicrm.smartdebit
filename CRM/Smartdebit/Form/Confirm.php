@@ -40,17 +40,10 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
 
     if ($state == 'done') {
       $this->status = 1;
-      $rejects = CRM_Smartdebit_SyncResults::get(['arudd' => TRUE, 'auddis' => TRUE]);
       $successes = CRM_Smartdebit_SyncResults::get(['collections' => TRUE]);
+      $rejects = CRM_Smartdebit_SyncResults::get(['arudd' => TRUE, 'auddis' => TRUE]);
 
       $summary = [];
-      foreach ($rejects as $reject) {
-        if (isset($reject['amount'])) {
-          $summary['reject']['amount'] += $reject['amount'];
-        }
-      }
-      $summary['reject']['count'] = count($rejects);
-      $summary['reject']['description'] = ts('Failed Contribution(s) synchronised with CiviCRM');
       foreach ($successes as $success) {
         if (isset($success['amount'])) {
           $summary['success']['amount'] += $success['amount'];
@@ -58,6 +51,14 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
       }
       $summary['success']['count'] = count($successes);
       $summary['success']['description'] = ts('Successful contribution(s) synchronised with CiviCRM');
+
+      foreach ($rejects as $reject) {
+        if (isset($reject['amount'])) {
+          $summary['reject']['amount'] += $reject['amount'];
+        }
+      }
+      $summary['reject']['count'] = count($rejects);
+      $summary['reject']['description'] = ts('Failed Contribution(s) synchronised with CiviCRM');
 
       $this->assign('summary', $summary);
       $this->assign('successes', $successes);
