@@ -31,6 +31,8 @@
 class CRM_Smartdebit_Base
 {
 
+  const TABLENAME = 'veda_smartdebit';
+
   /**
    * Generate a Direct Debit Reference (BACS reference)
    *
@@ -40,7 +42,7 @@ class CRM_Smartdebit_Base
     $tempDDIReference = CRM_Utils_String::createRandom(16, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
 
     $insertSql = "
-        INSERT INTO civicrm_direct_debit
+        INSERT INTO " . CRM_Smartdebit_Base::TABLENAME . " 
         (ddi_reference, created)
         VALUES
         (%1, NOW())
@@ -50,7 +52,7 @@ class CRM_Smartdebit_Base
 
     // Now get the ID for the record we've just created and create a sequenced DDI Reference Number
     $selectSql  = " SELECT id ";
-    $selectSql .= " FROM civicrm_direct_debit cdd ";
+    $selectSql .= " FROM " . CRM_Smartdebit_Base::TABLENAME . " cdd ";
     $selectSql .= " WHERE cdd.ddi_reference = %1 ";
     $selectParams  = array( 1 => array($tempDDIReference , 'String'));
     $dao = CRM_Core_DAO::executeQuery($selectSql, $selectParams);
@@ -62,7 +64,7 @@ class CRM_Smartdebit_Base
     $transactionPrefix = CRM_Smartdebit_Settings::getValue('transaction_prefix');
     $DDIReference      = $transactionPrefix . sprintf("%08s", $directDebitId);
 
-    $updateSql  = " UPDATE civicrm_direct_debit cdd ";
+    $updateSql  = " UPDATE " . CRM_Smartdebit_Base::TABLENAME . " cdd ";
     $updateSql .= " SET cdd.ddi_reference = %0 ";
     $updateSql .= " WHERE cdd.id = %1 ";
 
@@ -85,7 +87,7 @@ class CRM_Smartdebit_Base
 
     if (!empty($params['ddi_reference'])) {
       $sql = "
-SELECT * FROM civicrm_direct_debit
+SELECT * FROM " . CRM_Smartdebit_Base::TABLENAME . " 
 WHERE ddi_reference = '{$params['ddi_reference']}'
 ";
       $dao = CRM_Core_DAO::executeQuery($sql);
@@ -142,7 +144,7 @@ WHERE ddi_reference = '{$params['ddi_reference']}'
 
     // Set the DD Record to be complete
     $sql = "
-UPDATE civicrm_direct_debit
+UPDATE " . CRM_Smartdebit_Base::TABLENAME . " 
 SET    complete_flag = 1
 WHERE  ddi_reference = %0";
 

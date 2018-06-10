@@ -922,7 +922,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   private static function recordSmartDebitResponse($direct_debit_response)
   {
     $sql = "
-UPDATE civicrm_direct_debit SET
+UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
                  created                  = NOW()
           ,      request_counter          = request_counter + 1
     ";

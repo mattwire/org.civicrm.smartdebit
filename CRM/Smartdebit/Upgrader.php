@@ -69,4 +69,33 @@ class CRM_Smartdebit_Upgrader extends CRM_Smartdebit_Upgrader_Base {
     return TRUE;
   }
 
+  public function upgrade_4704() {
+    // Rename civicrm_direct_debit to veda_smartdebit
+    $this->ctx->log->info('Renaming table civicrm_direct_debit to ' . CRM_Smartdebit_Base::TABLENAME);
+    if (!CRM_Core_DAO::checkTableExists(CRM_Smartdebit_Base::TABLENAME)) {
+      CRM_Core_DAO::executeQuery("RENAME TABLE civicrm_direct_debit TO " . CRM_Smartdebit_Base::TABLENAME);
+    }
+
+    // Drop table veda_smartdebit_success_contributions
+    $this->ctx->log->info('Removing table veda_smartdebit_success_contributions');
+    if (!CRM_Core_DAO::checkTableExists('veda_smartdebit_success_contributions')) {
+      CRM_Core_DAO::executeQuery('DROP TABLE veda_smartdebit_success_contributions');
+    }
+
+    $this->ctx->log->info('Creating table to store the last set of successful imports: ' . CRM_Smartdebit_SyncResults::TABLENAME);
+    // Create a table to store store the last set of successful imports
+    $sql = "CREATE TABLE IF NOT EXISTS `veda_smartdebit_syncresults` (
+                   `type` tinyint unsigned NOT NULL,
+                   `transaction_id` varchar(255) DEFAULT NULL,
+                   `contribution_id` int(10) unsigned DEFAULT NULL,
+                   `contact_id` int(10) unsigned DEFAULT NULL,
+                   `contact_name` varchar(128) DEFAULT NULL,
+                   `amount` decimal(20,2) DEFAULT NULL,
+                   `frequency` varchar(255) DEFAULT NULL,
+                   `receive_date` date DEFAULT NULL
+         ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
+    CRM_Core_DAO::executeQuery($sql);
+    return TRUE;
+  }
+
 }
