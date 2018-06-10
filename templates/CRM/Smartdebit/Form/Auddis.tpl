@@ -158,7 +158,7 @@
           {/if}
         </td>
         <td>{$row.frequency}</td>
-        <td>{$row.start_date|crmDate}</td>
+        <td>{$row.receive_date|crmDate}</td>
         <td style="text-align: right">{$row.amount|crmMoney}</td>
       </tr>
     {/foreach}

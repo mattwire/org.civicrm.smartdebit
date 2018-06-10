@@ -260,7 +260,7 @@ WHERE cc.`trxn_id` IN ( $contributionTrxnIdsList )
       $queryParams['aruddID'] = urlencode(implode(',',$aruddIDs));
     }
     $queryParams['reset'] = 1;
-    $bQueryParams = ['reset' => 1];
+    $bQueryParams['reset'] = 1;
 
     $redirectUrlBack = CRM_Utils_System::url('civicrm/smartdebit/syncsd/select', $bQueryParams);
     $buttons[] = array(
