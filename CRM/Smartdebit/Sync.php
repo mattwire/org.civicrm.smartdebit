@@ -340,7 +340,7 @@ class CRM_Smartdebit_Sync
         'trxn_id' => $trxnId . '/' . CRM_Utils_Date::processDate($receiveDate),
         'financial_type_id' => $contributionRecur['financial_type_id'],
         'payment_instrument_id' => $contributionRecur['payment_instrument_id'],
-        'receive_date' => CRM_Utils_Date::processDate($receiveDate),
+        'receive_date' => $receiveDate,
         'is_email_receipt' => FALSE, // We don't want to send out email receipts for contributions. That's handled by Smartdebit or by CiviCRM scheduled reminders/rules if required.
       );
 
@@ -430,13 +430,13 @@ class CRM_Smartdebit_Sync
 
       $resultValues = [
         'type' => $collectionType,
-        'transaction_id' => $contributeResult['trxn_id'],
+        'transaction_id' => $contributeParams['trxn_id'],
         'contribution_id' => $contributeResult['id'],
         'contact_id' => $contactResult['id'],
         'contact_name' => $contactResult['display_name'],
         'amount' => $amount,
         'frequency' => ucwords($contributionRecur['frequency_interval'] . ' ' . $contributionRecur['frequency_unit']),
-        'receive_date' => $contributeResult['receive_date'],
+        'receive_date' => $contributeParams['receive_date'],
       ];
       CRM_Smartdebit_SyncResults::save($resultValues, $collectionType);
 
