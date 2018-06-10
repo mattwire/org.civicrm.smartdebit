@@ -172,11 +172,11 @@ WHERE ctrc.trxn_id = %1
       // Get list of transactionIDs that have matching recurring contributions in CiviCRM and Smartdebit
       $validIdsString = implode(',', $validIds);
       $sql = "
-SELECT ctrc.id contribution_recur_id, ctrc.contact_id, cont.display_name, ctrc.trxn_id, ctrc.frequency_unit, ctrc.payment_instrument_id, 
+SELECT ctrc.id contribution_recur_id, ctrc.contact_id, contact.display_name, ctrc.trxn_id, ctrc.frequency_unit, ctrc.payment_instrument_id, 
   ctrc.contribution_status_id, ctrc.frequency_interval, sdpayments.amount as sd_amount, sdpayments.receive_date as sd_receive_date
 FROM civicrm_contribution_recur ctrc
 INNER JOIN " . CRM_Smartdebit_CollectionReports::TABLENAME . " sdpayments ON sdpayments.transaction_id = ctrc.trxn_id
-INNER JOIN civicrm_contact cont ON (ctrc.contact_id = cont.id)
+INNER JOIN civicrm_contact contact ON (ctrc.contact_id = contact.id)
 WHERE ctrc.trxn_id IN ($validIdsString)
       ";
       $dao = CRM_Core_DAO::executeQuery($sql);
