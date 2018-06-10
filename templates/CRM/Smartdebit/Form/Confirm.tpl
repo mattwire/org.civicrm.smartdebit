@@ -43,7 +43,7 @@
       <tr>
           <td><a href="#{$linkrel}">{$sum.description}</a></td>
           <td style="text-align: right">{$sum.count}</td>
-          <td style="text-align: right">{$sum.total|crmMoney}</td>
+          <td style="text-align: right">{$sum.amount|crmMoney}</td>
       </tr>
     {/foreach}
   </table>
