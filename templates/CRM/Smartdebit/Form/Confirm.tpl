@@ -84,7 +84,7 @@
             </td>
             <td align="right">{$row.amount|crmMoney}</td>
             <td>{$row.frequency}</td>
-            <td>{$row.receive_date}</td>
+            <td>{$row.receive_date|crmDate}</td>
           </tr>
         {/foreach}
         {if $summary.success.amount}
@@ -134,7 +134,7 @@
             </td>
             <td align="right">{$row.amount|crmMoney}</td>
             <td>{$row.frequency}</td>
-            <td>{$row.receive_date}</td>
+            <td>{$row.receive_date|crmDate}</td>
           </tr>
         {/foreach}
         {if $summary.reject.amount}
