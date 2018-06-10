@@ -589,8 +589,7 @@ class CRM_Smartdebit_Sync
     }
 
     $contributionResult = civicrm_api3('Contribution', 'get', array(
-      'sequential' => 1,
-      'options' => array('sort' => "receive_date DESC"),
+      'options' => ['limit' => 0, 'sort' => "receive_date DESC"],
       'contribution_recur_id' => $newContribution['contribution_recur_id'],
     ));
 
