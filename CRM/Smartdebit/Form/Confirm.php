@@ -59,22 +59,9 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
       $summary['success']['count'] = count($successes);
       $summary['success']['description'] = ts('Successful contribution(s) synchronised with CiviCRM');
 
-
-      while ($getDAO->fetch()){
-        $transactionURL = CRM_Utils_System::url("civicrm/contact/view/contribution", "action=view&reset=1&id={$getDAO->contribution_id}&cid={$getDAO->contact_id}&context=home");
-        $contactURL     = CRM_Utils_System::url("civicrm/contact/view", "reset=1&cid={$getDAO->contact_id}");
-        $ids[] = array(
-          'transaction_id'  => sprintf("<a href=%s>%s</a>", $transactionURL, $getDAO->transaction_id),
-          'display_name'    => sprintf("<a href=%s>%s</a>", $contactURL, $getDAO->contact),
-          'amount'          => CRM_Utils_Money::format($getDAO->amount),
-          'frequency'       => ucwords($getDAO->frequency),
-        );
-        $totalContributionAmount[] =  $getDAO->amount;
-      }
-
-    $this->assign('summary', $summary);
-    $this->assign('successes', $successes);
-    $this->assign('rejects', $rejects);
+      $this->assign('summary', $summary);
+      $this->assign('successes', $successes);
+      $this->assign('rejects', $rejects);
     }
     $this->assign('status', $this->status);
   }
