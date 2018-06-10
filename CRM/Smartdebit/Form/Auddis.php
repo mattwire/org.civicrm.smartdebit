@@ -198,10 +198,6 @@ WHERE ctrc.trxn_id IN ($validIdsString)
         $counts['contribution_matched']++;
         $counts['contribution_matched_amount'] += $dao->sd_amount;
       }
-      //Store the list of matched transaction IDs in settings table for use later
-      if (!empty($matchTrxnIds)) {
-        CRM_Smartdebit_Settings::save(array('result_ids' => $matchTrxnIds));
-      }
     }
 
     // Find the contributions that have already been processed

@@ -47,10 +47,6 @@ class CRM_Smartdebit_Sync
    * @return \CRM_Queue_Runner
    */
   public static function getRunner($interactive=TRUE, $auddisIDs = NULL, $aruddIDs = NULL) {
-    // Reset stats
-    CRM_Smartdebit_Settings::save(array('rejected_auddis' => NULL));
-    CRM_Smartdebit_Settings::save(array('rejected_arudd' => NULL));
-
     // Setup the Queue
     $queue = CRM_Queue_Service::singleton()->create(array(
       'name'  => self::QUEUE_NAME,
@@ -59,8 +55,7 @@ class CRM_Smartdebit_Sync
     ));
 
     // Clear out the results table
-    $emptySql = "TRUNCATE TABLE veda_smartdebit_success_contributions";
-    CRM_Core_DAO::executeQuery($emptySql);
+    CRM_Smartdebit_SyncResults::delete();
 
     if (!$interactive) {
       // We only retrieve collection reports when running in unattended (ie. scheduled sync) mode.
@@ -202,27 +197,20 @@ class CRM_Smartdebit_Sync
    * @return int
    * @throws \Exception
    */
-  public static function syncSmartdebitAuddis(CRM_Queue_TaskContext $ctx, $smartDebitAuddisIds)
-  {
+  public static function syncSmartdebitAuddis(CRM_Queue_TaskContext $ctx, $smartDebitAuddisIds) {
     // Add contributions for rejected payments with the status of 'failed'
-    // Reset the counter when sync starts
-    CRM_Smartdebit_Settings::save(array('rejected_auddis' => NULL));
-    // Rejected Ids is used to display on confirm form, would be nice to tidy and have it's own table or something
-    $rejectedIds = array();
 
     // Retrieve AUDDIS files from Smartdebit
     if ($smartDebitAuddisIds) {
-      // Find the relevant auddis file
+      // Find the relevant AUDDIS file
       foreach ($smartDebitAuddisIds as $auddisId) {
         // Process AUDDIS files
         $auddisFile = CRM_Smartdebit_Api::getAuddisFile($auddisId);
         unset($auddisFile['auddis_date']);
-        $refKey = 'reference';
-        $dateKey = 'effective-date';
-        $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey, 'SDAUDDIS'));
+        CRM_Smartdebit_Sync::processAuddisFile($auddisId, $auddisFile, CRM_Smartdebit_CollectionReports::TYPE_AUDDIS);
       }
     }
-    CRM_Smartdebit_Settings::save(array('rejected_auddis' => $rejectedIds));
+
     return CRM_Queue_Task::TASK_SUCCESS;
   }
 
@@ -237,9 +225,6 @@ class CRM_Smartdebit_Sync
    */
   public static function syncSmartdebitArudd(CRM_Queue_TaskContext $ctx, $smartDebitAruddIds) {
     // Add contributions for rejected payments with the status of 'failed'
-    $rejectedIds = array();
-    // Reset the counter when sync starts
-    CRM_Smartdebit_Settings::save(array('rejected_arudd' => NULL));
 
     // Retrieve ARUDD files from Smartdebit
     if($smartDebitAruddIds) {
@@ -247,12 +232,9 @@ class CRM_Smartdebit_Sync
         // Process ARUDD files
         $aruddFile = CRM_Smartdebit_Api::getAruddFile($aruddId);
         unset($aruddFile['arudd_date']);
-        $refKey = 'ref';
-        $dateKey = 'originalProcessingDate';
-        $rejectedIds = array_merge($rejectedIds, CRM_Smartdebit_Sync::processAuddisFile($aruddId, $aruddFile, $refKey, $dateKey, 'SDARUDD'));
+        CRM_Smartdebit_Sync::processAuddisFile($aruddId, $aruddFile, CRM_Smartdebit_CollectionReports::TYPE_ARUDD);
       }
     }
-    CRM_Smartdebit_Settings::save(array('rejected_arudd' => $rejectedIds));
 
     Civi::log()->debug('Smartdebit: Sync Job End.');
     return CRM_Queue_Task::TASK_SUCCESS;
@@ -287,7 +269,7 @@ class CRM_Smartdebit_Sync
         continue;
       }
 
-      self::processCollection($sdPayment['transaction_id'], $sdPayment['receive_date'], TRUE, $sdPayment['amount'], 'SDCR');
+      self::processCollection($sdPayment['transaction_id'], $sdPayment['receive_date'], $sdPayment['amount'], CRM_Smartdebit_CollectionReports::TYPE_COLLECTION);
     }
     return CRM_Queue_Task::TASK_SUCCESS;
   }
@@ -297,17 +279,30 @@ class CRM_Smartdebit_Sync
    *
    * @param string $trxnId
    * @param string $receiveDate
-   * @param bool $contributionSuccess
    * @param float $amount
-   * @param string $collectionDescription
+   * @param int $collectionDescription
    *
    * @return bool|int
    * @throws \CiviCRM_API3_Exception
    */
-  private static function processCollection($trxnId, $receiveDate, $contributionSuccess, $amount, $collectionDescription) {
+  private static function processCollection($trxnId, $receiveDate, $amount, $collectionType) {
     if (empty($trxnId) || empty($receiveDate)) {
       // amount can be empty
       return FALSE;
+    }
+
+    switch ($collectionType) {
+      case CRM_Smartdebit_CollectionReports::TYPE_COLLECTION:
+        $collectionDescription = '[SDCR]';
+        break;
+
+      case CRM_Smartdebit_CollectionReports::TYPE_AUDDIS:
+        $collectionDescription = '[SDAUDDIS]';
+        break;
+
+      case CRM_Smartdebit_CollectionReports::TYPE_ARUDD:
+        $collectionDescription = '[SDARUDD]';
+        break;
     }
 
     // Get existing recurring contribution
@@ -354,14 +349,14 @@ class CRM_Smartdebit_Sync
     // as CiviCRM should have created the first contribution
     list($firstPayment, $contributeParams) = self::checkIfFirstPayment($contributeParams, $contributionRecur);
 
-    $contributeParams['source'] = '[' . $collectionDescription . ']';
+    $contributeParams['source'] = $collectionDescription;
     try {
       // Try to get description for contribution from membership
       $membership = civicrm_api3('Membership', 'getsingle', array(
         'contribution_recur_id' => $contributionRecur['id'],
       ));
       if (!empty($membership['source'])) {
-        $contributeParams['source'] = '[' . $collectionDescription . '] ' . $membership['source'];
+        $contributeParams['source'] = $collectionDescription . ' ' . $membership['source'];
       }
     }
     catch (Exception $e) {
@@ -373,7 +368,7 @@ class CRM_Smartdebit_Sync
 
     if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: $contribution=' . print_r($contributeParams, true)); }
 
-    if ($contributionSuccess) {
+    if ($collectionType === CRM_Smartdebit_CollectionReports::TYPE_COLLECTION) {
       $completedStatusId = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed');
       if ($firstPayment) {
         if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: success firstpayment (recur:' . $contributionRecur['id'] . ')'); }
@@ -433,30 +428,18 @@ class CRM_Smartdebit_Sync
       if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: Updating contributionrecur=' . $contributionRecur['id']); }
       CRM_Smartdebit_Base::createRecurContribution($contributionRecur);
 
-      // Only record completed collections in DB
-      if ($contributionSuccess) {
-        // Store the results in veda_smartdebit_success_contributions table
-        $keepSuccessResultsSQL = "
-          INSERT INTO `veda_smartdebit_success_contributions`(
-            `transaction_id`,
-            `contribution_id`,
-            `contact_id`,
-            `contact`,
-            `amount`,
-            `frequency`
-            )
-          VALUES (%1,%2,%3,%4,%5,%6)
-        ";
-        $keepSuccessResultsParams = array(
-          1 => array($trxnId, 'String'),
-          2 => array($contributeResult['id'], 'Integer'),
-          3 => array($contactResult['id'], 'Integer'),
-          4 => array($contactResult['display_name'], 'String'),
-          5 => array($amount, 'String'),
-          6 => array($contributionRecur['frequency_interval'] . ' ' . $contributionRecur['frequency_unit'], 'String'),
-        );
-        CRM_Core_DAO::executeQuery($keepSuccessResultsSQL, $keepSuccessResultsParams);
-      }
+      $resultValues = [
+        'type' => $collectionType,
+        'transaction_id' => $contributeResult['trxn_id'],
+        'contribution_id' => $contributeResult['id'],
+        'contact_id' => $contactResult['id'],
+        'contact_name' => $contactResult['display_name'],
+        'amount' => $amount,
+        'frequency' => ucwords($contributionRecur['frequency_interval'] . ' ' . $contributionRecur['frequency_unit']),
+        'receive_date' => $contributeResult['receive_date'],
+      ];
+      CRM_Smartdebit_SyncResults::save($resultValues, $collectionType);
+
       return $contributeResult['id'];
     }
     return FALSE;
@@ -511,23 +494,45 @@ class CRM_Smartdebit_Sync
    * @param string $auddisFile
    * @param string $refKey
    * @param string $dateKey
-   * @param string $collectionDescription
+   * @param int $collectionType
    *
    * @return array|bool
    * @throws \CiviCRM_API3_Exception
    */
-  private static function processAuddisFile($auddisId, $auddisFile, $refKey, $dateKey, $collectionDescription) {
+  private static function processAuddisFile($auddisId, $auddisFile, $collectionType) {
     $errors = FALSE;
     $rejectedIds = array();
 
-    // Process each record in the auddis file
+    switch ($collectionType) {
+      case CRM_Smartdebit_CollectionReports::TYPE_AUDDIS:
+        $collectionDescription = '[SDAUDDIS]';
+        $refKey = 'reference';
+        $dateKey = 'effective-date';
+        $amountKey = NULL;
+        break;
+
+      case CRM_Smartdebit_CollectionReports::TYPE_ARUDD:
+        $collectionDescription = '[SDARUDD]';
+        $refKey = 'ref';
+        $dateKey = 'originalProcessingDate';
+        $amountKey = 'valueOf';
+        break;
+    }
+
+    // Process each record in the AUDDIS/ARUDD file
     foreach ($auddisFile as $key => $value) {
       if (!isset($value[$refKey]) || !isset($value[$dateKey])) {
-        Civi::log()->debug('Smartdebit processAuddis. Id=' . $auddisId . '. Malformed Auddis/Arudd record from Smartdebit.');
+        Civi::log()->debug('Smartdebit processAuddis. Id=' . $auddisId . '. Malformed AUDDIS/ARUDD record from Smartdebit.');
         continue;
       }
 
-      $contributionId = self::processCollection($value[$refKey], $value[$dateKey], FALSE, 0, $collectionDescription);
+      $amount = 0;
+      if ($amountKey) {
+        // Only ARUDD has an amount
+        $amount = $value[$amountKey];
+      }
+
+      $contributionId = self::processCollection($value[$refKey], $value[$dateKey], $amount, $collectionType);
 
       if ($contributionId) {
         // Look for an existing contribution
@@ -541,18 +546,18 @@ class CRM_Smartdebit_Sync
         }
 
         // get contact display name to display in result screen
-        $contactParams = array('version' => 3, 'id' => $existingContribution['contact_id']);
-        $contactResult = civicrm_api('Contact', 'getsingle', $contactParams);
+        $contactParams = array('id' => $existingContribution['contact_id']);
+        $contactResult = civicrm_api3('Contact', 'getsingle', $contactParams);
 
-        $rejectedIds[$contributionId] = array('cid' => $existingContribution['contact_id'],
+        $rejectedIds[$contributionId] = array(
+          'cid' => $existingContribution['contact_id'],
           'id' => $contributionId,
           'display_name' => $contactResult['display_name'],
           'total_amount' => CRM_Utils_Money::format($existingContribution['total_amount']),
           'trxn_id' => $value[$refKey],
-          'status' => $existingContribution['label'],
         );
 
-        // Allow auddis rejected contribution to be handled by hook
+        // Allow AUDDIS rejected contribution to be handled by hook
         CRM_Smartdebit_Hook::handleAuddisRejectedContribution($contributionId);
       } else {
         Civi::log()->debug('Smartdebit processAuddis: ' . $value[$refKey] . ' NOT matched to contribution in CiviCRM - try reconciliation.');

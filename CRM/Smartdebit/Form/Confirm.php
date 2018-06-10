@@ -40,16 +40,26 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
 
     if ($state == 'done') {
       $this->status = 1;
-      $rejectedAuddis = CRM_Smartdebit_Settings::getValue('rejected_auddis');
-      $rejectedArudd = CRM_Smartdebit_Settings::getValue('rejected_arudd');
-      $this->assign('rejectedAuddis', $rejectedAuddis);
-      $this->assign('rejectedArudd', $rejectedArudd);
-      $rejectedids = array_merge(is_array($rejectedAuddis) ? $rejectedAuddis : array(), is_array($rejectedArudd) ? $rejectedArudd : array());
-      $this->assign('rejectedids', $rejectedids);
+      $rejects = CRM_Smartdebit_SyncResults::get(['arudd' => TRUE, 'auddis' => TRUE]);
+      $successes = CRM_Smartdebit_SyncResults::get(['collections' => TRUE]);
 
-      $getSQL = "SELECT * FROM veda_smartdebit_success_contributions";
-      $getDAO = CRM_Core_DAO::executeQuery($getSQL);
-      $ids = $totalContributionAmount = array();
+      $summary = [];
+      foreach ($rejects as $reject) {
+        if (isset($reject['amount'])) {
+          $summary['reject']['amount'] += $reject['amount'];
+        }
+      }
+      $summary['reject']['count'] = count($rejects);
+      $summary['reject']['description'] = ts('Failed Contribution(s) synchronised with CiviCRM');
+      foreach ($successes as $success) {
+        if (isset($success['amount'])) {
+          $summary['success']['amount'] += $success['amount'];
+        }
+      }
+      $summary['success']['count'] = count($successes);
+      $summary['success']['description'] = ts('Successful contribution(s) synchronised with CiviCRM');
+
+
       while ($getDAO->fetch()){
         $transactionURL = CRM_Utils_System::url("civicrm/contact/view/contribution", "action=view&reset=1&id={$getDAO->contribution_id}&cid={$getDAO->contact_id}&context=home");
         $contactURL     = CRM_Utils_System::url("civicrm/contact/view", "reset=1&cid={$getDAO->contact_id}");
@@ -61,12 +71,10 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
         );
         $totalContributionAmount[] =  $getDAO->amount;
       }
-      $totalAmountAdded = array_sum($totalContributionAmount);
-      $totalAmountAdded = CRM_Utils_Money::format($totalAmountAdded);
-      $this->assign('ids', $ids);
-      $this->assign('totalAmountAdded', $totalAmountAdded);
-      $this->assign('totalValidContribution', count($ids));
-      $this->assign('totalRejectedContribution', count($rejectedids));
+
+    $this->assign('summary', $summary);
+    $this->assign('successes', $successes);
+    $this->assign('rejects', $rejects);
     }
     $this->assign('status', $this->status);
   }

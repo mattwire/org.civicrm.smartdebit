@@ -24,8 +24,7 @@
  +-------------------------------------------------------------------*/
 
 return array(
-
-  //payment_instrument_id
+  // payment_instrument_id
   'smartdebit_payment_instrument_id' => array(
     'admin_group' => 'smartdebit_general',
     'admin_grouptitle' => 'General Settings',
@@ -43,7 +42,7 @@ return array(
     'html_attributes' => array(),
   ),
 
-  //financial_type
+  // financial_type
   'smartdebit_financial_type' => array(
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
@@ -59,7 +58,7 @@ return array(
     'html_attributes' => array(),
   ),
 
-  //activity_type
+  // activity_type
   'smartdebit_activity_type' => array(
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
@@ -75,7 +74,7 @@ return array(
     'html_attributes' => array(),
   ),
 
-  //activity_type_letter
+  // activity_type_letter
   'smartdebit_activity_type_letter' => array(
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
@@ -91,7 +90,7 @@ return array(
     'html_attributes' => array(),
   ),
 
-  //collection_interval
+  // collection_interval
   'smartdebit_collection_interval' => array(
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
@@ -109,7 +108,7 @@ return array(
     ),
   ),
 
-  //collection_days
+  // collection_days
   'smartdebit_collection_days' => array(
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
@@ -127,7 +126,7 @@ return array(
     ),
   ),
 
-  //Advance notice period
+  // Advance notice period
   'smartdebit_notice_period' => array(
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
@@ -145,7 +144,7 @@ return array(
     ),
   ),
 
-  //service_user_number
+  // service_user_number
   'smartdebit_service_user_number' => array(
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
@@ -163,7 +162,7 @@ return array(
     ),
   ),
 
-  //transaction_prefix
+  // transaction_prefix
   'smartdebit_transaction_prefix' => array(
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
@@ -181,7 +180,7 @@ return array(
     ),
   ),
 
-  //initial_completed
+  // initial_completed
   'smartdebit_initial_completed' => array(
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
@@ -198,7 +197,7 @@ return array(
     ),
   ),
 
-  //Confirm by
+  // Confirm by post
   'smartdebit_confirmby_post' => array(
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
@@ -215,7 +214,7 @@ return array(
     ),
   ),
 
-  //Confirm by
+  // Confirm by email
   'smartdebit_confirmby_email' => array(
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
@@ -232,7 +231,7 @@ return array(
     ),
   ),
 
-// Debug mode
+  // Debug mode
   'smartdebit_debug' => array(
     'admin_group' => 'smartdebit_debug',
     'admin_grouptitle' => 'Debug Settings',
@@ -251,7 +250,7 @@ return array(
     ),
   ),
 
-  //Collection report cache retention period
+  // Collection report cache retention period
   'smartdebit_cr_cache' => array(
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
@@ -268,43 +267,4 @@ return array(
       'size' => 50,
     ),
   ),
-
-  // Internal settings for stats
-  //transaction_prefix
-  'smartdebit_rejected_auddis' => array(
-    'group_name' => 'Smart Debit Settings',
-    'group' => 'smartdebit',
-    'name' => 'smartdebit_rejected_auddis',
-    'type' => 'Array',
-    'add' => '4.7',
-    'is_domain' => 1,
-    'is_contact' => 0,
-    'default' => '',
-    'html_type' => 'Hidden',
-    'html_attributes' => array(),
-  ),
-  'smartdebit_rejected_arudd' => array(
-    'group_name' => 'Smart Debit Settings',
-    'group' => 'smartdebit',
-    'name' => 'smartdebit_rejected_arudd',
-    'type' => 'Array',
-    'add' => '4.7',
-    'is_domain' => 1,
-    'is_contact' => 0,
-    'default' => '',
-    'html_type' => 'Hidden',
-    'html_attributes' => array(),
-  ),
-  'smartdebit_result_ids' => array(
-    'group_name' => 'Smart Debit Settings',
-    'group' => 'smartdebit',
-    'name' => 'smartdebit_result_ids',
-    'type' => 'Array',
-    'add' => '4.7',
-    'is_domain' => 1,
-    'is_contact' => 0,
-    'default' => '',
-    'html_type' => 'Hidden',
-    'html_attributes' => array(),
-  )
 );

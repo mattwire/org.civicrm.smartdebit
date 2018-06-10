@@ -10,6 +10,10 @@ class CRM_Smartdebit_CollectionReports {
   const TABLESUMMARY='veda_smartdebit_collectionreportsummary';
   const COLLECTION_REPORT_BACKTRACK_DAYS = 7;
 
+  const TYPE_COLLECTION=0;
+  const TYPE_AUDDIS=1;
+  const TYPE_ARUDD=2;
+
   /**
    * Function to get the retrieved collection report count
    *
