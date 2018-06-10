@@ -82,7 +82,7 @@ class CRM_Smartdebit_Sync
       $task    = new CRM_Queue_Task(
         array('CRM_Smartdebit_Sync', 'syncSmartdebitCollectionReports'),
         array($start, self::BATCH_COUNT),
-        "Processing Smartdebit collections: {$start} to " . ($start + self::BATCH_COUNT) . " of {$count}"
+        "Processed Smartdebit collections: {$start} to " . ($start + self::BATCH_COUNT) . " of {$count}"
       );
 
       // Add the Task to the Queue
@@ -107,7 +107,7 @@ class CRM_Smartdebit_Sync
       $task = new CRM_Queue_Task(
         array('CRM_Smartdebit_Sync', 'syncSmartdebitAuddis'),
         array($auddisIDs),
-        "Syncing AUDDIS reports from Smartdebit"
+        "Retrieved AUDDIS reports from Smartdebit"
       );
       $queue->createItem($task);
     }
@@ -126,7 +126,7 @@ class CRM_Smartdebit_Sync
       $task = new CRM_Queue_Task(
         array('CRM_Smartdebit_Sync', 'syncSmartdebitArudd'),
         array($aruddIDs),
-        "Syncing ARUDD reports from Smartdebit"
+        "Retrieved ARUDD reports from Smartdebit"
       );
       $queue->createItem($task);
     }
@@ -135,14 +135,14 @@ class CRM_Smartdebit_Sync
     $task = new CRM_Queue_Task(
       array('CRM_Smartdebit_Sync', 'updateRecurringContributionsTask'),
       array(),
-      'Updating Recurring Contributions in CiviCRM'
+      'Updated Recurring Contributions in CiviCRM'
     );
     $queue->createItem($task);
 
     $task = new CRM_Queue_Task(
       array('CRM_Smartdebit_CollectionReports', 'removeOld'),
       array(),
-      'Cleaning up'
+      'Cleaned up'
     );
     $queue->createItem($task);
 
