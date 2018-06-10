@@ -89,9 +89,11 @@ WHERE ctrc.trxn_id = %1
       }
     }
 
-    $summary['Rejected Contributions in the auddis']['count'] = $counts['auddis'];
-    $summary['Rejected Contributions in the auddis']['total'] = CRM_Utils_Money::format($counts['auddis_amount']);
-    $this->assign('totalMatchedAuddisRejected', $counts['auddis_amount']);
+    $summary['rejected_auddis'] = [
+      'description' => 'Rejected Contributions in the AUDDIS reports',
+      'count' => $counts['auddis'],
+      'total' => $counts['auddis_amount'],
+    ];
 
     $newAruddRecords = array();
     $counts['arudd'] = 0;
@@ -130,8 +132,11 @@ WHERE ctrc.trxn_id = %1
       }
     }
 
-    $summary['Rejected Contributions in the arudd']['count'] = $counts['arudd'];
-    $summary['Rejected Contributions in the arudd']['total'] = CRM_Utils_Money::format($counts['arudd_amount']);
+    $summary['rejected_arudd'] = [
+      'description' => 'Rejected Contributions in the ARUDD reports',
+      'count' => $counts['arudd'],
+      'total' => $counts['arudd_amount'],
+    ];
 
     $listArray = array();
     // Display the valid payments
@@ -275,30 +280,40 @@ WHERE cc.`trxn_id` IN ( $contributionTrxnIdsList )
     $this->addButtons($buttons);
     CRM_Utils_System::setTitle(ts('Synchronise CiviCRM with Smart Debit'));
 
-    $summary['Contributions already processed']['count'] = CRM_Utils_Array::value('contribution_existing', $counts);
-    $summary['Contributions already processed']['total'] = CRM_Utils_Money::format(CRM_Utils_Array::value('contribution_existing_amount', $counts));
-    $summary['Contributions not matched to contacts']['count'] = CRM_Utils_Array::value('contribution_missing', $counts);
-    $summary['Contributions not matched to contacts']['total'] = CRM_Utils_Money::format(CRM_Utils_Array::value('contribution_missing_amount', $counts));
-    $summary['Contributions matched to contacts']['count'] = CRM_Utils_Array::value('contribution_matched', $counts);
-    $summary['Contributions matched to contacts']['total'] = CRM_Utils_Money::format(CRM_Utils_Array::value('contribution_matched_amount', $counts));
+    $summary['contributions_already_processed'] = [
+      'description' => 'Contributions already processed',
+      'count' => CRM_Utils_Array::value('contribution_existing', $counts),
+      'total' => CRM_Utils_Array::value('contribution_existing_amount', $counts),
+    ];
+    $summary['contributions_matched'] = [
+      'description' => 'Contributions matched to contacts',
+      'count' => CRM_Utils_Array::value('contribution_matched', $counts),
+      'total' => CRM_Utils_Array::value('contribution_matched_amount', $counts),
+    ];
+    $summary['contributions_not_matched'] = [
+      'description' => 'Contributions not matched to contacts',
+      'count' => CRM_Utils_Array::value('contribution_missing', $counts),
+      'total' => CRM_Utils_Array::value('contribution_missing_amount', $counts),
+    ];
 
-    $totalSummaryNumber = CRM_Utils_Array::value('auddis', $counts) + CRM_Utils_Array::value('arudd', $counts) + CRM_Utils_Array::value('contribution_existing', $counts) + CRM_Utils_Array::value('contribution_missing', $counts) + CRM_Utils_Array::value('contribution_matched', $counts);
-    $totalSummaryAmount = CRM_Utils_Array::value('auddis_amount', $counts) + CRM_Utils_Array::value('arudd_amount', $counts) + CRM_Utils_Array::value('contribution_existing_amount', $counts) + CRM_Utils_Array::value('contribution_missing_amount', $counts) + CRM_Utils_Array::value('contribution_matched_amount', $counts);
+    $summary['total'] = [
+      'description' => 'Total',
+      'count' => CRM_Utils_Array::value('auddis', $counts) + CRM_Utils_Array::value('arudd', $counts) + CRM_Utils_Array::value('contribution_existing', $counts) + CRM_Utils_Array::value('contribution_missing', $counts) + CRM_Utils_Array::value('contribution_matched', $counts),
+      'total' => CRM_Utils_Array::value('auddis_amount', $counts) + CRM_Utils_Array::value('arudd_amount', $counts) + CRM_Utils_Array::value('contribution_existing_amount', $counts) + CRM_Utils_Array::value('contribution_missing_amount', $counts) + CRM_Utils_Array::value('contribution_matched_amount', $counts),
+    ];
 
     $this->assign('newAuddisRecords', $newAuddisRecords);
     $this->assign('newAruddRecords', $newAruddRecords);
     $this->assign('listArray', $listArray);
-    $this->assign('totalMatched', CRM_Utils_Money::format(CRM_Utils_Array::value('contribution_matched_amount', $counts)));
+    $this->assign('totalMatched', CRM_Utils_Array::value('contribution_matched_amount', $counts));
     $this->assign('totalMatchedCount', CRM_Utils_Array::value('contribution_matched', $counts));
     $this->assign('totalMatchedAuddis', CRM_Utils_Array::value('auddis_matched', $counts));
     $this->assign('totalMatchedArudd', CRM_Utils_Array::value('arudd_matched', $counts));
     $this->assign('totalRejectedArudd', CRM_Utils_Array::value('arudd_amount', $counts));
-    $this->assign('totalExist', CRM_Utils_Money::format(CRM_Utils_Array::value('contribution_existing_amount', $counts)));
-    $this->assign('totalMissing', CRM_Utils_Money::format(CRM_Utils_Array::value('contribution_missing_amount', $counts)));
+    $this->assign('totalExist', CRM_Utils_Array::value('contribution_existing_amount', $counts));
+    $this->assign('totalMissing', CRM_Utils_Array::value('contribution_missing_amount', $counts));
     $this->assign('existArray', $existArray);
     $this->assign('missingArray', $missingArray);
-    $this->assign('summaryNumber', $totalSummaryNumber);
-    $this->assign('totalSummaryAmount', CRM_Utils_Money::format($totalSummaryAmount));
     $this->assign('summary', $summary);
 
     parent::buildQuickForm();

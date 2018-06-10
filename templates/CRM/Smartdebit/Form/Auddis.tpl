@@ -22,7 +22,6 @@
 | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
 +-------------------------------------------------------------------*}
 
-<h3>{ts}Select the AUDDIS and ARUDD dates that you wish to process now:{/ts}</h3>
 <div class="help">
   <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}The below tables summarise the data available from SmartDebit in the selected AUDDIS/ARUDD files and collection reports.{/ts}</span><br />
   <strong>{ts}To synchronise CiviCRM from Smartdebit click continue.{/ts}</strong>
@@ -40,21 +39,23 @@
       <th style="text-align: right"><b>{ts}Number{/ts}</th>
       <th style="text-align: right"><b>{ts}Amount{/ts}</th>
     </tr>
-    {foreach from=$summary key=description item=sum}
+    {foreach from=$summary key=linkrel item=sum}
       <tr>
-        <td>{$description}</td>
-        <td style="text-align: right">{$sum.count}</td>
-        <td style="text-align: right">{$sum.total}</td>
+        {if $linkrel eq 'total'}
+          <td><strong>{$sum.description}</strong></td>
+          <td style="text-align: right"><strong>{$sum.count}</strong></td>
+          <td style="text-align: right"><strong>{$sum.total|crmMoney}</strong></td>
+        {else}
+          <td><a href="#{$linkrel}">{$sum.description}</a></td>
+          <td style="text-align: right">{$sum.count}</td>
+          <td style="text-align: right">{$sum.total|crmMoney}</td>
+        {/if}
       </tr>
     {/foreach}
-    <tr>
-      <td><strong>{ts}Total{/ts}</strong></td>
-      <td style="text-align: right"><strong>{$summaryNumber}</strong></td>
-      <td style="text-align: right"><strong>{$totalSummaryAmount}</strong></td>
-    </tr>
   </table>
   <br>
-  <h3>{ts}Rejected Contributions in the AUDDIS{/ts}</h3>
+  <a name="rejected_auddis"></a>
+  <h3>{$summary.rejected_auddis.description} ({$summary.rejected_auddis.count})</h3>
   <table class="form-layout">
     <tr>
       <th><b>{ts}Reference{/ts}</th>
@@ -87,12 +88,13 @@
       <td></td>
       <td></td>
       <td></td>
-      <td><b>{ts}Total Rejected Contributions in AUDDIS{/ts}</td>
-      <td style="text-align: right"><b>{ts}{$totalRejected|crmMoney}{/ts}</td>
+      <td><b>{ts}Total{/ts} {$summary.rejected_auddis.description}</td>
+      <td style="text-align: right"><b>{ts}{$summary.rejected_auddis.total|crmMoney}{/ts}</td>
     </tr>
   </table>
   <br>
-  <h3>{ts}Rejected Contributions in the ARUDD{/ts}</h3>
+  <a name="rejected_arudd"></a>
+  <h3>{$summary.rejected_arudd.description} ({$summary.rejected_arudd.count})</h3>
   <table class="form-layout">
 {foreach from=$newAruddRecords item=arudd}
   {if $arudd.arudd_date}
@@ -127,12 +129,13 @@
       <td></td>
       <td></td>
       <td></td>
-      <td><b>{ts}Total Rejected Contributions in ARUDD{/ts}</td>
-      <td style ="text-align: right"><b>{ts}{$totalRejectedArudd|crmMoney}{/ts}</td>
+      <td><b>{ts}Total{/ts} {$summary.rejected_arudd.description}</td>
+      <td style ="text-align: right"><b>{ts}{$summary.rejected_arudd.total|crmMoney}{/ts}</td>
     </tr>
   </table>
   <br>
-  <h3>{ts}Contributions already processed{/ts}</h3>
+  <a name="contributions_already_processed"></a>
+  <h3>{$summary.contributions_already_processed.description} ({$summary.contributions_already_processed.count})</h3>
   <table class="form-layout">
     <tr>
       <th><b>{ts}Transaction ID{/ts}</th>
@@ -164,12 +167,13 @@
       <td></td>
       <td></td>
       <td></td>
-      <td><b>{ts}Total Processed Contributions{/ts}</td>
-      <td style="text-align: right"><b>{ts}{$totalExist}{/ts}</td>
+      <td><b>{ts}Total{/ts} {$summary.contributions_already_processed.description}</td>
+      <td style="text-align: right"><b>{ts}{$summary.contributions_already_processed.total|crmMoney}{/ts}</td>
     </tr>
   </table>
   <br>
-  <h3>{ts}Contributions matched to contacts{/ts}</h3>
+  <a name="contributions_matched"></a>
+  <h3>{$summary.contributions_matched.description} ({$summary.contributions_matched.count})</h3>
   <table class="form-layout">
     <tr>
       <th><b>{ts}Transaction ID{/ts}</th>
@@ -201,11 +205,12 @@
       <td></td>
       <td></td>
       <td></td>
-      <td><b>{ts}Total Matched Contributions{/ts}</td>
-      <td style ="text-align: right"><b>{ts}{$totalMatched}{/ts}</td>
+      <td><b>{ts}Total{/ts} {$summary.contributions_matched.description}</td>
+      <td style ="text-align: right"><b>{ts}{$summary.contributions_matched.total|crmMoney}{/ts}</td>
     </tr>
   </table>
-  <h3>{ts}Contributions not matched to contacts{/ts}</h3>
+  <a name="contributions_not_matched"></a>
+  <h3>{$summary.contributions_not_matched.description} ({$summary.contributions_not_matched.count})</h3>
   <table class="form-layout">
     <tr>
       <th><b>{ts}Reference{/ts}</th>
@@ -231,8 +236,8 @@
       <td></td>
       <td></td>
       <td></td>
-      <td><b>{ts}Total Not Matched Contributions{/ts}</td>
-      <td style ="text-align: right"><b>{ts}{$totalMissing}{/ts}</td>
+      <td><b>{ts}Total{/ts} {$summary.contributions_not_matched.description}</td>
+      <td style ="text-align: right"><b>{ts}{$summary.contributions_not_matched.total|crmMoney}{/ts}</td>
     </tr>
   </table>
   <br>
