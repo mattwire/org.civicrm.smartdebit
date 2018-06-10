@@ -147,7 +147,16 @@
     {foreach from=$existArray item=row}
       {assign var=id value=$row.id}
       <tr>
-        <td>{$row.transaction_id}</td>
+        <td>
+          {if $row.contribution_id gt 0}
+            {assign var=contactId value=$row.contact_id}
+            {assign var=contributionId value=$row.contribution_id}
+            {capture assign=contributionViewURL}{crmURL p='civicrm/contact/view/contribution' q="reset=1&id=$contributionId&cid=$contactId&action=view&context=contribution"}{/capture}
+            <a href="{$contributionViewURL}" target="_blank">{$row.transaction_id}</a>
+          {else}
+            {$row.transaction_id}
+          {/if}
+        </td>
         <td>
           {if $row.contact_id gt 0}
             {assign var=contactId value=$row.contact_id}

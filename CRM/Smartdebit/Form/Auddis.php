@@ -206,7 +206,7 @@ WHERE ctrc.trxn_id IN ($validIdsString)
 
     // Find the contributions that have already been processed
     $contributionQuery = "
-SELECT cc.contact_id, cc.total_amount, cc.trxn_id, cc.receive_date as cc_receive_date, ctrc.frequency_unit, ctrc.frequency_interval, contact.display_name
+SELECT cc.id as cc_id, cc.contact_id, cc.total_amount, cc.trxn_id, cc.receive_date as cc_receive_date, ctrc.frequency_unit, ctrc.frequency_interval, contact.display_name
 FROM `civicrm_contribution` cc
 LEFT JOIN civicrm_contribution_recur ctrc ON (ctrc.id = cc.contribution_recur_id)
 INNER JOIN civicrm_contact contact ON (cc.contact_id = contact.id)
@@ -218,6 +218,7 @@ WHERE cc.`trxn_id` IN ( $contributionTrxnIdsList )
     $counts['contribution_existing_amount'] = 0;
 
     while ($dao->fetch()) {
+      $existArray[$counts['contribution_existing']]['contribution_id'] = $dao->cc_id;
       $existArray[$counts['contribution_existing']]['contact_id'] = $dao->contact_id;
       $existArray[$counts['contribution_existing']]['contact_name'] = $dao->display_name;
       $existArray[$counts['contribution_existing']]['receive_date'] = date('Y-m-d', strtotime($dao->cc_receive_date));
