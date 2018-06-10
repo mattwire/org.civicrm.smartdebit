@@ -72,7 +72,7 @@
           {if $auddis.contribution_recur_id gt 0}
             {assign var=contactId value=$auddis.contact_id}
             {capture assign=contactViewURL}{crmURL p='civicrm/contact/view' q="reset=1&cid=$contactId"}{/capture}
-            <a href="{$contactViewURL}">{$auddis.contact_name}</a>
+            <a href="{$contactViewURL}" target="_blank">{$auddis.contact_name}</a>
           {else}
             {$auddis.contact_name} ({$auddis.contact_id})
           {/if}
@@ -115,7 +115,7 @@
       {if $arudd.contact_name}
         {assign var=contactId value=$arudd.contact_id}
         {capture assign=contactViewURL}{crmURL p='civicrm/contact/view' q="reset=1&cid=$contactId"}{/capture}
-        <a href="{$contactViewURL}">{$arudd.contact_name}</a>
+        <a href="{$contactViewURL}" target="_blank">{$arudd.contact_name}</a>
       {else}
         {$arudd.contact_id}
       {/if}
@@ -152,7 +152,7 @@
           {if $row.contact_id gt 0}
             {assign var=contactId value=$row.contact_id}
             {capture assign=contactViewURL}{crmURL p='civicrm/contact/view' q="reset=1&cid=$contactId"}{/capture}
-            <a href="{$contactViewURL}">{$row.contact_name}</a>
+            <a href="{$contactViewURL}" target="_blank">{$row.contact_name}</a>
           {else}
             {$row.contact_name}
           {/if}
@@ -190,7 +190,7 @@
           {if $row.contact_id gt 0}
             {assign var=contactId value=$row.contact_id}
             {capture assign=contactViewURL}{crmURL p='civicrm/contact/view' q="reset=1&cid=$contactId"}{/capture}
-            <a href="{$contactViewURL}">{$row.contact_name}</a>
+            <a href="{$contactViewURL}" target="_blank">{$row.contact_name}</a>
           {else}
             {$row.contact_name}
           {/if}
