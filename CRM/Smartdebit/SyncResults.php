@@ -57,12 +57,12 @@ class CRM_Smartdebit_SyncResults {
 
     $resultValues = [
       'type' => $type,
-      'transaction_id' => CRM_Utils_Array::value('transaction_id', $values),
+      'transaction_id' => '"' . CRM_Utils_Array::value('transaction_id', $values) . '"',
       'contribution_id' => CRM_Utils_Array::value('contribution_id', $values),
       'contact_id' => CRM_Utils_Array::value('contact_id', $values),
-      'contact_name' => CRM_Utils_Array::value('contact_name', $values),
+      'contact_name' => '"' . CRM_Utils_Array::value('contact_name', $values) . '"',
       'amount' => CRM_Utils_Array::value('amount', $values),
-      'frequency' => CRM_Utils_Array::value('frequency', $values),
+      'frequency' => '"' . CRM_Utils_Array::value('frequency', $values) . '"',
       'receive_date' => CRM_Utils_Array::value('receive_date', $values),
     ];
     $sql = "

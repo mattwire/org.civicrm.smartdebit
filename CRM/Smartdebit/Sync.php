@@ -323,7 +323,7 @@ class CRM_Smartdebit_Sync
     // Smart debit charge file has dates in UK format
     // UK dates (eg. 27/05/1990) won't work with strtotime, even with timezone properly set.
     // However, if you just replace "/" with "-" it will work fine.
-    $receiveDate = date('Y-m-d', strtotime(str_replace('/', '-', $receiveDate)));
+    $receiveDate = CRM_Utils_Date::processDate(date('Y-m-d', strtotime(str_replace('/', '-', $receiveDate))));
 
     // Use financial type from Smart debit settings
     // if recurring record does not have financial type
@@ -337,7 +337,7 @@ class CRM_Smartdebit_Sync
         'contribution_recur_id' => $contributionRecur['id'],
         'total_amount' => $amount,
         'invoice_id' => md5(uniqid(rand(), TRUE)),
-        'trxn_id' => $trxnId . '/' . CRM_Utils_Date::processDate($receiveDate),
+        'trxn_id' => $trxnId . '/' . $receiveDate,
         'financial_type_id' => $contributionRecur['financial_type_id'],
         'payment_instrument_id' => $contributionRecur['payment_instrument_id'],
         'receive_date' => $receiveDate,
