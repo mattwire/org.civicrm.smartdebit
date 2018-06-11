@@ -40,7 +40,7 @@ class CRM_Smartdebit_Upgrader extends CRM_Smartdebit_Upgrader_Base {
 
     // Clearing cached collection reports
     $this->ctx->log->info('Clearing cached collection reports');
-    if (!CRM_Core_DAO::checkTableExists(CRM_Smartdebit_CollectionReports::TABLENAME)) {
+    if (CRM_Core_DAO::checkTableExists(CRM_Smartdebit_CollectionReports::TABLENAME)) {
       CRM_Core_DAO::executeQuery("TRUNCATE TABLE " . CRM_Smartdebit_CollectionReports::TABLENAME);
     }
 
