@@ -280,12 +280,13 @@ class CRM_Smartdebit_Sync
    * @param string $trxnId
    * @param string $receiveDate
    * @param float $amount
-   * @param int $collectionDescription
+   * @param int $collectionType
+   * @param string $description
    *
    * @return bool|int
    * @throws \CiviCRM_API3_Exception
    */
-  private static function processCollection($trxnId, $receiveDate, $amount, $collectionType) {
+  private static function processCollection($trxnId, $receiveDate, $amount, $collectionType, $description = '') {
     if (empty($trxnId) || empty($receiveDate)) {
       // amount can be empty
       return FALSE;
@@ -297,11 +298,11 @@ class CRM_Smartdebit_Sync
         break;
 
       case CRM_Smartdebit_CollectionReports::TYPE_AUDDIS:
-        $collectionDescription = '[SDAUDDIS]';
+        $collectionDescription = "[SDAUDDIS] {$description}";
         break;
 
       case CRM_Smartdebit_CollectionReports::TYPE_ARUDD:
-        $collectionDescription = '[SDARUDD]';
+        $collectionDescription = "[SDARUDD] {$description}";
         break;
     }
 
@@ -509,6 +510,7 @@ class CRM_Smartdebit_Sync
         $refKey = 'reference';
         $dateKey = 'effective-date';
         $amountKey = NULL;
+        $descriptionKey = 'reason-code';
         break;
 
       case CRM_Smartdebit_CollectionReports::TYPE_ARUDD:
@@ -516,6 +518,7 @@ class CRM_Smartdebit_Sync
         $refKey = 'ref';
         $dateKey = 'originalProcessingDate';
         $amountKey = 'valueOf';
+        $descriptionKey = 'returnDescription';
         break;
     }
 
@@ -532,7 +535,12 @@ class CRM_Smartdebit_Sync
         $amount = $value[$amountKey];
       }
 
-      $contributionId = self::processCollection($value[$refKey], $value[$dateKey], $amount, $collectionType);
+      $description = '';
+      if ($descriptionKey) {
+        $description = $value[$descriptionKey];
+      }
+
+      $contributionId = self::processCollection($value[$refKey], $value[$dateKey], $amount, $collectionType, $description);
 
       if ($contributionId) {
         // Look for an existing contribution
