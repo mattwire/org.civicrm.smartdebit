@@ -44,6 +44,37 @@ class CRM_Smartdebit_Api {
   }
 
   /**
+   * Do the actual call to POST.  The purpose of this function is to allow retries as the smartdebit server sometimes fails to respond.
+   *
+   * @param string $url
+   * @param array $data
+   * @param string $username
+   * @param string $password
+   * @param int $retry
+   *
+   * @return array
+   */
+  private static function doPost($url, $data, $username, $password, $retry = 3) {
+    while ($retry > 0) {
+      if (getenv('CIVICRM_UF') === 'UnitTests') {
+        list($header, $output, $error) = CRM_Smartdebit_Mock::post($url, $data, $username, $password);
+      }
+      else {
+        list($header, $output, $error) = self::post($url, $data, $username, $password);
+      }
+
+      if($error['code']) {
+        Civi::log()->warning('Smartdebit doPost: Error ' . $error['code'] . ' : ' . $error['message']);
+        $retry--;
+      }
+      else {
+        break;
+      }
+    }
+    return array($header, $output, $error);
+  }
+
+  /**
    *   Send a post request with cURL
    *
    * @param string $url URL to send request to
@@ -57,12 +88,7 @@ class CRM_Smartdebit_Api {
     // Prepare data
     $data = self::encodePostParams($data);
 
-    if (getenv('CIVICRM_UF') === 'UnitTests') {
-      list($header, $output, $error) = CRM_Smartdebit_Mock::post($url, $data, $username, $password);
-    }
-    else {
-      list($header, $output, $error) = self::post($url, $data, $username, $password);
-    }
+    list($header, $output, $error) = self::doPost($url, $data, $username, $password);
 
     // Set return values
     if (isset($header['http_code'])) {
