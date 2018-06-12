@@ -175,7 +175,7 @@ function civicrm_api3_smartdebit_getcollectionreportscount($params) {
  *
  * @return array
  */
-function civicrm_api3_smartdebit_getcollectionreports($params) {
+function civicrm_api3_smartdebit_getcollections($params) {
   if (isset($params['options'])) {
     $params['limit'] = CRM_Utils_Array::value('limit', $params['options'], 0);
     $params['offset'] = CRM_Utils_Array::value('offset', $params['options'], 0);
@@ -183,13 +183,17 @@ function civicrm_api3_smartdebit_getcollectionreports($params) {
   return array('reports' => CRM_Smartdebit_CollectionReports::get($params));
 }
 
-function _civicrm_api3_smartdebit_getcollectionreports_spec(&$spec) {
+function _civicrm_api3_smartdebit_getcollections_spec(&$spec) {
   $spec['successes']['api.required'] = 0;
   $spec['successes']['title'] = 'Get successful collections';
   $spec['successes']['type'] = CRM_Utils_Type::T_BOOLEAN;
   $spec['rejects']['api.required'] = 0;
   $spec['rejects']['title'] = 'Get rejected collections';
   $spec['rejects']['type'] = CRM_Utils_Type::T_BOOLEAN;
+  $spec['trxn_id']['api.required'] = 0;
+  $spec['trxn_id']['title'] = 'Transaction ID / Reference Number';
+  $spec['trxn_id']['description'] = 'The Smartdebit "Reference Number" / CiviCRM Transaction ID (eg. WEB00000123)';
+  $spec['trxn_id']['type'] = CRM_Utils_Type::T_STRING;
 }
 
 function civicrm_api3_smartdebit_clearcache($params) {

@@ -309,11 +309,20 @@ ON DUPLICATE KEY UPDATE
     $params['rejects'] = CRM_Utils_Array::value('rejects', $params, FALSE);
     $whereClause = '';
     if ($params['successes'] && !$params['rejects']) {
-      $whereClause .= " WHERE success = 1";
+      $whereClauses[] = "success = 1";
     }
     elseif (!$params['successes'] && $params['rejects']) {
-      $whereClause .= " WHERE success = 0";
+      $whereClauses[] = "success = 0";
     }
+
+    if (!empty($params['trxn_id'])) {
+      $whereClauses[] = 'transaction_id="' . $params['trxn_id'] . '"';
+    }
+
+    if (!empty($whereClauses)) {
+      $whereClause = 'WHERE ' . implode(' AND ', $whereClauses);
+    }
+
     return $whereClause;
   }
 

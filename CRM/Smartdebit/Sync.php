@@ -261,14 +261,6 @@ class CRM_Smartdebit_Sync
 
     // Import each transaction from smart debit
     foreach ($smartDebitPayments as $key => $sdPayment) {
-      // Check we have a mandate for the payment
-      if (!CRM_Smartdebit_Mandates::getbyReference($sdPayment['transaction_id'], TRUE)) {
-        if (CRM_Smartdebit_Settings::getValue('debug')) {
-          Civi::log()->debug('Smartdebit syncSmartdebitRecords: No mandate available for ' . $sdPayment['transaction_id']);
-        }
-        continue;
-      }
-
       self::processCollection($sdPayment['transaction_id'], $sdPayment['receive_date'], $sdPayment['amount'], CRM_Smartdebit_CollectionReports::TYPE_COLLECTION);
     }
     return CRM_Queue_Task::TASK_SUCCESS;
@@ -289,6 +281,14 @@ class CRM_Smartdebit_Sync
   private static function processCollection($trxnId, $receiveDate, $amount, $collectionType, $description = '') {
     if (empty($trxnId) || empty($receiveDate)) {
       // amount can be empty
+      return FALSE;
+    }
+
+    // Check we have a mandate for the payment
+    if (!CRM_Smartdebit_Mandates::getbyReference($trxnId, TRUE)) {
+      if (CRM_Smartdebit_Settings::getValue('debug')) {
+        Civi::log()->debug('Smartdebit syncSmartdebitRecords: No mandate available for ' . $trxnId);
+      }
       return FALSE;
     }
 
