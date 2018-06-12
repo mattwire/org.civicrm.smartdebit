@@ -766,7 +766,9 @@ class CRM_Smartdebit_Sync
         case CRM_Smartdebit_Api::SD_STATE_LIVE:
         case CRM_Smartdebit_Api::SD_STATE_NEW:
           // Clear cancel date and set status if live
-          $recurContribution['cancel_date'] = '';
+          if (isset($recurContribution['cancel_date'])) {
+            $recurContribution['cancel_date'] = '';
+          }
           if (($recurContribution['contribution_status_id'] != CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending'))
             && ($recurContribution['contribution_status_id'] != CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress'))) {
             $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
