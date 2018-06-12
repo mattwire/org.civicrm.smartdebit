@@ -387,6 +387,20 @@ WHERE  ddi_reference = %0";
   }
 
   /**
+   * Get the next scheduled date for the recurring contribution
+   *
+   * @param string $paymentDateString
+   * @param array $recurParams
+   *
+   * @return string
+   */
+  public static function getNextScheduledDate($paymentDateString, $recurParams) {
+    $paymentDate = new DateTime($paymentDateString);
+    $paymentDate->modify('+' . $recurParams['frequency_interval'] . ' ' . $recurParams['frequency_unit']);
+    return $paymentDate->format('Ymd');
+  }
+
+  /**
    * Create a new recurring contribution for the direct debit instruction we set up.
    *
    * @param $recurParams
