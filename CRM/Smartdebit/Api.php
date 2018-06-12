@@ -64,8 +64,12 @@ class CRM_Smartdebit_Api {
       }
 
       if($error['code']) {
-        Civi::log()->warning('Smartdebit doPost: Error ' . $error['code'] . ' : ' . $error['message']);
+        $message = 'Smartdebit doPost: Error ' . $error['code'] . ' : ' . $error['message'];
         $retry--;
+        if ($retry > 0) {
+          $message .= '. Retrying ' . $retry . ' times';
+        }
+        Civi::log()->warning($message);
       }
       else {
         break;
