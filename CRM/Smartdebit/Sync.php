@@ -797,6 +797,7 @@ class CRM_Smartdebit_Sync
       // Hook to allow modifying recurring contribution during sync task
       CRM_Smartdebit_Hook::updateRecurringContribution($recurContribution);
       if ($recurContribution != $recurContributionOriginal) {
+        CRM_Smartdebit_Utils::log('Smartdebit recurs don\'t match: Original: ' . print_r($recurContributionOriginal, TRUE) . ' New: ' . print_r($recurContribution, TRUE), TRUE);
         $recurContribution['modified_date'] = (new DateTime())->format('Y-m-d H:i:s');
         civicrm_api3('ContributionRecur', 'create', $recurContribution);
       }
