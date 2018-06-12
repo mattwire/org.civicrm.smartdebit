@@ -726,8 +726,19 @@ class CRM_Smartdebit_Sync
    *
    * @throws \CiviCRM_API3_Exception
    */
-  public static function updateRecurringContributions() {
-    $smartDebitPayerContactDetails = CRM_Smartdebit_Mandates::getAll(FALSE, TRUE);
+  public static function updateRecurringContributions($transactionIds = array()) {
+    if (count($transactionIds) > 0) {
+      foreach ($transactionIds as $transactionId) {
+        $smartDebitRecord = CRM_Smartdebit_Mandates::getbyReference($transactionId, FALSE);
+        if ($smartDebitRecord) {
+          $smartDebitPayerContactDetails[] = $smartDebitRecord;
+        }
+      }
+    }
+    else {
+      $smartDebitPayerContactDetails = CRM_Smartdebit_Mandates::getAll(FALSE, TRUE);
+    }
+
     if (empty($smartDebitPayerContactDetails)) {
       return;
     }

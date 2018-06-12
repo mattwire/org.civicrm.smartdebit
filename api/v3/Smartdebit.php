@@ -45,13 +45,27 @@ function civicrm_api3_smartdebit_sync($params) {
  * @return array
  */
 function civicrm_api3_smartdebit_updaterecurring($params) {
+  $params['trxn_id'] = CRM_Utils_Array::value('trxn_id', $params, array());
+  if (isset($params['trxn_id']['IN'])) {
+    $params['trxn_id'] = $params['trxn_id']['IN'];
+  }
+  else {
+    $params['trxn_id'] = array($params['trxn_id']);
+  }
   try {
-    CRM_Smartdebit_Sync::updateRecurringContributions();
+    CRM_Smartdebit_Sync::updateRecurringContributions($params['trxn_id']);
   }
   catch (Exception $e) {
     return civicrm_api3_create_error($e->getMessage());
   }
   return civicrm_api3_create_success();
+}
+
+function _civicrm_api3_smartdebit_updaterecurring_spec(&$spec) {
+  $spec['trxn_id']['api.required'] = 0;
+  $spec['trxn_id']['title'] = 'Transaction ID / Reference Number';
+  $spec['trxn_id']['description'] = 'The Smartdebit "Reference Number" / CiviCRM Transaction ID (eg. WEB00000123)';
+  $spec['trxn_id']['type'] = CRM_Utils_Type::T_STRING;
 }
 
 /**
