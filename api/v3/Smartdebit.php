@@ -196,7 +196,35 @@ function _civicrm_api3_smartdebit_getcollections_spec(&$spec) {
   $spec['trxn_id']['type'] = CRM_Utils_Type::T_STRING;
 }
 
+function civicrm_api3_smartdebit_processcollections($params) {
+  if (!empty($params['rejects'])) {
+    return civicrm_api3_create_error('NOT IMPLEMENTED: Process rejected collections');
+  }
+  $smartDebitPayments = CRM_Smartdebit_CollectionReports::get($params);
+
+  // Import each transaction from smart debit
+  foreach ($smartDebitPayments as $key => $sdPayment) {
+    $contributionIds[] = CRM_Smartdebit_Sync::processCollection($sdPayment['transaction_id'], $sdPayment['receive_date'], $sdPayment['amount'], CRM_Smartdebit_CollectionReports::TYPE_COLLECTION);
+  }
+  return array('Contribution IDs' => $contributionIds);
+}
+
+function _civicrm_api3_smartdebit_processcollections_spec(&$spec) {
+  $spec['successes']['api.required'] = 0;
+  $spec['successes']['title'] = 'Process successful collections';
+  $spec['successes']['type'] = CRM_Utils_Type::T_BOOLEAN;
+  $spec['rejects']['api.required'] = 0;
+  $spec['rejects']['title'] = 'Process rejected collections (NOT IMPLEMENTED)';
+  $spec['rejects']['type'] = CRM_Utils_Type::T_BOOLEAN;
+  $spec['trxn_id']['api.required'] = 0;
+  $spec['trxn_id']['title'] = 'Process collection with Transaction ID / Reference Number';
+  $spec['trxn_id']['description'] = 'The Smartdebit "Reference Number" / CiviCRM Transaction ID (eg. WEB00000123)';
+  $spec['trxn_id']['type'] = CRM_Utils_Type::T_STRING;
+}
+
 function civicrm_api3_smartdebit_clearcache($params) {
+  civicrm_api3_verify_mandatory($params, NULL, array(array('mandates', 'collections')));
+
   if (!empty($params['mandates'])) {
     CRM_Smartdebit_Mandates::delete();
   }

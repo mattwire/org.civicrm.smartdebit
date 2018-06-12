@@ -278,7 +278,7 @@ class CRM_Smartdebit_Sync
    * @return bool|int
    * @throws \CiviCRM_API3_Exception
    */
-  private static function processCollection($trxnId, $receiveDate, $amount, $collectionType, $description = '') {
+  public static function processCollection($trxnId, $receiveDate, $amount, $collectionType, $description = '') {
     if (empty($trxnId) || empty($receiveDate)) {
       // amount can be empty
       return FALSE;
