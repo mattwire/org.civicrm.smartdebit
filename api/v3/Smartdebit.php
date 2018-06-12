@@ -178,7 +178,7 @@ function _civicrm_api3_smartdebit_retrievecollectionreports_spec(&$spec) {
  *
  * @return array
  */
-function civicrm_api3_smartdebit_getcollectionreportscount($params) {
+function civicrm_api3_smartdebit_getcollectionscount($params) {
   return array('count' => CRM_Smartdebit_CollectionReports::count());
 }
 
