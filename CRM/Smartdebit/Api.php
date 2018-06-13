@@ -194,9 +194,10 @@ class CRM_Smartdebit_Api {
    * Format error from Smartdebit for display
    *
    * @param array $response
+   * @param string $url Request URL that generated the response
    * @param string $referenceNumber (Smartdebit reference number)
    */
-  public static function reportError($response, $referenceNumber = NULL) {
+  public static function reportError($response, $url, $referenceNumber = '') {
     if (isset($response['head']['title'])) {
       $msg = $response['head']['title'];
     }
@@ -208,8 +209,9 @@ class CRM_Smartdebit_Api {
         $msg = $response['statuscode'] . ': ' . $response['message'];
       }
     }
-    CRM_Core_Session::setStatus($msg, 'Smart Debit API', 'error');
-    Civi::log()->error('Smart Debit API: ' . $msg);
+    $msg .= ' Request URL: ' . $url;
+    CRM_Core_Session::setStatus($msg, 'Smartdebit API', 'error');
+    Civi::log()->error('Smartdebit API: ' . $msg);
   }
 
   /**
@@ -326,8 +328,8 @@ class CRM_Smartdebit_Api {
       return $smartDebitArray;
     }
     else {
-      self::reportError($response);
-      return false;
+      self::reportError($response, $url);
+      return FALSE;
     }
   }
 
@@ -401,9 +403,9 @@ class CRM_Smartdebit_Api {
       }
     }
     else {
-      $url = CRM_Utils_System::url('civicrm/smartdebit/syncsd', 'reset=1'); // DataSource Form
-      self::reportError($response);
-      CRM_Utils_System::redirect($url);
+      self::reportError($response, $url);
+      $redirectUrl = CRM_Utils_System::url('civicrm/smartdebit/syncsd', 'reset=1'); // DataSource Form
+      CRM_Utils_System::redirect($redirectUrl);
     }
     return FALSE;
   }

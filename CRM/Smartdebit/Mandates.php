@@ -343,7 +343,7 @@ class CRM_Smartdebit_Mandates {
       return self::save($smartDebitArray, $format);
     }
     else {
-      CRM_Smartdebit_Api::reportError($response, $referenceNumber);
+      CRM_Smartdebit_Api::reportError($response, $url, $referenceNumber);
       return FALSE;
     }
   }
