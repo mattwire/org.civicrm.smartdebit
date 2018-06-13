@@ -71,13 +71,15 @@ class CRM_Smartdebit_Sync
     // Setup a Task in the Queue
     $i = 0;
     while ($i < $rounds) {
-      $start   = $i * self::BATCH_COUNT;
-      $counter = ($rounds > 1) ? ($start + self::BATCH_COUNT) : $count;
-      if ($counter > $count) $counter = $count;
-      $task    = new CRM_Queue_Task(
+      $start = $i * self::BATCH_COUNT;
+      $end = ($start + self::BATCH_COUNT);
+      if ($end > $count) {
+        $end = $count;
+      }
+      $task = new CRM_Queue_Task(
         array('CRM_Smartdebit_Sync', 'syncSmartdebitCollectionReports'),
         array($start, self::BATCH_COUNT),
-        "Processed Smartdebit collections: {$start} to " . ($start + self::BATCH_COUNT) . " of {$count}"
+        "Processed Smartdebit collections: {$start} to {$end} of {$count}"
       );
 
       // Add the Task to the Queue
