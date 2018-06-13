@@ -718,7 +718,8 @@ class CRM_Smartdebit_Sync
    * @throws \CiviCRM_API3_Exception
    */
   public static function updateRecurringContributionsTask(CRM_Queue_TaskContext $ctx) {
-    self::updateRecurringContributions();
+    $stats = self::updateRecurringContributions();
+    Civi::log()->info('Smartdebit: Updated ' . $stats['modified'] . ' of ' . $stats['count'] . 'recurring contributions');
     return CRM_Queue_Task::TASK_SUCCESS;
   }
 
@@ -727,17 +728,25 @@ class CRM_Smartdebit_Sync
    *
    * @param array $transactionIds Optional array of transaction IDs to update recurring contributions for
    *
+   * @return array $stats['modified', 'count']
    * @throws \Exception
    */
   public static function updateRecurringContributions($transactionIds = array()) {
+    $stats = [
+      'count' => 0,
+      'modified' => 0,
+    ];
+
     if (count($transactionIds) > 0) {
       foreach ($transactionIds as $transactionId) {
         $smartDebitRecord = CRM_Smartdebit_Mandates::getbyReference($transactionId, FALSE);
         if ($smartDebitRecord) {
-          self::updateRecur($smartDebitRecord);
+          if (self::updateRecur($smartDebitRecord)) {
+            $stats['modified']++;
+          }
+          $stats['count']++;
         }
       }
-      return;
     }
     else {
       $count = CRM_Smartdebit_Mandates::count(TRUE);
@@ -747,13 +756,25 @@ class CRM_Smartdebit_Sync
         $params['offset'] = $start;
         $smartDebitMandates = CRM_Smartdebit_Mandates::getAll(FALSE, TRUE, $params);
         foreach ($smartDebitMandates as $key => $smartDebitMandate) {
-          self::updateRecur($smartDebitMandate);
+          if (self::updateRecur($smartDebitMandate)) {
+            $stats['modified']++;
+          }
+          $stats['count']++;
         }
       }
-      return;
     }
+
+    return $stats;
   }
 
+  /**
+   * Update the recurring contribution linked to the smartdebit mandate
+   *
+   * @param $smartDebitMandate
+   *
+   * @return bool TRUE if recur was modified, FALSE otherwise
+   * @throws \CiviCRM_API3_Exception
+   */
   private static function updateRecur($smartDebitMandate) {
     // Get recur
     try {
@@ -763,7 +784,7 @@ class CRM_Smartdebit_Sync
     }
     catch (CiviCRM_API3_Exception $e) {
       // Recurring contribution with transaction ID does not exist
-      return;
+      return FALSE;
     }
 
     $recurContributionOriginal = $recurContribution;
@@ -812,7 +833,9 @@ class CRM_Smartdebit_Sync
       CRM_Smartdebit_Utils::log('Smartdebit recurs don\'t match: Original: ' . print_r($recurContributionOriginal, TRUE) . ' New: ' . print_r($recurContribution, TRUE), TRUE);
       $recurContribution['modified_date'] = (new DateTime())->format('Y-m-d H:i:s');
       civicrm_api3('ContributionRecur', 'create', $recurContribution);
+      return TRUE;
     }
+    return FALSE;
   }
 
 }

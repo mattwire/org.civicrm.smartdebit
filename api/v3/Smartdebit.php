@@ -53,12 +53,12 @@ function civicrm_api3_smartdebit_updaterecurring($params) {
     $params['trxn_id'] = array($params['trxn_id']);
   }
   try {
-    CRM_Smartdebit_Sync::updateRecurringContributions($params['trxn_id']);
+    $stats = CRM_Smartdebit_Sync::updateRecurringContributions($params['trxn_id']);
   }
   catch (Exception $e) {
     return civicrm_api3_create_error($e->getMessage());
   }
-  return civicrm_api3_create_success();
+  return $stats;
 }
 
 function _civicrm_api3_smartdebit_updaterecurring_spec(&$spec) {
