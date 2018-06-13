@@ -765,7 +765,7 @@ class CRM_Smartdebit_Sync
       }
     }
 
-    Civi::log()->info('Smartdebit: Updated ' . $stats['modified'] . ' of ' . $stats['count'] . 'recurring contributions');
+    Civi::log()->info('Smartdebit: Updated ' . $stats['modified'] . ' of ' . $stats['count'] . ' recurring contributions');
 
     return $stats;
   }
