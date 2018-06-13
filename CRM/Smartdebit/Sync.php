@@ -720,8 +720,7 @@ class CRM_Smartdebit_Sync
    * @throws \CiviCRM_API3_Exception
    */
   public static function updateRecurringContributionsTask(CRM_Queue_TaskContext $ctx) {
-    $stats = self::updateRecurringContributions();
-    Civi::log()->info('Smartdebit: Updated ' . $stats['modified'] . ' of ' . $stats['count'] . 'recurring contributions');
+    self::updateRecurringContributions();
     return CRM_Queue_Task::TASK_SUCCESS;
   }
 
@@ -765,6 +764,8 @@ class CRM_Smartdebit_Sync
         }
       }
     }
+
+    Civi::log()->info('Smartdebit: Updated ' . $stats['modified'] . ' of ' . $stats['count'] . 'recurring contributions');
 
     return $stats;
   }
