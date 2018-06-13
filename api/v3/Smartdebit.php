@@ -49,7 +49,7 @@ function civicrm_api3_smartdebit_updaterecurring($params) {
   if (isset($params['trxn_id']['IN'])) {
     $params['trxn_id'] = $params['trxn_id']['IN'];
   }
-  else {
+  elseif (!is_array($params['trxn_id'])) {
     $params['trxn_id'] = array($params['trxn_id']);
   }
   try {

@@ -38,7 +38,7 @@ class CRM_Smartdebit_CollectionReports {
     $sql = "SELECT * FROM `" . self::TABLENAME . "`";
 
     $sql .= self::whereClause($params);
-    $sql .= self::limitClause($params);
+    $sql .= CRM_Smartdebit_Base::limitClause($params);
 
     $dao = CRM_Core_DAO::executeQuery($sql);
     $collectionReports = array();
@@ -119,7 +119,7 @@ ON DUPLICATE KEY UPDATE
   public static function getReports($params) {
     $sql = "SELECT * FROM `" . self::TABLESUMMARY . "`";
     $sql .= " ORDER BY collection_date DESC";
-    $sql .= self::limitClause($params);
+    $sql .= CRM_Smartdebit_Base::limitClause($params);
 
     $dao = CRM_Core_DAO::executeQuery($sql);
     $collectionReports = array();
@@ -276,25 +276,6 @@ ON DUPLICATE KEY UPDATE
 
     // Iterate back one day at a time requesting reports
     return self::retrieve($dateStart, $dateEnd);
-  }
-
-  /**
-   * Add optional limits
-   *
-   * @param $params
-   *
-   * @return string
-   */
-  private static function limitClause($params) {
-    $limitClause = '';
-
-    if (!empty($params['limit'])) {
-      $limitClause .= ' LIMIT ' . $params['limit'];
-    }
-    if (!empty($params['offset'])) {
-      $limitClause .= ' OFFSET ' . $params['offset'];
-    }
-    return $limitClause;
   }
 
   /**

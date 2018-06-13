@@ -90,7 +90,7 @@ class CRM_Smartdebit_Mandates {
    * @return array $smartDebitParams
    * @throws \Exception
    */
-  public static function getAll($refresh, $onlyWithRecurId=FALSE) {
+  public static function getAll($refresh, $onlyWithRecurId=FALSE, $params) {
     if ($refresh) {
       if ($onlyWithRecurId) {
         // If the mandate doesn't have a recur ID then it's not reconciled in CiviCRM so we don't sync it from Smartdebit.
@@ -114,6 +114,8 @@ class CRM_Smartdebit_Mandates {
     if ($onlyWithRecurId) {
       $sql .= " WHERE recur_id IS NOT NULL";
     }
+    $sql .= CRM_Smartdebit_Base::limitClause($params);
+
     $dao = CRM_Core_DAO::executeQuery($sql);
     $smartDebitPayerContacts = array();
     while ($dao->fetch()) {

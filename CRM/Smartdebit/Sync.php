@@ -725,84 +725,93 @@ class CRM_Smartdebit_Sync
   /**
    * Update parameters of CiviCRM recurring contributions that represent Smartdebit Direct Debit Mandates
    *
-   * @throws \CiviCRM_API3_Exception
+   * @param array $transactionIds Optional array of transaction IDs to update recurring contributions for
+   *
+   * @throws \Exception
    */
   public static function updateRecurringContributions($transactionIds = array()) {
     if (count($transactionIds) > 0) {
       foreach ($transactionIds as $transactionId) {
         $smartDebitRecord = CRM_Smartdebit_Mandates::getbyReference($transactionId, FALSE);
         if ($smartDebitRecord) {
-          $smartDebitPayerContactDetails[] = $smartDebitRecord;
+          self::updateRecur($smartDebitRecord);
         }
       }
+      return;
     }
     else {
-      $smartDebitPayerContactDetails = CRM_Smartdebit_Mandates::getAll(FALSE, TRUE);
+      $count = CRM_Smartdebit_Mandates::count(TRUE);
+      $batchSize = 100;
+      $params['limit'] = $batchSize;
+      for ($start = 0; $start < $count; $start+=$batchSize) {
+        $params['offset'] = $start;
+        $smartDebitMandates = CRM_Smartdebit_Mandates::getAll(FALSE, TRUE, $params);
+        foreach ($smartDebitMandates as $key => $smartDebitMandate) {
+          self::updateRecur($smartDebitMandate);
+        }
+      }
+      return;
     }
+  }
 
-    if (empty($smartDebitPayerContactDetails)) {
+  private static function updateRecur($smartDebitMandate) {
+    // Get recur
+    try {
+      $recurContribution = civicrm_api3('ContributionRecur', 'getsingle', array(
+        'trxn_id' => $smartDebitMandate['reference_number'],
+      ));
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      // Recurring contribution with transaction ID does not exist
       return;
     }
 
-    foreach ($smartDebitPayerContactDetails as $key => $smartDebitRecord) {
-      // Get recur
-      try {
-        $recurContribution = civicrm_api3('ContributionRecur', 'getsingle', array(
-          'trxn_id' => $smartDebitRecord['reference_number'],
-        ));
-      }
-      catch (CiviCRM_API3_Exception $e) {
-        // Recurring contribution with transaction ID does not exist
-        continue;
-      }
+    $recurContributionOriginal = $recurContribution;
+    // Update the recurring contribution
+    $recurContribution['amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($smartDebitMandate['default_amount']);
+    list($recurContribution['frequency_unit'], $recurContribution['frequency_interval']) =
+      CRM_Smartdebit_Base::translateSmartdebitFrequencytoCiviCRM($smartDebitMandate['frequency_type'], $smartDebitMandate['frequency_factor']);
 
-      $recurContributionOriginal = $recurContribution;
-      // Update the recurring contribution
-      $recurContribution['amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($smartDebitRecord['default_amount']);
-      list($recurContribution['frequency_unit'], $recurContribution['frequency_interval']) =
-        CRM_Smartdebit_Base::translateSmartdebitFrequencytoCiviCRM($smartDebitRecord['frequency_type'], $smartDebitRecord['frequency_factor']);
-
-      switch ($smartDebitRecord['current_state']) {
-        case CRM_Smartdebit_Api::SD_STATE_LIVE:
-        case CRM_Smartdebit_Api::SD_STATE_NEW:
-          // Clear cancel date and set status if live
-          if (isset($recurContribution['cancel_date'])) {
-            $recurContribution['cancel_date'] = '';
-          }
-          if (($recurContribution['contribution_status_id'] != CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending'))
-            && ($recurContribution['contribution_status_id'] != CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress'))) {
-            $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
-          }
-          break;
-        case CRM_Smartdebit_Api::SD_STATE_CANCELLED:
-          $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Cancelled');
-          break;
-        case CRM_Smartdebit_Api::SD_STATE_REJECTED:
-          $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Failed');
-          break;
-      }
-
-      // Set start date to date of first contribution
-      try {
-        $firstContribution = civicrm_api3('Contribution', 'getsingle', array(
-          'contribution_recur_id' => $recurContribution['id'],
-          'options' => array('limit' => 1, 'sort' => "receive_date ASC"),
-        ));
-        if (!empty($firstContribution['receive_date'])) {
-          $recurContribution['start_date'] = $firstContribution['receive_date'];
+    switch ($smartDebitMandate['current_state']) {
+      case CRM_Smartdebit_Api::SD_STATE_LIVE:
+      case CRM_Smartdebit_Api::SD_STATE_NEW:
+        // Clear cancel date and set status if live
+        if (isset($recurContribution['cancel_date'])) {
+          $recurContribution['cancel_date'] = '';
         }
-      }
-      catch (CiviCRM_API3_Exception $e) {
-        // No contribution, so don't update start date.
-      }
+        if (($recurContribution['contribution_status_id'] != CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending'))
+          && ($recurContribution['contribution_status_id'] != CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress'))) {
+          $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
+        }
+        break;
+      case CRM_Smartdebit_Api::SD_STATE_CANCELLED:
+        $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Cancelled');
+        break;
+      case CRM_Smartdebit_Api::SD_STATE_REJECTED:
+        $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Failed');
+        break;
+    }
 
-      // Hook to allow modifying recurring contribution during sync task
-      CRM_Smartdebit_Hook::updateRecurringContribution($recurContribution);
-      if ($recurContribution != $recurContributionOriginal) {
-        CRM_Smartdebit_Utils::log('Smartdebit recurs don\'t match: Original: ' . print_r($recurContributionOriginal, TRUE) . ' New: ' . print_r($recurContribution, TRUE), TRUE);
-        $recurContribution['modified_date'] = (new DateTime())->format('Y-m-d H:i:s');
-        civicrm_api3('ContributionRecur', 'create', $recurContribution);
+    // Set start date to date of first contribution
+    try {
+      $firstContribution = civicrm_api3('Contribution', 'getsingle', array(
+        'contribution_recur_id' => $recurContribution['id'],
+        'options' => array('limit' => 1, 'sort' => "receive_date ASC"),
+      ));
+      if (!empty($firstContribution['receive_date'])) {
+        $recurContribution['start_date'] = $firstContribution['receive_date'];
       }
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      // No contribution, so don't update start date.
+    }
+
+    // Hook to allow modifying recurring contribution during sync task
+    CRM_Smartdebit_Hook::updateRecurringContribution($recurContribution);
+    if ($recurContribution != $recurContributionOriginal) {
+      CRM_Smartdebit_Utils::log('Smartdebit recurs don\'t match: Original: ' . print_r($recurContributionOriginal, TRUE) . ' New: ' . print_r($recurContribution, TRUE), TRUE);
+      $recurContribution['modified_date'] = (new DateTime())->format('Y-m-d H:i:s');
+      civicrm_api3('ContributionRecur', 'create', $recurContribution);
     }
   }
 

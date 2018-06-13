@@ -641,4 +641,24 @@ WHERE  ddi_reference = %0";
     return $result;
   }
 
+  /**
+   * Add optional limits
+   *
+   * @param $params
+   *
+   * @return string
+   */
+  public static function limitClause($params) {
+    $limitClause = '';
+
+    if (!empty($params['limit'])) {
+      $limitClause .= ' LIMIT ' . $params['limit'];
+    }
+    if (!empty($params['offset'])) {
+      $limitClause .= ' OFFSET ' . $params['offset'];
+    }
+    return $limitClause;
+  }
+
+
 }
