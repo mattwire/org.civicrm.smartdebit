@@ -761,6 +761,7 @@ class CRM_Smartdebit_Sync
             $stats['modified']++;
           }
           $stats['count']++;
+          CRM_Smartdebit_Utils::log('Smartdebit updateRecur. Modified: ' . $stats['modified'] . ' Count: ' . $stats['count'], TRUE);
         }
       }
     }
