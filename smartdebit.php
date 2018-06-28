@@ -295,18 +295,25 @@ function smartdebit_civicrm_pageRun(&$page)
     if (CRM_Contact_BAO_Contact_Permission::allow($userID, CRM_Core_Permission::EDIT)) {
       $recurID = $page->getVar('_id');
 
-      $queryParams = array(
+      $recurParams = array(
         'options' => array('sort' => "id DESC", 'limit' => 1),
-        'return' => array("trxn_id", "id"),
+        'return' => array('id', 'trxn_id', 'payment_processor_id'),
         'id' => $recurID,
         'contact_id' => $contactID,
       );
 
-      $recurRef = civicrm_api3('ContributionRecur', 'getsingle', $queryParams);
+      $recurDetails = civicrm_api3('ContributionRecur', 'getsingle', $recurParams);
+      $paymentProcessorDetails = civicrm_api3('PaymentProcessor', 'getsingle', [
+        'return' => ["payment_processor_type_id.name"],
+        'id' => $recurDetails['payment_processor_id'],
+      ]);
+      if ($paymentProcessorDetails['payment_processor_type_id.name'] !== 'Smart_Debit') {
+        return;
+      }
 
       $contributionRecurDetails = array();
-      if (!empty($recurRef['trxn_id'])) {
-        $smartDebitResponse = CRM_Smartdebit_Mandates::getbyReference($recurRef['trxn_id'], TRUE);
+      if (!empty($recurDetails['trxn_id'])) {
+        $smartDebitResponse = CRM_Smartdebit_Mandates::getbyReference($recurDetails['trxn_id'], TRUE);
         if ($smartDebitResponse) {
           $contributionRecurDetails = CRM_Smartdebit_Form_Payerdetails::formatDetails($smartDebitResponse);
         }

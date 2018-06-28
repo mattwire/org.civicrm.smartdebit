@@ -22,7 +22,7 @@
 | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
 +-------------------------------------------------------------------*}
 
-<div class="crm-block crm-form-block crm-smartdebit-settings-form-block">
+<div class="crm-block crm-form-block crm-admin-options-form-block">
   <div class="crm-submit-buttons">
     {include file="CRM/common/formButtons.tpl" location="top"}
   </div>
@@ -37,8 +37,8 @@
       <table class="form-layout-compressed">
         {foreach from=$elementGroup.elementNames item=elementName}
           <tr><td>
-              {$form.$elementName.html}
-              <label for="{$elementName}">{$form.$elementName.label} {help id=$elementName title=$form.$elementName.label}</label>
+            {$form.$elementName.html}
+            <label for="{$elementName}">{$form.$elementName.label} {help id=$elementName title=$form.$elementName.label}</label>
             </td></tr>
         {/foreach}
       </table>
