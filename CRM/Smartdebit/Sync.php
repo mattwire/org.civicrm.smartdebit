@@ -344,7 +344,8 @@ class CRM_Smartdebit_Sync
         'financial_type_id' => $contributionRecur['financial_type_id'],
         'payment_instrument_id' => $contributionRecur['payment_instrument_id'],
         'receive_date' => $receiveDate,
-        'is_email_receipt' => FALSE, // We don't want to send out email receipts for contributions. That's handled by Smartdebit or by CiviCRM scheduled reminders/rules if required.
+        // We don't want to send out email receipts for repeat contributions. That's handled by Smartdebit or by CiviCRM scheduled reminders/rules if required.
+        'is_email_receipt' => FALSE,
       );
 
     // Check if the contribution is first payment

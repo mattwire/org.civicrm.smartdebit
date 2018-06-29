@@ -269,7 +269,7 @@ class CRM_Smartdebit_Mandates {
         15 => array(CRM_Utils_Array::value('start_date', $smartDebitRecord, 'NULL'), 'String'),
         16 => array(CRM_Utils_Array::value('current_state', $smartDebitRecord, 'NULL'), 'Int'),
         17 => array(CRM_Utils_Array::value('reference_number', $smartDebitRecord, 'NULL'), 'String'),
-        18 => array(CRM_Utils_Array::value('payerReference', $smartDebitRecord, 'NULL'), 'String'),
+        18 => array(CRM_Utils_Array::value('payer_reference', $smartDebitRecord, 'NULL'), 'String'),
       );
       CRM_Core_DAO::executeQuery($sql, $params);
     }

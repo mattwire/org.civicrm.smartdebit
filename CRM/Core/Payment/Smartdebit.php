@@ -700,18 +700,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       $serviceUserId = $this->_paymentProcessor['signature'];
     }
 
-    if (isset($params['contactID'])) {
-      $payerReference = $params['contactID'];
-    }
-    elseif (isset($params['cms_contactID'])) {
-      $payerReference = $params['cms_contactID'];
-    }
-    elseif (isset($_REQUEST['cid'])) {
-      $payerReference = CRM_Utils_Array::value('cid', $_REQUEST);
-    }
-    else {
-      $payerReference = 'CIVICRMEXT';
-    }
+    $payerReference = CRM_Utils_Array::value('contactID', $params, CRM_Utils_Array::value('cms_contactID', $params, CRM_Utils_Array::value('cid', $params, 'CIVICRMEXT')));
 
     $billingID = $locationTypes = CRM_Core_BAO_LocationType::getBilling();
 
