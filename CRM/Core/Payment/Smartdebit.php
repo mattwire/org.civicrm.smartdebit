@@ -111,16 +111,13 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    *
    * @return array|bool
    */
-  public static function getProcessorDetails($id = NULL, $test = FALSE, $isActive = TRUE) {
-    $params = array(
-      'is_test' => $test,
-      'is_active' => $isActive,
-      'domain_id' => CRM_Core_Config::domainID(),
-    );
-    if (!empty($id)) {
-      $params['id'] = $id;
-    }
-    else {
+  public static function getProcessorDetails($params = []) {
+    $params['is_test'] = CRM_Utils_Array::value('is_test', $params, FALSE);
+    $params['is_active'] = CRM_Utils_Array::value('is_active', $params, TRUE);
+    $params['id'] = CRM_Utils_Array::value('payment_processor_id', $params, CRM_Utils_Array::value('id', $params, NULL));
+    $params['domain_id'] = CRM_Utils_Array::value('domain_id', $params, CRM_Core_Config::domainID());
+
+    if (empty($params['id'])) {
       $paymentProcessorTypeId = CRM_Core_PseudoConstant::getKey('CRM_Financial_BAO_PaymentProcessor', 'payment_processor_type_id', 'Smart_Debit');
       $params['payment_processor_type_id'] = $paymentProcessorTypeId;
       $params['options'] = array('sort' => "id DESC", 'limit' => 1);
@@ -130,7 +127,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       $paymentProcessorDetails = civicrm_api3('PaymentProcessor', 'getsingle', $params);
     }
     catch (Exception $e) {
-      CRM_Core_Session::setStatus(ts('Smart Debit API User Details Missing, Please check the Smart Debit Payment Processor is configured Properly'), 'Smart Debit', 'error');
+      CRM_Core_Session::setStatus(ts('Smart Debit API User Details Missing, Please check that the Smart Debit Payment Processor is configured.'), 'Smart Debit', 'error');
       return FALSE;
     }
 
@@ -756,6 +753,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       if (isset($smartDebitParams['variable_ddi[end_date]'])) {
         $params['end_date'] = $smartDebitParams['variable_ddi[end_date]'];
       }
+      $params['is_test'] = CRM_Utils_Array::value('is_test', $this->_paymentProcessor, FALSE);
       $params = self::setRecurTransactionId($params);
       CRM_Smartdebit_Base::completeDirectDebitSetup($params);
       return $params;
@@ -778,9 +776,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   private static function setRecurTransactionId($params) {
     if (!empty($params['trxn_id'])) {
       // Common parameters
-      $recurParams = array(
+      $recurParams = [
         'trxn_id' => $params['trxn_id'],
-      );
+        'is_test' => CRM_Utils_Array::value('is_test', $params, FALSE),
+        'payment_processor_id' => CRM_Utils_Array::value('payment_processor_id', $params, NULL),
+      ];
       if (!empty($params['end_date'])) {
         $recurParams['end_date'] = $params['end_date'];
       }
@@ -808,14 +808,14 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         if (empty($params['receive_date'])) {
           $params['receive_date'] = date('YmdHis');
         }
-        $recurParams['contact_id'] =  $params['contactID'];
+        $recurParams['contact_id'] = $params['contactID'];
         $recurParams['create_date'] = $params['receive_date'];
         $recurParams['modified_date'] = $params['receive_date'];
         $recurParams['start_date'] = $params['receive_date'];
         $recurParams['amount'] = $params['amount'];
         $recurParams['frequency_unit'] = 'year';
         $recurParams['frequency_interval'] = '1';
-        $recurParams['financial_type_id'] = $params['financialTypeID'];
+        $recurParams['financial_type_id'] = CRM_Utils_Array::value('financial_type_id', $params, CRM_Utils_Array::value('financialTypeID', $params));
         $recurParams['auto_renew'] = '0'; // Make auto renew
         $recurParams['currency'] = $params['currencyID'];
         $recurParams['invoice_id'] = $params['invoiceID'];
@@ -826,11 +826,12 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         $params['contributionRecurID'] = $recur['id'];
         $params['contribution_recur_id'] = $recur['id'];
         // We need to link the recurring contribution and contribution record, as Civi won't do it for us (4.7.21)
-        $contributionParams = array(
+        $contributionParams = [
           'contribution_recur_id' => $params['contribution_recur_id'],
           'contact_id' => $params['contactID'],
           'contribution_status_id' => self::getInitialContributionStatus(FALSE),
-        );
+          'is_test' => $params['is_test'],
+        ];
         if (empty($params['contributionID'])) {
           Civi::log()->debug('Smartdebit: No contribution ID specified.  Is this a non-recur transaction?');
         }
@@ -1046,7 +1047,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     }
 
     // Update the cached mandate
-    CRM_Smartdebit_Mandates::getbyReference($recurRecord['trxn_id'], TRUE);
+    CRM_Smartdebit_Mandates::getbyReference($recurRecord);
     return TRUE;
   }
 
@@ -1097,7 +1098,11 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     }
 
     // Update the cached mandate
-    CRM_Smartdebit_Mandates::getbyReference($smartDebitParams['reference_number'], TRUE);
+    $params = [
+      'trxn_id' => $smartDebitParams['reference_number'],
+      'refresh' => TRUE,
+    ];
+    CRM_Smartdebit_Mandates::getbyReference($params);
 
     return TRUE;
   }
@@ -1142,7 +1147,11 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     }
 
     // Update the cached mandate
-    CRM_Smartdebit_Mandates::getbyReference($smartDebitParams['reference_number'], TRUE);
+    $params = [
+      'trxn_id' => $smartDebitParams['reference_number'],
+      'refresh' => TRUE,
+    ];
+    CRM_Smartdebit_Mandates::getbyReference($params);
 
     return TRUE;
   }
@@ -1153,18 +1162,23 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    * @return int|bool
    * @throws \CiviCRM_API3_Exception
    */
-  public static function getSmartDebitPaymentProcessorID() {
-    $result = civicrm_api3('PaymentProcessor', 'get', array(
+  public static function getSmartDebitPaymentProcessorID($recurParams) {
+    if (!empty($recurParams['payment_processor_id'])) {
+      return $recurParams['payment_processor_id'];
+    }
+
+    $processorParams = [
+      'is_test' => CRM_Utils_Array::value('is_test', $recurParams, FALSE),
       'sequential' => 1,
-      'return' => array("id"),
-      'class_name' => "Payment_Smartdebit",
-      'is_test' => 0,
-    ));
-    if ($result['count'] > 0) {
+      'class_name' => 'Payment_Smartdebit',
+      'return' => ['id'],
+    ];
+    $paymentProcessor = civicrm_api3('PaymentProcessor', 'get', $processorParams);
+    if ($paymentProcessor['count'] > 0) {
       // Return the first one, it's possible there is more than one payment processor of the same type configured
       //  so we'll just return the first one here.
-      if (isset($result['values'][0]['id'])) {
-        return $result['values'][0]['id'];
+      if (isset($paymentProcessor['values'][0]['id'])) {
+        return $paymentProcessor['values'][0]['id'];
       }
     }
     // If we don't have a valid processor id return false;

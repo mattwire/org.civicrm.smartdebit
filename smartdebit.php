@@ -297,7 +297,7 @@ function smartdebit_civicrm_pageRun(&$page)
 
       $recurParams = array(
         'options' => array('sort' => "id DESC", 'limit' => 1),
-        'return' => array('id', 'trxn_id', 'payment_processor_id'),
+        'return' => array('id', 'trxn_id', 'payment_processor_id', 'is_test'),
         'id' => $recurID,
         'contact_id' => $contactID,
       );
@@ -313,7 +313,7 @@ function smartdebit_civicrm_pageRun(&$page)
 
       $contributionRecurDetails = array();
       if (!empty($recurDetails['trxn_id'])) {
-        $smartDebitResponse = CRM_Smartdebit_Mandates::getbyReference($recurDetails['trxn_id'], TRUE);
+        $smartDebitResponse = CRM_Smartdebit_Mandates::getbyReference($recurDetails);
         if ($smartDebitResponse) {
           $contributionRecurDetails = CRM_Smartdebit_Form_Payerdetails::formatDetails($smartDebitResponse);
         }

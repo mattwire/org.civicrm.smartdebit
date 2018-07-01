@@ -287,7 +287,7 @@ class CRM_Smartdebit_Sync
     }
 
     // Check we have a mandate for the payment
-    if (!CRM_Smartdebit_Mandates::getbyReference($trxnId, TRUE)) {
+    if (!CRM_Smartdebit_Mandates::getbyReference(['trxn_id' => $trxnId])) {
       if (CRM_Smartdebit_Settings::getValue('debug')) {
         Civi::log()->debug('Smartdebit syncSmartdebitRecords: No mandate available for ' . $trxnId);
       }
@@ -741,7 +741,7 @@ class CRM_Smartdebit_Sync
 
     if (count($transactionIds) > 0) {
       foreach ($transactionIds as $transactionId) {
-        $smartDebitRecord = CRM_Smartdebit_Mandates::getbyReference($transactionId, FALSE);
+        $smartDebitRecord = CRM_Smartdebit_Mandates::getbyReference(['trxn_id' => $transactionId, 'refresh' => FALSE]);
         if ($smartDebitRecord) {
           if (self::updateRecur($smartDebitRecord)) {
             $stats['modified']++;

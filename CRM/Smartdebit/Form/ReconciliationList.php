@@ -380,14 +380,14 @@ AND   csd.id IS NULL LIMIT 100";
    * @return bool
    */
   static function reconcileRecordWithCiviCRM($params) {
-    foreach (array('contact_id', 'payer_reference' ) as $required) {
+    foreach (array('contact_id', 'payer_reference') as $required) {
       if (empty($params[$required])) {
         throw new InvalidArgumentException("Missing params[$required]");
       }
     }
 
     // Get the Smart Debit details for the payer
-    $smartDebitRecord = CRM_Smartdebit_Mandates::getbyReference($params['payer_reference'], TRUE);
+    $smartDebitRecord = CRM_Smartdebit_Mandates::getbyReference(['trxn_id' => $params['payer_reference']]);
 
     // Setup params for the relevant record
     $recurParams['contact_id'] = $params['contact_id'];

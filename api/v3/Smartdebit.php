@@ -98,7 +98,7 @@ function civicrm_api3_smartdebit_getmandates($params) {
     $mandates = CRM_Smartdebit_Mandates::getAll($params['refresh'], $params['only_withrecurid']);
   }
   else {
-    $mandates = array(CRM_Smartdebit_Mandates::getbyReference($params['trxn_id'], $params['refresh']));
+    $mandates = array(CRM_Smartdebit_Mandates::getbyReference($params));
   }
 
   return _civicrm_api3_basic_array_get('smartdebit', $params, $mandates, 'reference_number', array());

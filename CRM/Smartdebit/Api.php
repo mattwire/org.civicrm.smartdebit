@@ -248,7 +248,10 @@ class CRM_Smartdebit_Api {
    */
   public static function getSystemStatus($test = FALSE)
   {
-    $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails(NULL, $test);
+    $processorParams = [
+      'is_test' => $test,
+    ];
+    $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails($processorParams);
     $username = CRM_Utils_Array::value('user_name', $userDetails);
     $password = CRM_Utils_Array::value('password', $userDetails);
 

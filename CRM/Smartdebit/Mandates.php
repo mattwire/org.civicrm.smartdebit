@@ -40,22 +40,25 @@ class CRM_Smartdebit_Mandates {
   /**
    * Get the smartdebit mandate from the cache by reference number
    *
-   * @param string $transactionId
-   * @param bool $refresh Whether to refresh mandate from smartdebit or not
+   * @param array $recurParams
+   *   'trxn_id' => Transaction ID (Smartdebit Mandate reference number)
+   *   'refresh' => Whether to refresh mandate from smartdebit or not (Default TRUE)
    *
    * @return array $payerContactDetails
    * @throws \Exception
    */
-  public static function getbyReference($transactionId, $refresh) {
+  public static function getbyReference($recurParams) {
+    $transactionId = CRM_Utils_Array::value('trxn_id', $recurParams);
+    $refresh = CRM_Utils_Array::value('refresh', $recurParams, TRUE);
     if ($refresh) {
       // Retrieve the mandate from Smartdebit, update the cache and return the retrieved mandate
-      self::retrieve($transactionId);
+      self::retrieve($recurParams);
     }
 
     // Return the retrieved mandate from the database
     $sql = "SELECT * FROM `" . self::TABLENAME . "` WHERE reference_number=%1";
-    $params = array(1 => array($transactionId, 'String'));
-    $dao = CRM_Core_DAO::executeQuery($sql, $params);
+    $sqlParams = array(1 => array($transactionId, 'String'));
+    $dao = CRM_Core_DAO::executeQuery($sql, $sqlParams);
     if ($dao->fetch()) {
       $payerContactDetails['title'] = $dao->title;
       $payerContactDetails['first_name'] = $dao->first_name;
@@ -100,7 +103,7 @@ class CRM_Smartdebit_Mandates {
         }
         $dao = CRM_Core_DAO::executeQuery($sql);
         while ($dao->fetch()) {
-          self::retrieve($dao->reference_number);
+          self::retrieve(['trxn_id' => $dao->reference_number]);
         }
       }
       else {
@@ -280,13 +283,19 @@ class CRM_Smartdebit_Mandates {
    * Retrieve Payer Contact Details from Smartdebit
    * Called during daily sync job
    *
-   * @param string $referenceNumber
+   * @param array $recurParams
+   *   'trxn_id' => Optional transaction ID / Smartdebit mandate reference number.
    *
    * @return array|bool
    * @throws \Exception
    */
-  public static function retrieve($referenceNumber = '') {
-    $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
+  public static function retrieve($recurParams = []) {
+    $transactionId = CRM_Utils_Array::value('trxn_id', $recurParams, '');
+
+    $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails($recurParams);
+    if (!$userDetails) {
+      return FALSE;
+    }
     $username = CRM_Utils_Array::value('user_name', $userDetails);
     $password = CRM_Utils_Array::value('password', $userDetails);
     $pslid = CRM_Utils_Array::value('signature', $userDetails);
@@ -310,8 +319,8 @@ class CRM_Smartdebit_Mandates {
     }
 
     // Restrict to a single payer if we have a reference
-    if (!empty($referenceNumber)) {
-      $url .= "&query[reference_number]=".urlencode($referenceNumber);
+    if (!empty($transactionId)) {
+      $url .= "&query[reference_number]=".urlencode($transactionId);
     }
     $response = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password, $format);
 
@@ -339,11 +348,11 @@ class CRM_Smartdebit_Mandates {
           break;
       }
 
-      self::delete($referenceNumber);
+      self::delete($transactionId);
       return self::save($smartDebitArray, $format);
     }
     else {
-      CRM_Smartdebit_Api::reportError($response, $url, $referenceNumber);
+      CRM_Smartdebit_Api::reportError($response, $url, $transactionId);
       return FALSE;
     }
   }

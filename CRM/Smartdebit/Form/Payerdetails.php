@@ -39,7 +39,7 @@ class CRM_Smartdebit_Form_Payerdetails extends CRM_Core_Form {
     }
 
     // Get Smartdebit Mandate details
-    $smartDebitResponse = CRM_Smartdebit_Mandates::getbyReference($reference_number, TRUE);
+    $smartDebitResponse = CRM_Smartdebit_Mandates::getbyReference(['trxn_id' => $reference_number]);
     $smartDebitDetails = self::formatDetails($smartDebitResponse);
 
     foreach ($smartDebitDetails as $key => $value) {

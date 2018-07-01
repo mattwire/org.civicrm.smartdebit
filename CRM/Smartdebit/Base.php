@@ -424,14 +424,9 @@ WHERE  ddi_reference = %0";
 
     // Optional parameters
     // Set default payment_processor_id
-    if (empty($recurParams['payment_processor_id'])) {
-      $recurParams['payment_processor_id'] = CRM_Core_Payment_Smartdebit::getSmartdebitPaymentProcessorID();
-    }
-    // Set status
-    if (empty($recurParams['contribution_status_id'])) {
-      // Default to "Pending". This will change to "In Progress" on a successful sync once the first payment has been received
-      $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
-    }
+    $recurParams['payment_processor_id'] = CRM_Core_Payment_Smartdebit::getSmartdebitPaymentProcessorID($recurParams);
+    // Set status - Default to "Pending". This will change to "In Progress" on a successful sync once the first payment has been received
+    $recurParams['contribution_status_id'] = CRM_Utils_Array::value('contribution_status_id', $recurParams, CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending'));
     // Set unit/interval
     if (isset($recurParams['frequency_type'])) {
       if (empty($recurParams['frequency_factor'])) {
@@ -499,16 +494,13 @@ WHERE  ddi_reference = %0";
       $recurParams['auto_renew'] = 1;
     }
     // Defaults to 0 if not set, but we set to 1 if not auto-renew, so make sure array is set here.
-    if (!isset($recurParams['installments'])) {
-      $recurParams['installments'] = '';
-    }
-    if (!isset($recurParams['is_test'])) {
-      $recurParams['is_test'] = 0;
-    }
+    $recurParams['installments'] = CRM_Utils_Array::value('installments', $recurParams, '');
+    // Test mode?
+    $recurParams['is_test'] = CRM_Utils_Array::value('is_test', $recurParams, FALSE);
 
     // Build recur params
-    $params = array(
-      'contact_id' =>  $recurParams['contact_id'],
+    $params = [
+      'contact_id' => $recurParams['contact_id'],
       'create_date' => $recurParams['create_date'],
       'modified_date' => $recurParams['modified_date'],
       'start_date' => $recurParams['start_date'],
@@ -519,7 +511,7 @@ WHERE  ddi_reference = %0";
       'payment_processor_id' => $recurParams['payment_processor_id'],
       'contribution_status_id'=> $recurParams['contribution_status_id'],
       'trxn_id'	=> $recurParams['trxn_id'],
-      'financial_type_id'	=> $recurParams['financial_type_id'],
+      'financial_type_id' => $recurParams['financial_type_id'],
       'auto_renew' => $recurParams['auto_renew'],
       'cycle_day' => $recurParams['cycle_day'],
       'currency' => $recurParams['currency'],
@@ -527,7 +519,7 @@ WHERE  ddi_reference = %0";
       'invoice_id' => $recurParams['invoice_id'],
       'installments' => $recurParams['installments'],
       'is_test' => $recurParams['is_test'],
-    );
+    ];
 
     // We're updating an existing recurring contribution
     // Either id or contribution_recur_id can be set, but contribution_recur_id will take precedence
@@ -570,9 +562,8 @@ WHERE  ddi_reference = %0";
 
     // Optional parameters
     // Set default payment_processor_id
-    if (empty($params['payment_processor_id'])) {
-      $params['payment_processor_id'] = CRM_Core_Payment_Smartdebit::getSmartdebitPaymentProcessorID();
-    }
+    $params['payment_processor_id'] = CRM_Core_Payment_Smartdebit::getSmartdebitPaymentProcessorID($params);
+
     // Set status
     if (empty($params['contribution_status_id'])) {
       // Default to "Completed" as we assume contribution was successful if status not passed in
