@@ -815,6 +815,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         $recurParams['amount'] = $params['amount'];
         $recurParams['frequency_unit'] = 'year';
         $recurParams['frequency_interval'] = '1';
+        $recurParams['installments'] = '1';
         $recurParams['financial_type_id'] = CRM_Utils_Array::value('financial_type_id', $params, CRM_Utils_Array::value('financialTypeID', $params));
         $recurParams['auto_renew'] = '0'; // Make auto renew
         $recurParams['currency'] = $params['currencyID'];
