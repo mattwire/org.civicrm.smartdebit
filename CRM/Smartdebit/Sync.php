@@ -801,7 +801,7 @@ class CRM_Smartdebit_Sync
     list($recurContribution['frequency_unit'], $recurContribution['frequency_interval']) =
       CRM_Smartdebit_Base::translateSmartdebitFrequencytoCiviCRM($smartDebitMandate['frequency_type'], $smartDebitMandate['frequency_factor']);
     // We have no way of knowing the end_date (API doesn't report it) but we'll assume that there is no end date if we changed frequency.
-    if ($recurContribution['installments'] == 1) {
+    if (CRM_Utils_Array::value('installments', $recurContribution) == 1) {
       if (($recurContribution['frequency_interval'] != $recurContributionOriginal['frequency_interval'])
         || ($recurContribution['frequency_unit'] != $recurContributionOriginal['frequency_unit'])) {
         $recurContribution['installments'] = '';
