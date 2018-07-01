@@ -284,8 +284,7 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
  * @param $page
  *
  */
-function smartdebit_civicrm_pageRun(&$page)
-{
+function smartdebit_civicrm_pageRun(&$page) {
   $pageName = $page->getVar('_name');
   if ($pageName == 'CRM_Contribute_Page_ContributionRecur') {
     // On the view recurring contribution page we add some info from smart debit if we have it
@@ -313,9 +312,13 @@ function smartdebit_civicrm_pageRun(&$page)
 
       $contributionRecurDetails = array();
       if (!empty($recurDetails['trxn_id'])) {
-        $smartDebitResponse = CRM_Smartdebit_Mandates::getbyReference($recurDetails);
-        if ($smartDebitResponse) {
-          $contributionRecurDetails = CRM_Smartdebit_Form_Payerdetails::formatDetails($smartDebitResponse);
+        $smartDebitMandate = CRM_Smartdebit_Mandates::getbyReference($recurDetails);
+        if ($smartDebitMandate) {
+          $contributionRecurDetails = CRM_Smartdebit_Form_Payerdetails::formatDetails($smartDebitMandate);
+          if (CRM_Smartdebit_Sync::updateRecur($smartDebitMandate)) {
+            // Reload the page so we show correct info
+            CRM_Utils_System::redirect(CRM_Utils_Array::value('REQUEST_URI', $_SERVER));
+          }
         }
       }
       // Add Smart Debit details via js
@@ -332,8 +335,7 @@ function smartdebit_civicrm_pageRun(&$page)
  * @param $formName
  * @param $form
  */
-function smartdebit_civicrm_buildForm( $formName, &$form )
-{
+function smartdebit_civicrm_buildForm($formName, &$form) {
   if ($form->isSubmitted()) return;
 
   //Smart Debit
@@ -406,15 +408,6 @@ function smartdebit_civicrm_buildForm( $formName, &$form )
     }
   }
 }
-
-/* function smartdebit_civicrm_validateForm($name, &$fields, &$files, &$form, &$errors) {
-  // Only do recurring edit form
-    if ($name == 'CRM_Contribute_Form_UpdateSubscription') {
-    // only do if payment process is Smart Debit
-    if (isset($fields['payment_processor_type']) && $fields['payment_processor_type'] == 'Smart_Debit') {
-    }
-  }
-}*/
 
 /**
  * Implements hook_civicrm_links

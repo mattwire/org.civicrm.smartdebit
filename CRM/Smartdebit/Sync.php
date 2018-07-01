@@ -733,7 +733,10 @@ class CRM_Smartdebit_Sync
    * @return array $stats['modified', 'count']
    * @throws \Exception
    */
-  public static function updateRecurringContributions($transactionIds = array()) {
+  public static function updateRecurringContributions($transactionIds = []) {
+    if (!is_array($transactionIds) && !empty($transactionIds)) {
+      $transactionIds = [$transactionIds];
+    }
     $stats = [
       'count' => 0,
       'modified' => 0,
@@ -777,10 +780,10 @@ class CRM_Smartdebit_Sync
    *
    * @param $smartDebitMandate
    *
-   * @return bool TRUE if recur was modified, FALSE otherwise
+   * @return bool|array new $recur params if recur was modified, FALSE otherwise.
    * @throws \CiviCRM_API3_Exception
    */
-  private static function updateRecur($smartDebitMandate) {
+  public static function updateRecur($smartDebitMandate) {
     // Get recur
     try {
       $recurContribution = civicrm_api3('ContributionRecur', 'getsingle', array(
@@ -797,6 +800,13 @@ class CRM_Smartdebit_Sync
     $recurContribution['amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($smartDebitMandate['default_amount']);
     list($recurContribution['frequency_unit'], $recurContribution['frequency_interval']) =
       CRM_Smartdebit_Base::translateSmartdebitFrequencytoCiviCRM($smartDebitMandate['frequency_type'], $smartDebitMandate['frequency_factor']);
+    // We have no way of knowing the end_date (API doesn't report it) but we'll assume that there is no end date if we changed frequency.
+    if ($recurContribution['installments'] == 1) {
+      if (($recurContribution['frequency_interval'] != $recurContributionOriginal['frequency_interval'])
+        || ($recurContribution['frequency_unit'] != $recurContributionOriginal['frequency_unit'])) {
+        $recurContribution['installments'] = '';
+      }
+    }
 
     switch ($smartDebitMandate['current_state']) {
       case CRM_Smartdebit_Api::SD_STATE_LIVE:
@@ -838,7 +848,7 @@ class CRM_Smartdebit_Sync
       CRM_Smartdebit_Utils::log('Smartdebit recurs don\'t match: Original: ' . print_r($recurContributionOriginal, TRUE) . ' New: ' . print_r($recurContribution, TRUE), TRUE);
       $recurContribution['modified_date'] = (new DateTime())->format('Y-m-d H:i:s');
       civicrm_api3('ContributionRecur', 'create', $recurContribution);
-      return TRUE;
+      return $recurContribution;
     }
     return FALSE;
   }
