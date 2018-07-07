@@ -4,10 +4,10 @@
     Manual sync would normally be used for troubleshooting or initial setup of Smartdebit with CiviCRM.
 
 !!! tip "Cached collection reports"
-    Manual sync can also be used to cache 3 months of collection report data by specifying a date in 
-    the first step.  This is very useful if reinstalling or syncing with Smartdebit for the first time.
+    Manual sync can be used to synchronise any collection reports that are downloaded, synchronised, or it can download the latest daily reports. 
+    This is very useful if reinstalling or syncing with Smartdebit for the first time.
 
-You can perform a manual sync by selecting _Manual Sync_ from the Administer->Smart Debit menu.
+You can perform a manual sync by selecting _Manual Sync_ from the Administer->CiviContribute->Smart Debit menu.
 
 ## Step 1: Select sync date
 ![manual sync step 1](/images/smartdebit_manualsync1.png)

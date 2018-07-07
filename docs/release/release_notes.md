@@ -1,3 +1,74 @@
+## Release 1.24
+** THIS IS A MAJOR UPDATE **
+
+It has significant performance improvements to the synchronisation process for organisations with many direct debits.  The manual sync UI has been significantly improved. There is a suite of new API functions to facilitate advanced functionality/debugging. 
+
+### Upgrading:
+Multiple tables have been renamed and some tables have been added/removed.
+ 
+**BACKUP your database before upgrading!**
+
+You will need to run the extension upgrader immediately after updating to this version.
+
+### Fixes
+* Allow the synchronisation scheduled job to be disabled
+* Resolve #17 Do not try and display mandate information on non-smartdebit recurring contribution view.
+* Don't limit the number of contributions we can return when checking for first payment. There could be more than 25.
+* Use name instead of label for payment_instrument when retrieving records during reconciliation.
+* Properly handle test transactions.
+
+### Features
+* Save ARUDD/AUDDIS reason on contribution source text if possible.
+* Create a new "Diagnostics" page with lot's of information about cached reports etc.
+* Add a direct link to the navigation menu to view results of the last sync (whether triggered manually or automatically) (uses the new veda_smartdebit_syncresults database table).
+* New API function: processcollections.
+* New API function: clearcache to allow for deleting mandates/collectionreports from caches.
+* New API function: getmandatescount.
+* New API function: retrievemandates.
+* New API function: getcollections.
+* New API function: getcollectionscount.
+* New API function: retrievecollectionreports.
+* Improve API updaterecurring to support specifying transaction IDs.
+
+### Changes
+* Retry 3 times when we get an empty response from the Smartdebit server.
+* Formatting/Comments/Function visibility.
+* Set 'number of installments' to 1 when making a single payment.
+* Don't send out receipts when creating/updating contributions.
+* Set the next scheduled contribution date when we receive a contribution.
+* When viewing a recurring contribution and the smartdebit mandate has changed, update the recurring contribution.
+
+### Debugging:
+* Additional debug messages for "updaterecurring" when you enable debug.
+* Include request URL in error log when we get an API error.
+
+### Manual Sync UI:
+The manual sync UI has had significant improvements. You must now use the API retrievecollectionreports if you want to sync specific reports. The manual sync UI allows you to sync existing cached reports or retrieve the latest daily report for sync.
+It also significantly improves the summary and results pages.
+
+* Make retrieving collection report optional (eg. if you already have it cached, or you have synced a specific one via the API first).
+* Add details of latest collection report to manual sync UI.
+* Summary page before synchronisation:
+  * Add link to recurring contribution for contributions matched to contacts on manual sync summary.
+  * Use accordions to group results.
+  * Add link to contribution for collections that have already been processed.
+  * Open links to records in new window/tab.
+  * Fix display of receive date for contributions already processed.
+  * Add counts and relative links.
+  * Fix display of contact name on ARUDD report.
+* Fix Selection of ARUDD/AUDDIS records.
+
+### Performance Improvements
+For organisations that have a large number of mandates (eg. 50,000) and a large number of collections in a report (eg. 12,000) this release has made significant performance improvements to cope with numbers of this size.
+
+  * Don't resync all mandates every time we sync. Just sync the ones that are present in the collection report being processed.
+  * Refactor get mandates to resolve timeouts with large collections.
+  * Add new table to store collection report summaries.
+  * Split common retrieve collection reports code.
+  * Add batching to CRM_Smartdebit_Mandates::getAll so we can run updateRecurringContributions task without loading all mandates into memory.
+  * Switch to retrieving Mandates from Smartdebit using CSV format instead of XML as it is a more compact format and is quicker to retrieve.
+  * Use SQL LIMIT and OFFSET to get collection reports from database instead of retrieving all of them and performing an array_slice in PHP.
+
 ## Release 1.23
 
 * Minor tweak to wording of mandate as requested by bank - *"Please also notify us".*

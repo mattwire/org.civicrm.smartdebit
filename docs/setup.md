@@ -19,11 +19,12 @@ Install this extension!
 
 The following menu options will then be available:
 
-* Administer->Smart Debit
-
-  * Settings
+* Administer->CiviContribute->Smart Debit
   * Manual Sync
+  * View Results of Last Sync
   * Reconcile Transactions
+  * Diagnostics
+  * General Setup
 
 In addition, a scheduled job is installed.  This performs automatic sync of successful and failed payments - whilst you are testing you may wish to disable this job and run manually via the menu options above.
 
@@ -47,7 +48,7 @@ When using the test Smartdebit API you can use the following account details:
   * Sort Code: 00-00-00.
 
 ## Manual Sync
-This allows you to manually sync collection reports, AUDDIS and ARUDD records from Smart Debit.  Useful if you need to sync for a different period (the default is the last 3 months).
+This allows you to manually sync collection reports, AUDDIS and ARUDD records from Smart Debit.  Useful when first integration with Smartdebit and allows you to see exactly what is being synced.
 
 ![sync task complete](/images/smartdebit_sync_complete.png)
 
