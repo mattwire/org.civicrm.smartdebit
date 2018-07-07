@@ -124,7 +124,7 @@ LEFT JOIN civicrm_option_value opva ON (ctrc.payment_instrument_id = opva.value)
 LEFT JOIN civicrm_option_group opgr ON (opgr.id = opva.option_group_id) 
 INNER JOIN veda_smartdebit_mandates csd ON csd.reference_number = ctrc.trxn_id 
 WHERE opgr.name = 'payment_instrument' 
-AND   opva.label = 'Direct Debit' ";
+AND   opva.name = 'Direct Debit' ";
 
       $dao = CRM_Core_DAO::executeQuery( $sql);
 
@@ -339,7 +339,7 @@ LEFT JOIN civicrm_option_value opva ON (ctrc.payment_instrument_id = opva.value)
 LEFT JOIN civicrm_option_group opgr ON (opgr.id = opva.option_group_id) 
 LEFT JOIN veda_smartdebit_mandates csd ON csd.reference_number = ctrc.trxn_id 
 WHERE opgr.name = 'payment_instrument' 
-AND   opva.label = 'Direct Debit' 
+AND   opva.name = 'Direct Debit' 
 AND   csd.id IS NULL LIMIT 100";
 
       $dao = CRM_Core_DAO::executeQuery($sql);

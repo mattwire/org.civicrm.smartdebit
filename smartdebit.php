@@ -100,11 +100,12 @@ function smartdebit_civicrm_postInstall() {
   ));
   if (empty($ddPayment['count'])) {
     // Otherwise create it
-    $paymentParams = array('version' => '3'
-    , 'option_group_id' => "payment_instrument"
-    , 'name' => 'Direct Debit'
-    , 'description' => 'Direct Debit');
-    $paymentType = civicrm_api('OptionValue', 'Create', $paymentParams);
+    $paymentParams = [
+      'option_group_id' => "payment_instrument",
+      'name' => 'Direct Debit',
+      'description' => 'Direct Debit'
+    ];
+    $paymentType = civicrm_api3('OptionValue', 'create', $paymentParams);
     $paymentTypeId = $paymentType['values'][$paymentType['id']]['value'];
     CRM_Smartdebit_Settings::save(array('payment_instrument_id' => $paymentTypeId));
   }
