@@ -37,9 +37,13 @@ Before you use Smart Debit you need to configure it as a payment processor on yo
 Configure Live and Test Processors according to the details provided by Smartdebit.
 ![Payment Processor](/images/payment_processor.png)
 
-## Settings
+## General Setup
 Each setting has a help icon associated with it - click it for more information.
 ![settings](/images/smartdebit_settings.png)
+
+## Diagnostics
+To view diagnostics:
+![diagnostics](/images/smartdebit_diagnostics.png)
 
 ## Testing
 When using the test Smartdebit API you can use the following account details:
