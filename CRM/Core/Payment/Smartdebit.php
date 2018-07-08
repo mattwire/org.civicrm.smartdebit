@@ -78,6 +78,30 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   }
 
   /**
+   * We can use the smartdebit processor on the backend
+   * @return bool
+   */
+  public function supportsBackOffice() {
+    return TRUE;
+  }
+
+  /**
+   * We can edit smartdebit recurring contributions
+   * @return bool
+   */
+  public function supportsEditRecurringContribution() {
+    return TRUE;
+  }
+
+  /**
+   * We can configure a start date for a smartdebit mandate
+   * @return bool
+   */
+  public function supportsFutureRecurStartDate() {
+    return TRUE;
+  }
+
+  /**
    * This function checks to see if we have the right config values
    *
    * @return string the error message if any

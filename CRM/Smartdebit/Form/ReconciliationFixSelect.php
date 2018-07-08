@@ -79,7 +79,7 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
     // Get the smart Debit mandate details
     if (CRM_Utils_Array::value('reference_number', $_GET)) {
       $smartDebitResponse = CRM_Smartdebit_Mandates::getbyReference(['trxn_id' => CRM_Utils_Array::value('reference_number', $_GET)]);
-      $smartDebitMandate = $smartDebitResponse[0];
+      $smartDebitMandate = $smartDebitResponse;
       $this->assign('SDMandateArray', $smartDebitMandate);
     }
 
