@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS `veda_smartdebit_collections` (
                    `receive_date` varchar(255) DEFAULT NULL,
                    `error_message` varchar(255) DEFAULT NULL,
                    `success` tinyint unsigned NOT NULL,
-                  PRIMARY KEY (`id`)
+                  PRIMARY KEY (`id`),
                   CONSTRAINT UC_Collection UNIQUE (transaction_id, amount, receive_date)
          ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
