@@ -1,3 +1,7 @@
+## Release 1.24.1
+Fix missing comma in install SQL. This only affects users installing 1.24 for the first time and there is no need to upgrade to this version otherwise.
+
+
 ## Release 1.24
 ** THIS IS A MAJOR UPDATE **
 
