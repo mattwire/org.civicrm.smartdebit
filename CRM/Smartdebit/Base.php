@@ -510,7 +510,7 @@ WHERE  ddi_reference = %0";
       'frequency_interval' => $recurParams['frequency_interval'],
       'payment_processor_id' => $recurParams['payment_processor_id'],
       'contribution_status_id'=> $recurParams['contribution_status_id'],
-      'trxn_id'	=> $recurParams['trxn_id'],
+      'trxn_id' => $recurParams['trxn_id'],
       'financial_type_id' => $recurParams['financial_type_id'],
       'auto_renew' => $recurParams['auto_renew'],
       'cycle_day' => $recurParams['cycle_day'],
@@ -533,6 +533,8 @@ WHERE  ddi_reference = %0";
       $params['contribution_recur_id'] = $recurParams['id'];
     }
 
+    // Hook to allow modifying recurring contribution params
+    CRM_Smartdebit_Hook::updateRecurringContribution($recurParams);
     // Create the recurring contribution
     return civicrm_api3('ContributionRecur', 'create', $params);
   }

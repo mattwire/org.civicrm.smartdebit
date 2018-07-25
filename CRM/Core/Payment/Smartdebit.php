@@ -450,7 +450,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    *
    * @return mixed
    */
-  private static function getUserEmail(&$params)
+  private static function getUserEmail($params)
   {
     $useremail = NULL;
     // Set email
@@ -704,7 +704,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
    *
    * @return array
    */
-  private function preparePostArray($params)
+  private function preparePostArray(&$params)
   {
     // When passed in from backend forms via AJAX (ie. select from multiple payprocs
     //  $params is not fully set for doDirectPayment, but $_REQUEST has the missing info
@@ -714,7 +714,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       }
     }
 
+    // Calculate the first collection date (start date)
+    // Store in params start_date and next_sched_collection_date so we can save to recur
     $collectionDate = self::getCollectionStartDate($params);
+    $params['start_date'] = $params['next_sched_contribution_date'] = $collectionDate->format('Y-m-d');
+
     $serviceUserId = NULL;
 
     if (isset($this->_paymentProcessor['signature'])) {
@@ -741,7 +745,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       'variable_ddi[account_number]' => CRM_Utils_Array::value('bank_account_number', $params),
       'variable_ddi[first_amount]' => CRM_Utils_Array::value('amount', $params, 0),
       'variable_ddi[default_amount]' => CRM_Utils_Array::value('amount', $params, 0),
-      'variable_ddi[start_date]' => $collectionDate->format("Y-m-d"),
+      'variable_ddi[start_date]' => $params['start_date'],
       'variable_ddi[email_address]' => self::getUserEmail($params),
     );
     $smartDebitParams = array_merge((array)$smartDebitParams, (array)self::getCollectionFrequencyPostParams($params));
@@ -804,6 +808,9 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         'trxn_id' => $params['trxn_id'],
         'is_test' => CRM_Utils_Array::value('is_test', $params, FALSE),
         'payment_processor_id' => CRM_Utils_Array::value('payment_processor_id', $params, NULL),
+        'start_date' => $params['start_date'],
+        'next_sched_contribution_date' => $params['next_sched_contribution_date'],
+        'contribution_status_id' => self::getInitialContributionStatus(TRUE),
       ];
       if (!empty($params['end_date'])) {
         $recurParams['end_date'] = $params['end_date'];
@@ -815,16 +822,23 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       if (!empty($params['contributionRecurID'])) {
         // Recurring transaction, so this is a recurring payment
         $recurParams['id'] = $params['contributionRecurID'];
-        $recurParams['contribution_status_id'] = self::getInitialContributionStatus(TRUE);
-        // Update the recurring payment
-        civicrm_api3('ContributionRecur', 'create', $recurParams);
-        // Update the contribution status
+
+        // Update the related contribution before the recur (so we can access it from the hook)
         if (!empty($params['contributionID'])) {
           // contributionID not set if we're creating a pledge
           $contributionParams['id'] = $params['contributionID'];
+          // Receive date will be the date that the direct debit is taken, not today.
+          $contributionParams['receive_date'] = $recurParams['start_date'];
+          // Set to pending or completed?
           $contributionParams['contribution_status_id'] = self::getInitialContributionStatus(FALSE);
           civicrm_api3('Contribution', 'create', $contributionParams);
         }
+
+        // Hook to allow modifying recurring contribution params
+        CRM_Smartdebit_Hook::updateRecurringContribution($recurParams);
+        // Update the recurring payment
+        civicrm_api3('ContributionRecur', 'create', $recurParams);
+        // Update the contribution status
       }
       else {
         // No recurring transaction, assume this is a non-recurring payment (so create a recurring contribution with a single installment
@@ -835,7 +849,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         $recurParams['contact_id'] = $params['contactID'];
         $recurParams['create_date'] = $params['receive_date'];
         $recurParams['modified_date'] = $params['receive_date'];
-        $recurParams['start_date'] = $params['receive_date'];
+        $recurParams['start_date'] = $params['start_date'];
         $recurParams['amount'] = $params['amount'];
         $recurParams['frequency_unit'] = 'year';
         $recurParams['frequency_interval'] = '1';
@@ -844,7 +858,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         $recurParams['auto_renew'] = '0'; // Make auto renew
         $recurParams['currency'] = $params['currencyID'];
         $recurParams['invoice_id'] = $params['invoiceID'];
-        $recurParams['contribution_status_id'] = self::getInitialContributionStatus(TRUE);
 
         $recur = CRM_Smartdebit_Base::createRecurContribution($recurParams);
         // Record recurring contribution ID in params for return
@@ -861,6 +874,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
           Civi::log()->debug('Smartdebit: No contribution ID specified.  Is this a non-recur transaction?');
         }
         else {
+          // Update the related contribution before the recur (so we can access it from the hook)
           $contributionParams['id'] = $params['contributionID'];
           civicrm_api3('Contribution', 'create', $contributionParams);
         }
