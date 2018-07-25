@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS `veda_smartdebit_auddis` (
                    `date` date DEFAULT NULL,
                    `type` tinyint DEFAULT NULL,
                    `processed` boolean DEFAULT FALSE,
-                  PRIMARY KEY (`id`, `type`)
+                  PRIMARY KEY (`id`),
+                  CONSTRAINT UC_id_type UNIQUE (`id`, `type`)
          ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 /* Create a table to store imported collections (CRM_Smartdebit_Api::getCollectionReport()) */
