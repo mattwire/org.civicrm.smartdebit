@@ -55,6 +55,7 @@
                         <li><a href="{crmURL p='civicrm/smartdebit/reconciliation/list' q='checkAmount=1' h=0}">Show All Mandates with Differing Amounts</a><br /></li>
                         <li><a href="{crmURL p='civicrm/smartdebit/reconciliation/list' q='checkFrequency=1' h=0}">Show All Mandates with Differing Frequencies</a><br /></li>
                         <li><a href="{crmURL p='civicrm/smartdebit/reconciliation/list' q='checkStatus=1' h=0}">Show All Mandates with Differing Status</a><br /></li>
+                        <li><a href="{crmURL p='civicrm/smartdebit/reconciliation/list' q='checkDate=1' h=0}">Show All Mandates with Differing Start Dates</a><br /></li>
                         <li><a href="{crmURL p='civicrm/smartdebit/reconciliation/list' q='checkPayerReference=1' h=0}">Show All Mandates where CiviCRM Contact ID and Smart Debit Payer Reference do not match</a></li>
                     </ul>
                 </div>
@@ -76,6 +77,7 @@ For "Payer Reference" errors you need to login to the Smart Debit control panel 
             <td><b>{ts}Contact (SD Contact ID){/ts}</td>
             <td><b>{ts}Differences{/ts}</td>
             <td><b>{ts}Frequency (CiviCRM/SD){/ts}</td>
+            <td><b>{ts}Start Date (CiviCRM/SD){/ts}</td>
             <td><b>{ts}Total (CiviCRM/SD){/ts}</td>
             <td><b>{ts}Status (CiviCRM/SD){/ts}</td>
             <td></td>
@@ -104,10 +106,12 @@ For "Payer Reference" errors you need to login to the Smart Debit control panel 
               <td>{$row.differences}</td>
             {if $row.contribution_recur_id }
                 <td>{$row.frequency_interval} {$row.frequency_unit}/{$row.sd_frequency_factor} {$row.sd_frequency_type}</td>
+                <td>{$row.start_date}/{$row.sd_start_date}</td>
                 <td>{$row.amount}/{$row.sd_amount}</td>
                 <td>{$row.contribution_status_id}/{$row.sd_contribution_status_id}</td>
             {else}
                 <td>{$row.sd_frequency_factor} {$row.sd_frequency_type}</td>
+                <td>{$row.sd_start_date}</td>
                 <td>{$row.sd_amount}</td>
                 <td>{$row.sd_contribution_status_id}</td>
             {/if}
