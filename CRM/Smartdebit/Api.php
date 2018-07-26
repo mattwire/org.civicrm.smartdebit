@@ -92,6 +92,9 @@ class CRM_Smartdebit_Api {
     // Prepare data
     $data = self::encodePostParams($data);
 
+    $username = trim($username);
+    $password = trim($password);
+
     list($header, $output, $error) = self::doPost($url, $data, $username, $password);
 
     // Set return values

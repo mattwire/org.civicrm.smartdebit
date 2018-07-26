@@ -719,19 +719,12 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     $collectionDate = self::getCollectionStartDate($params);
     $params['start_date'] = $params['next_sched_contribution_date'] = $collectionDate->format('Y-m-d');
 
-    $serviceUserId = NULL;
-
-    if (isset($this->_paymentProcessor['signature'])) {
-      $serviceUserId = $this->_paymentProcessor['signature'];
-    }
-
     $payerReference = CRM_Utils_Array::value('contactID', $params, CRM_Utils_Array::value('cms_contactID', $params, CRM_Utils_Array::value('cid', $params, 'CIVICRMEXT')));
-
-    $billingID = $locationTypes = CRM_Core_BAO_LocationType::getBilling();
+    $billingID = CRM_Core_BAO_LocationType::getBilling();
 
     // Construct params list to send to Smart Debit ...
     $smartDebitParams = array(
-      'variable_ddi[service_user][pslid]' => $serviceUserId,
+      'variable_ddi[service_user][pslid]' => trim(CRM_Utils_Array::value('signature', $this->_paymentProcessor)),
       'variable_ddi[reference_number]' => CRM_Utils_Array::value('ddi_reference', $params),
       'variable_ddi[payer_reference]' => $payerReference,
       'variable_ddi[first_name]' => CRM_Utils_Array::value('billing_first_name', $params),
@@ -1028,7 +1021,6 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
       return FALSE;
     }
 
-    $serviceUserId = $paymentProcessor['signature'];
     $username = $paymentProcessor['user_name'];
     $password = $paymentProcessor['password'];
 
@@ -1050,7 +1042,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     }
 
     $smartDebitParams = array(
-      'variable_ddi[service_user][pslid]' => $serviceUserId,
+      'variable_ddi[service_user][pslid]' => trim(CRM_Utils_Array::value('signature', $paymentProcessor)),
       'variable_ddi[default_amount]' => $amount,
     );
     if (!empty($startDate)) {
@@ -1100,7 +1092,6 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    */
   public function cancelSubscription($params = array())
   {
-    $serviceUserId = $this->_paymentProcessor['signature'];
     $username = $this->_paymentProcessor['user_name'];
     $password = $this->_paymentProcessor['password'];
 
@@ -1119,7 +1110,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     }
     $reference = $contributionRecur['trxn_id'];
     $smartDebitParams = array(
-      'variable_ddi[service_user][pslid]' => $serviceUserId,
+      'variable_ddi[service_user][pslid]' => trim(CRM_Utils_Array::value('signature', $this->_paymentProcessor)),
       'variable_ddi[reference_number]' => $reference,
     );
 
@@ -1157,13 +1148,12 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    */
   public function updateSubscriptionBillingInfo(&$message = '', $params = array())
   {
-    $serviceUserId = $this->_paymentProcessor['signature'];
     $username = $this->_paymentProcessor['user_name'];
     $password = $this->_paymentProcessor['password'];
     $reference = $params['subscriptionId'];
 
     $smartDebitParams = array(
-      'variable_ddi[service_user][pslid]' => $serviceUserId,
+      'variable_ddi[service_user][pslid]' => trim(CRM_Utils_Array::value('signature', $this->_paymentProcessor)),
       'variable_ddi[reference_number]' => $reference,
       'variable_ddi[first_name]' => $params['first_name'],
       'variable_ddi[last_name]' => $params['last_name'],
