@@ -92,9 +92,6 @@ class CRM_Smartdebit_Api {
     // Prepare data
     $data = self::encodePostParams($data);
 
-    $username = trim($username);
-    $password = trim($password);
-
     list($header, $output, $error) = self::doPost($url, $data, $username, $password);
 
     // Set return values
@@ -255,13 +252,11 @@ class CRM_Smartdebit_Api {
       'is_test' => $test,
     ];
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails($processorParams);
-    $username = CRM_Utils_Array::value('user_name', $userDetails);
-    $password = CRM_Utils_Array::value('password', $userDetails);
 
     // Send payment POST to the target URL
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, 'api/system_status');
 
-    $response = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
+    $response = CRM_Smartdebit_Api::requestPost($url, NULL, $userDetails['user_name'], $userDetails['password']);
 
     /* Expected Response:
     Array (
@@ -304,19 +299,16 @@ class CRM_Smartdebit_Api {
    */
   public static function getAuditLog($referenceNumber = '') {
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
-    $username = CRM_Utils_Array::value('user_name', $userDetails);
-    $password = CRM_Utils_Array::value('password', $userDetails);
-    $pslid = CRM_Utils_Array::value('signature', $userDetails);
 
     // Send payment POST to the target URL
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/data/auditlog', "query[service_user][pslid]="
-      . urlencode($pslid) . "&query[report_format]=XML");
+      . urlencode($userDetails['signature']) . "&query[report_format]=XML");
 
     // Restrict to a single payer if we have a reference
     if (!empty($referenceNumber)) {
       $url .= "&query[reference_number]=" . urlencode($referenceNumber);
     }
-    $response = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
+    $response = CRM_Smartdebit_Api::requestPost($url, NULL, $userDetails['user_name'], $userDetails['password']);
 
     // Take action based upon the response status
     if ($response['success']) {
@@ -354,13 +346,10 @@ class CRM_Smartdebit_Api {
     }
 
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
-    $username    = CRM_Utils_Array::value('user_name', $userDetails);
-    $password    = CRM_Utils_Array::value('password', $userDetails);
-    $pslid       = CRM_Utils_Array::value('signature', $userDetails);
 
     $collections = array();
-    $url = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/get_successful_collection_report', "query[service_user][pslid]=$pslid&query[collection_date]=$dateOfCollection");
-    $response    = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
+    $url = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/get_successful_collection_report', "query[service_user][pslid]=" . $userDetails['signature'] . "&query[collection_date]=$dateOfCollection");
+    $response = CRM_Smartdebit_Api::requestPost($url, NULL, $userDetails['user_name'], $userDetails['password']);
 
     // Take action based upon the response status
     if ($response['success']) {
@@ -426,17 +415,14 @@ class CRM_Smartdebit_Api {
    */
   public static function getAuddisFile($fileId) {
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
-    $username = CRM_Utils_Array::value('user_name', $userDetails);
-    $password = CRM_Utils_Array::value('password', $userDetails);
-    $pslid = CRM_Utils_Array::value('signature', $userDetails);
 
     if (empty($fileId)) {
       Civi::log()->debug('Smartdebit getSmartdebitAuddisFile: Must specify file ID!');
       return FALSE;
     }
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, "/api/auddis/$fileId",
-      "query[service_user][pslid]=$pslid");
-    $responseAuddis = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
+      "query[service_user][pslid]=" . $userDetails['signature']);
+    $responseAuddis = CRM_Smartdebit_Api::requestPost($url, NULL, $userDetails['user_name'], $userDetails['password']);
     $scrambled = str_replace(" ", "+", $responseAuddis['file']);
     $outputafterencode = base64_decode($scrambled);
     $auddisArray = json_decode(json_encode((array)simplexml_load_string($outputafterencode)), 1);
@@ -465,9 +451,6 @@ class CRM_Smartdebit_Api {
    */
   public static function getAruddFile($fileId) {
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
-    $username = CRM_Utils_Array::value('user_name', $userDetails);
-    $password = CRM_Utils_Array::value('password', $userDetails);
-    $pslid = CRM_Utils_Array::value('signature', $userDetails);
 
     if (empty($fileId)) {
       Civi::log()->debug('Smartdebit getSmartdebitAruddFile: Must specify file ID!');
@@ -475,8 +458,8 @@ class CRM_Smartdebit_Api {
     }
 
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, "/api/arudd/$fileId",
-      "query[service_user][pslid]=$pslid");
-    $responseArudd = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password);
+      "query[service_user][pslid]=" . $userDetails['signature']);
+    $responseArudd = CRM_Smartdebit_Api::requestPost($url, NULL, $userDetails['user_name'], $userDetails['password']);
     $scrambled = str_replace(" ", "+", $responseArudd['file']);
     $outputafterencode = base64_decode($scrambled);
     $aruddArray = json_decode(json_encode((array)simplexml_load_string($outputafterencode)), 1);

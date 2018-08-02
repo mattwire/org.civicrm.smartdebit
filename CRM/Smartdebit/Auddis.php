@@ -74,15 +74,11 @@ class CRM_Smartdebit_Auddis
       $dateOfCollectionStart = date('Y-m-d', strtotime($dateOfCollectionEnd . CRM_Smartdebit_Settings::getValue('cr_cache')));
     }
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
-    $username = CRM_Utils_Array::value('user_name', $userDetails);
-    $password = CRM_Utils_Array::value('password', $userDetails);
-    $pslid = CRM_Utils_Array::value('signature', $userDetails);
 
     // Send payment POST to the target URL
-
     $urlAuddis = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/auddis/list',
-      "query[service_user][pslid]=$pslid&query[from_date]=$dateOfCollectionStart&query[till_date]=$dateOfCollectionEnd");
-    $responseAuddis = CRM_Smartdebit_Api::requestPost($urlAuddis, NULL, $username, $password);
+      "query[service_user][pslid]=" . $userDetails['signature'] . "&query[from_date]=$dateOfCollectionStart&query[till_date]=$dateOfCollectionEnd");
+    $responseAuddis = CRM_Smartdebit_Api::requestPost($urlAuddis, NULL, $userDetails['user_name'], $userDetails['password']);
     // Take action based upon the response status
     if ($responseAuddis['success']) {
       $this->_auddisList = $responseAuddis;
@@ -112,13 +108,10 @@ class CRM_Smartdebit_Auddis
       $dateOfCollectionStart = date('Y-m-d', strtotime($dateOfCollectionEnd . CRM_Smartdebit_Settings::getValue('cr_cache')));
     }
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
-    $username = CRM_Utils_Array::value('user_name', $userDetails);
-    $password = CRM_Utils_Array::value('password', $userDetails);
-    $pslid = CRM_Utils_Array::value('signature', $userDetails);
 
     // Send payment POST to the target URL
-    $urlArudd = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/arudd/list', "query[service_user][pslid]=$pslid&query[from_date]=$dateOfCollectionStart&query[till_date]=$dateOfCollectionEnd");
-    $responseArudd = CRM_Smartdebit_Api::requestPost($urlArudd, NULL, $username, $password);
+    $urlArudd = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/arudd/list', "query[service_user][pslid]=" . $userDetails['signature'] . "&query[from_date]=$dateOfCollectionStart&query[till_date]=$dateOfCollectionEnd");
+    $responseArudd = CRM_Smartdebit_Api::requestPost($urlArudd, NULL, $userDetails['user_name'], $userDetails['password']);
 
     // Take action based upon the response status
     if ($responseArudd['success']) {
