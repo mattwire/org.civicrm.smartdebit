@@ -83,7 +83,8 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
 
     $listArray = array();
     $fixMeContact = FALSE;
-    $totalRows = NULL;
+    $totalRows = 0;
+
     // Get contribution Status options
     $contributionStatusOptions = CRM_Contribute_BAO_Contribution::buildOptions('contribution_status_id', 'validate');
 
