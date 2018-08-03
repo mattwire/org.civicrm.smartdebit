@@ -1021,16 +1021,23 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    * @throws \Exception
    */
   public function changeSubscriptionAmount(&$message = '', $params = array()) {
-    // We don't use recur start_date as smartdebit start_date can change during the subscription
+    // Smartdebit start_date can change during the subscription (eg. if we update amount)
+    //  so we need to be careful when setting it here.
+    // Logic: If a start_date is passed in via UpdateSubscription form we use it, otherwise
+    //   we don't touch
+    $startDate = NULL;
+    if (!empty($params['start_date']) && (array_key_exists('_qf_UpdateSubscription_next', $params))) {
+      $startDate = $params['start_date'];
+    }
     unset($params['start_date']);
-    return self::changeSubscription($this->_paymentProcessor, $params);
+    return self::changeSubscription($this->_paymentProcessor, $params, $startDate);
   }
 
   /**
    * This function allows to update the subscription with Smartdebit
    * @param array $paymentProcessor
    * @param array $recurContributionParams
-   * @param date $startDate We pass this is separately to recurContributionParams as we don't use recur start_date
+   * @param date $startDate We pass this in separately to recurContributionParams as we don't use recur start_date
    *                        because subscription can change during life
    *
    * @return bool
