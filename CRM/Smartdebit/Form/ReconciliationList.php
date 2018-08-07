@@ -73,6 +73,7 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     $checkAmount = CRM_Utils_Array::value('checkAmount', $_GET);
     $checkFrequency = CRM_Utils_Array::value('checkFrequency', $_GET);
     $checkStatus = CRM_Utils_Array::value('checkStatus', $_GET);
+	$checkDate = CRM_Utils_Array::value('checkDate', $_GET);
     $checkPayerReference = CRM_Utils_Array::value('checkPayerReference', $_GET);
     $checkMissingFromCivi = CRM_Utils_Array::value('checkMissingFromCivi', $_GET);
     $checkMissingFromSD = CRM_Utils_Array::value('checkMissingFromSD', $_GET);
@@ -82,7 +83,8 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
 
     $listArray = array();
     $fixMeContact = FALSE;
-    $totalRows = NULL;
+    $totalRows = 0;
+
     // Get contribution Status options
     $contributionStatusOptions = CRM_Contribute_BAO_Contribution::buildOptions('contribution_status_id', 'validate');
 
@@ -96,7 +98,7 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     //foreach ($smartDebitArray as $key => $smartDebitRecord) {
 
     // Start Here
-    if ($checkAmount || $checkFrequency || $checkStatus || $checkPayerReference) {
+    if ($checkAmount || $checkFrequency || $checkStatus || $checkPayerReference || $checkDate) {
       $sql  = "
 SELECT ctrc.id contribution_recur_id, 
   ctrc.contact_id,
@@ -133,13 +135,20 @@ AND   opva.name = 'Direct Debit' ";
         // 1. Transaction Id in Smart Debit and Civi for the same contact
 
         $transactionRecordFound = true;
-        $difference['amount'] = $difference['frequency'] = $difference['status'] = $difference['contact'] = FALSE;
+        $difference['amount'] = $difference['frequency'] = $difference['status'] = $difference['contact'] = $difference['date'] = FALSE;
 
         if ($checkAmount) {
           // Check that amount in CiviCRM matches amount in Smart Debit
           if ($dao->default_amount != $dao->amount) {
             $difference['amount'] = TRUE;
           }
+        }
+
+        if ($checkDate) {
+	      // Check that date in CiviCRM matches amount in Smart Debit
+	      if ($dao->smart_debit_start_date != $dao->start_date) {
+		    $difference['date'] = TRUE;
+	      }
         }
 
         if ($checkFrequency) {
@@ -180,7 +189,7 @@ AND   opva.name = 'Direct Debit' ";
         }
 
         // If different then
-        if ($difference['amount'] || $difference['frequency'] || $difference['status'] || $difference['contact']) {
+        if ($difference['amount'] || $difference['frequency'] || $difference['status'] || $difference['contact'] || $difference['date']) {
           $financialType = '';
           if ($dao->financial_type_id) {
             $financialType = CRM_Core_DAO::getFieldValue('CRM_Financial_DAO_FinancialType', $dao->financial_type_id, 'name', 'id');
@@ -206,6 +215,9 @@ AND   opva.name = 'Direct Debit' ";
                 case 'contact':
                   $differences .= 'Payer Reference(Contact Id)';
                   break;
+	            case 'date':
+	              $differences .= 'Date';
+	              break;
               }
             }
           }
@@ -230,8 +242,8 @@ AND   opva.name = 'Direct Debit' ";
           $listArray[$dao->smart_debit_id]['transaction_id']        = $dao->trxn_id;
           $listArray[$dao->smart_debit_id]['differences']           = $differences;
           $fixmeurl = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/fix/select', "cid=".$dao->contact_id."&reference_number=".$dao->reference_number,  TRUE, NULL, FALSE, TRUE, TRUE);
-          if ($difference['amount'] || $difference['frequency'] || $difference['status']) {
-            // Show fix me link if difference is amount, frequency or status
+          if ($difference['amount'] || $difference['frequency'] || $difference['status'] || $difference['date']) {
+            // Show fix me link if difference is amount, frequency, status, or date
             if (!empty($dao->default_amount)) { // We don't support no amount at smartdebit
               $listArray[$dao->smart_debit_id]['fix_me_url'] = $fixmeurl;
             }

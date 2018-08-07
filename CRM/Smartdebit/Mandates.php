@@ -293,12 +293,6 @@ class CRM_Smartdebit_Mandates {
     $transactionId = CRM_Utils_Array::value('trxn_id', $recurParams, '');
 
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails($recurParams);
-    if (!$userDetails) {
-      return FALSE;
-    }
-    $username = CRM_Utils_Array::value('user_name', $userDetails);
-    $password = CRM_Utils_Array::value('password', $userDetails);
-    $pslid = CRM_Utils_Array::value('signature', $userDetails);
 
     // Originally we did everything in XML format, but for sites with > 50000 mandates the report is too big
     // and we get server timeouts.  It's not possible to retrieve partial results (either one or all) so we switch
@@ -309,12 +303,12 @@ class CRM_Smartdebit_Mandates {
     switch($format) {
       case 'XML':
         $url = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/data/dump', "query[service_user][pslid]="
-          .urlencode($pslid)."&query[report_format]=XML");
+          . $userDetails['signature'] . "&query[report_format]=XML");
         break;
 
       case 'CSV':
         $url = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/data/dump', "query[service_user][pslid]="
-          .urlencode($pslid)."&query[report_format]=CSV" . "&query[include_header]=true");
+          . $userDetails['signature'] . "&query[report_format]=CSV" . "&query[include_header]=true");
         break;
     }
 
@@ -322,7 +316,7 @@ class CRM_Smartdebit_Mandates {
     if (!empty($transactionId)) {
       $url .= "&query[reference_number]=".urlencode($transactionId);
     }
-    $response = CRM_Smartdebit_Api::requestPost($url, NULL, $username, $password, $format);
+    $response = CRM_Smartdebit_Api::requestPost($url, NULL, $userDetails['user_name'], $userDetails['password'], $format);
 
     // Take action based upon the response status
     if ($response['success']) {

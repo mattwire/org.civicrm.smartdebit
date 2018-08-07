@@ -155,6 +155,9 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       return FALSE;
     }
 
+    $paymentProcessorDetails['user_name'] = self::getUserStatic($paymentProcessorDetails);
+    $paymentProcessorDetails['password'] = self::getPasswordStatic($paymentProcessorDetails);
+    $paymentProcessorDetails['signature'] = self::getSignatureStatic($paymentProcessorDetails);
     return $paymentProcessorDetails;
   }
 
@@ -208,12 +211,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'validate');
     self::checkSmartDebitParams($smartDebitParams);
 
-    // Get the API Username and Password
-    $username = $this->_paymentProcessor['user_name'];
-    $password = $this->_paymentProcessor['password'];
-
     $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/validate');
-    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
+    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $this->getUser(), $this->getPassword());
 
     $direct_debit_response = array();
     $direct_debit_response['data_type'] = 'recurring';
@@ -663,6 +662,66 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   }
 
   /**
+   * Get the Signature (PSLID)
+   *
+   * @return string
+   */
+  public function getSignature() {
+    return self::getSignatureStatic($this->_paymentProcessor);
+  }
+
+  /**
+   * Get the Signature (PSLID)
+   *
+   * @param array $paymentProcessorParams
+   *
+   * @return string
+   */
+  public static function getSignatureStatic($paymentProcessorParams) {
+    return trim(CRM_Utils_Array::value('signature', $paymentProcessorParams));
+  }
+
+  /**
+   * Get the Username
+   *
+   * @return string
+   */
+  public function getUser() {
+    return self::getUserStatic($this->_paymentProcessor);
+  }
+
+  /**
+   * Get the Username
+   *
+   * @param array $paymentProcessorParams
+   *
+   * @return string
+   */
+  public static function getUserStatic($paymentProcessorParams) {
+    return trim(CRM_Utils_Array::value('user_name', $paymentProcessorParams));
+  }
+
+  /**
+   * Get the Password
+   *
+   * @return string
+   */
+  public function getPassword() {
+    return self::getPasswordStatic($this->_paymentProcessor);
+  }
+
+  /**
+   * Get the Password
+   *
+   * @param array $paymentProcessorParams
+   *
+   * @return string
+   */
+  public static function getPasswordStatic($paymentProcessorParams) {
+    return trim(CRM_Utils_Array::value('password', $paymentProcessorParams));
+  }
+
+  /**
    * Get the currency for the transaction formatted for smartdebit
    * Smartdebit requires that the amount is sent in "pence" eg. £12.37 would be 1237.
    *
@@ -724,7 +783,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
 
     // Construct params list to send to Smart Debit ...
     $smartDebitParams = array(
-      'variable_ddi[service_user][pslid]' => trim(CRM_Utils_Array::value('signature', $this->_paymentProcessor)),
+      'variable_ddi[service_user][pslid]' => $this->getSignature(),
       'variable_ddi[reference_number]' => CRM_Utils_Array::value('ddi_reference', $params),
       'variable_ddi[payer_reference]' => $payerReference,
       'variable_ddi[first_name]' => CRM_Utils_Array::value('billing_first_name', $params),
@@ -759,12 +818,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'create');
     self::checkSmartDebitParams($smartDebitParams);
 
-    // Get the API Username and Password
-    $username = $this->_paymentProcessor['user_name'];
-    $password = $this->_paymentProcessor['password'];
-
     $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/create');
-    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
+    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $this->getUser(), $this->getPassword());
 
     // Take action based upon the response status
     if ($response['success']) {
@@ -1021,9 +1076,6 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
       return FALSE;
     }
 
-    $username = $paymentProcessor['user_name'];
-    $password = $paymentProcessor['password'];
-
     $amount = isset($recurContributionParams['amount']) ? $recurContributionParams['amount'] : 0;
 
     if (!empty($recurContributionParams['end_date'])) {
@@ -1042,7 +1094,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     }
 
     $smartDebitParams = array(
-      'variable_ddi[service_user][pslid]' => trim(CRM_Utils_Array::value('signature', $paymentProcessor)),
+      'variable_ddi[service_user][pslid]' => self::getSignatureStatic($paymentProcessor),
       'variable_ddi[default_amount]' => $amount,
     );
     if (!empty($startDate)) {
@@ -1068,7 +1120,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
 
     $url = CRM_Smartdebit_Api::buildUrl($paymentProcessor, 'api/ddi/variable/' . $recurRecord['trxn_id'] . '/update');
     if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit changeSubscription: ' . $url . print_r($smartDebitParams, TRUE)); }
-    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
+    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, self::getUserStatic($paymentProcessor), self::getPasswordStatic($paymentProcessor));
     if (!$response['success']) {
       $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
       $msg .= '<br />Update Subscription Failed.';
@@ -1092,9 +1144,6 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    */
   public function cancelSubscription($params = array())
   {
-    $username = $this->_paymentProcessor['user_name'];
-    $password = $this->_paymentProcessor['password'];
-
     try {
       $contributionRecur = civicrm_api3('ContributionRecur', 'getsingle', array(
         'sequential' => 1,
@@ -1110,7 +1159,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     }
     $reference = $contributionRecur['trxn_id'];
     $smartDebitParams = array(
-      'variable_ddi[service_user][pslid]' => trim(CRM_Utils_Array::value('signature', $this->_paymentProcessor)),
+      'variable_ddi[service_user][pslid]' => $this->getSignature(),
       'variable_ddi[reference_number]' => $reference,
     );
 
@@ -1119,7 +1168,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     self::checkSmartDebitParams($smartDebitParams);
 
     $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/' . $reference . '/cancel');
-    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
+    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $this->getUser(), $this->getPassword());
     if (!$response['success']) {
       $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
       $msg .= '<br />Cancel Subscription Failed.';
@@ -1148,12 +1197,10 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    */
   public function updateSubscriptionBillingInfo(&$message = '', $params = array())
   {
-    $username = $this->_paymentProcessor['user_name'];
-    $password = $this->_paymentProcessor['password'];
     $reference = $params['subscriptionId'];
 
     $smartDebitParams = array(
-      'variable_ddi[service_user][pslid]' => trim(CRM_Utils_Array::value('signature', $this->_paymentProcessor)),
+      'variable_ddi[service_user][pslid]' => $this->getSignature(),
       'variable_ddi[reference_number]' => $reference,
       'variable_ddi[first_name]' => $params['first_name'],
       'variable_ddi[last_name]' => $params['last_name'],
@@ -1168,7 +1215,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     self::checkSmartDebitParams($smartDebitParams);
 
     $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/' . $reference . '/update');
-    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $username, $password);
+    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $this->getUser(), $this->getPassword());
     if (!$response['success']) {
       $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
       CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
