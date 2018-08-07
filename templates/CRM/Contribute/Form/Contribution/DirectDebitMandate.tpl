@@ -147,7 +147,10 @@
             request %1 to collect a payment, confirmation of the amount and date will be given to you at the time of the request.{/ts}</li>
         <li style="margin-bottom: 10px">{ts 1=$dd_details.company_address.company_name}If an error is made in the payment of your Direct Debit, by %1 or your bank or building society,
             you are entitled to a full and immediate refund of the amount paid from your bank or building society.{/ts}
-          - {ts 1=$dd_details.company_address.company_name}If you receive a refund you are not entitled to, you must pay it back when %1 asks you to.{/ts}</li>
+          <ul>
+            <li style="margin-bottom: 10px">{ts 1=$dd_details.company_address.company_name}If you receive a refund you are not entitled to, you must pay it back when %1 asks you to.{/ts}</li>
+          </ul>
+        </li>
         <li>{ts 1=$dd_details.company_address.company_name}You can cancel a Direct Debit at any time by simply contacting your bank or building society. Written
             confirmation may be required. Please also notify us.{/ts}</li>
       </ul>
