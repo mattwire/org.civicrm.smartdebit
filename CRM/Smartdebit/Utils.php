@@ -182,6 +182,35 @@ class CRM_Smartdebit_Utils {
   }
 
   /**
+   * Is this recurring contribution of type Smartdebit?
+   *
+   * @param $recurId
+   *
+   * @return bool
+   * @throws \CiviCRM_API3_Exception
+   */
+  public static function isSmartdebitPaymentProcessor($recurId) {
+    $paymentProcessors = civicrm_api3('PaymentProcessor', 'get', array(
+      'return' => array("id"),
+      'payment_processor_type_id' => "Smart_Debit",
+    ));
+
+    $paymentProcessorIds = array_keys($paymentProcessors['values']);
+
+    $recurParams = array(
+      'payment_processor_id' => array('IN' => $paymentProcessorIds),
+      'id' => $recurId,
+    );
+    try {
+      civicrm_api3('ContributionRecur', 'getsingle', $recurParams);
+    }
+    catch (Exception $e) {
+      return FALSE;
+    }
+    return TRUE;
+  }
+
+  /**
    * Get contact details
    *
    * @param $cid

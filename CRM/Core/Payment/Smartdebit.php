@@ -936,11 +936,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       if (!empty($contributionParams['contribution_status_id'])) {
         $params['payment_status_id'] = $contributionParams['contribution_status_id'];
       }
-
-      // Check and update membership
-      if (!empty($params['membershipID'])) {
-        self::updateMembershipStatus($params['membershipID']);
-      }
     }
     return $params;
   }
@@ -963,32 +958,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
       return CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed');
     }
     return CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
-  }
-
-  /**
-   * If we are forcing initial payment status to completed we have to update the membership status as well or it will stay in pending
-   *
-   * @param $membershipId
-   *
-   * @throws \CiviCRM_API3_Exception
-   */
-  private static function updateMembershipStatus($membershipId) {
-    $initialCompleted = (boolean) CRM_Smartdebit_Settings::getValue('initial_completed');
-
-    if ($initialCompleted) {
-      // Force an update of the membership status
-      $membership = civicrm_api3('Membership', 'getsingle', array('membership_id' => $membershipId));
-      $dates = CRM_Member_BAO_MembershipType::getDatesForMembershipType($membership['membership_type_id']);
-
-      $membershipParams = array(
-        'membership_id' => $membershipId,
-        'start_date' => $dates['start_date'],
-        'end_date' => $dates['end_date'],
-        'join_date' => $dates['join_date'],
-        'skipStatusCal' => 0,
-      );
-      civicrm_api3('Membership', 'create', $membershipParams);
-    }
   }
 
   /**

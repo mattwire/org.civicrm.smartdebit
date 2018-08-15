@@ -452,3 +452,39 @@ function smartdebit_civicrm_links( $op, $objectName, $objectId, &$links, &$mask,
     }
   }
 }
+
+/**
+ * Implements hook_civicrm_pre
+ *
+ * @param $op
+ * @param $objectName
+ * @param $id
+ * @param $params
+ *
+ * @throws \CiviCRM_API3_Exception
+ */
+function smartdebit_civicrm_pre($op, $objectName, $id, &$params) {
+  switch ($objectName) {
+    case 'Membership':
+      if ($op !== 'create') {
+        return;
+      }
+      // If creating a new membership and we have "Mark Initial Payment as Completed" set we need to:
+      // 1. Set membership status from Pending->New
+      // 2. Set join_date, start_date, end_date as they are not calculated automatically in this case.
+      if (!CRM_Smartdebit_Utils::isSmartdebitPaymentProcessor($params['contribution_recur_id'])) {
+        return;
+      }
+      if ((boolean) CRM_Smartdebit_Settings::getValue('initial_completed')) {
+        if ($params['status_id'] == CRM_Core_PseudoConstant::getKey('CRM_Member_BAO_Membership', 'status_id', 'Pending')) {
+          $params['status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Member_BAO_Membership', 'status_id', 'New');
+        }
+        $dates = civicrm_api3('MembershipType', 'getdates', ['membershiptype_id' => $params['membership_type_id']]);
+        if (empty($params['join_date'])) {
+          $params['join_date'] = CRM_Utils_Array::value('join_date', $dates);
+        }
+        $params['start_date'] = CRM_Utils_Array::value('start_date', $dates);
+        $params['end_date'] = CRM_Utils_Array::value('end_date', $dates);
+      }
+  }
+}
