@@ -1,3 +1,13 @@
+## Release 1.25
+* Change how we change membership from Pending to New as we were overwriting join_date when we shouldn't have been.
+* Update mandate text in line with BACS requirements (#24).
+* Add getters and fully escape user_name,password,signature fields (API no longer fails if there is whitespace/newline in the user/pass/pslid fields).
+* Reconciliation:
+  * Display '0 found for current filter' if none found for reconciliation.
+  * Add option to reconcile mismatched dates (#21).
+* Set start_date, next_sched_contribution_date to collection date, trigger updateRecurringContribution every time we update a recur. **This means that new recurring contributions/contributions will show with the date the money will be received, rather than the date they were setup.**
+* Fix create SQL for veda_smartdebit_auddis table
+
 ## Release 1.24.2
 Fix unique constraint in install SQL for veda_smartdebit_auddis table. This only affects users installing 1.24 for the first time and there is no need to upgrade to this version otherwise.
 
