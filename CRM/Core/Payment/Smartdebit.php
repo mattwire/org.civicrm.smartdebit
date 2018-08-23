@@ -1114,12 +1114,11 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    * @return bool
    * @throws \Exception
    */
-  public function cancelSubscription($params = array())
-  {
+  public function cancelSubscription($params = array()) {
+    $contributionRecurId = CRM_Utils_Array::value('crid', $_GET);
     try {
       $contributionRecur = civicrm_api3('ContributionRecur', 'getsingle', array(
-        'sequential' => 1,
-        'id' => $_GET['crid'],
+        'id' => $contributionRecurId,
       ));
     }
     catch (Exception $e) {
@@ -1148,12 +1147,12 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
       return FALSE;
     }
 
-    // Update the cached mandate
+    // Refresh the cached mandate from Smartdebit
     $params = [
-      'trxn_id' => $smartDebitParams['reference_number'],
+      'trxn_id' => $reference,
       'refresh' => TRUE,
     ];
-    CRM_Smartdebit_Mandates::getbyReference($params);
+    CRM_Smartdebit_Mandates::retrieve($params);
 
     return TRUE;
   }

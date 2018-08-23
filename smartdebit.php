@@ -396,17 +396,14 @@ function smartdebit_civicrm_buildForm($formName, &$form) {
       $defaults['frequency_interval'] = array_search($recurRecord['frequency_interval'], $frequencyIntervals);
       $form->setDefaults($defaults);
     }
+    /**
     elseif ($formName == 'CRM_Contribute_Form_UpdateBilling') {
       // This is triggered by clicking "Change Billing Details" on a recurring contribution.
     }
-    if ($formName == 'CRM_Contribute_Form_CancelSubscription') {
+    elseif ($formName == 'CRM_Contribute_Form_CancelSubscription') {
       // This is triggered when you cancel a recurring contribution
-      $paymentProcessorObj = $form->getVar('_paymentProcessorObj');
-      $paymentProcessorName = $paymentProcessorObj->_processorName;
-      if ($paymentProcessorName == 'Smart Debit Processor') {
-        $form->addRule('send_cancel_request', 'Please select one of these options', 'required');
-      }
     }
+    */
   }
 }
 
