@@ -339,7 +339,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         , 'maxlength' => 18
         , 'autocomplete' => 'on'
         ),
-        'is_required' => TRUE
+        'is_required' => TRUE,
+        'description' => 'Should be no more than 18 characters. Should not include punctuation (e.g. O\'Callaghan should be OCallaghan). First initial and surname is valid. (e.g. D Watson)'
       ),
       // UK BACS Account number is 8 digits
       'bank_account_number' => array(
@@ -351,7 +352,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         , 'maxlength' => 8
         , 'autocomplete' => 'off'
         ),
-        'is_required' => TRUE
+        'is_required' => TRUE,
+        'description' => '8 digits (e.g. 12345678)'
       ),
       // UK BACS sortcode is 6 digits
       'bank_identification_number' => array(
@@ -363,7 +365,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         , 'maxlength' => 6
         , 'autocomplete' => 'off'
         ),
-        'is_required' => TRUE
+        'is_required' => TRUE,
+        'description' => '6 digits (e.g. 01 23 45)'
       ),
       'preferred_collection_day' => array(
         'htmlType' => (count($collectionDaysArray) > 1) ? 'select' : 'hidden',
