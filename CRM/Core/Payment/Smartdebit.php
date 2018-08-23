@@ -341,26 +341,26 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         ),
         'is_required' => TRUE
       ),
-      //e.g. IBAN can have maxlength of 34 digits
+      // UK BACS Account number is 8 digits
       'bank_account_number' => array(
         'htmlType' => 'text',
         'name' => 'bank_account_number',
         'title' => ts('Bank Account Number'),
         'cc_field' => TRUE,
         'attributes' => array('size' => 20
-        , 'maxlength' => 34
+        , 'maxlength' => 8
         , 'autocomplete' => 'off'
         ),
         'is_required' => TRUE
       ),
-      //e.g. SWIFT-BIC can have maxlength of 11 digits
+      // UK BACS sortcode is 6 digits
       'bank_identification_number' => array(
         'htmlType' => 'text',
         'name' => 'bank_identification_number',
         'title' => ts('Sort Code'),
         'cc_field' => TRUE,
         'attributes' => array('size' => 20
-        , 'maxlength' => 11
+        , 'maxlength' => 6
         , 'autocomplete' => 'off'
         ),
         'is_required' => TRUE
