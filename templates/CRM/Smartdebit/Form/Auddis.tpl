@@ -23,7 +23,7 @@
 +-------------------------------------------------------------------*}
 
 <div class="help">
-  <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}The below tables summarise the data available from SmartDebit in the selected AUDDIS/ARUDD files and collection reports.{/ts}</span><br />
+  <span><i class="crm-i fas fa-info-circle" aria-hidden="true"></i> {ts}The below tables summarise the data available from SmartDebit in the selected AUDDIS/ARUDD files and collection reports.{/ts}</span><br />
   <strong>{ts}To synchronise CiviCRM from Smartdebit click continue.{/ts}</strong>
 </div>
 

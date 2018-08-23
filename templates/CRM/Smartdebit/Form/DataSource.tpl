@@ -28,7 +28,7 @@
     <h3>{ts}Automatic Synchronisation is {/ts}{if $sync_active}{ts}ENABLED{/ts}{else}{ts}DISABLED{/ts}{/if}</h3>
   </div>
   <div class="help">
-        <span><i class="crm-i fa-info-circle" aria-hidden="true"></i> {ts}The Smartdebit scheduled job automatically synchronises and caches the latest daily collection report.{/ts}
+        <span><i class="crm-i fas fa-info-circle" aria-hidden="true"></i> {ts}The Smartdebit scheduled job automatically synchronises and caches the latest daily collection report.{/ts}
           {ts 1=$period}Collection reports older than %1 will be removed from the local cache.{/ts}<br />
       </span>
   </div>

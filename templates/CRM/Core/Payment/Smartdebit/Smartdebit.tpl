@@ -23,7 +23,7 @@
 +-------------------------------------------------------------------*}
 
 <div class="help">
-  <span><i class="crm-i fa-exclamation-circle"></i><strong> You should not continue with this form if any of the following apply:</strong></span>
+  <span><i class="crm-i fas fa-exclamation-circle"></i><strong> You should not continue with this form if any of the following apply:</strong></span>
   <ul>
     <li>You are not the account holder.</li>
     <li>If it is a business account and more than one person is required to authorise debits on this account.</li>
