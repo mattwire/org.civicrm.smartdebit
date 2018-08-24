@@ -26,7 +26,7 @@
 
 <div class="help">
   <span>
-    <i class="crm-i fas fa-info-circle" aria-hidden="true"></i>
+    <i class="crm-i fa fa-info-circle" aria-hidden="true"></i>
     {ts}The below tables summarise what was updated in CiviCRM during the last (Scheduled/Manual) sync with SmartDebit.{/ts}
   </span>
 </div>

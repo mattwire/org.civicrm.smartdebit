@@ -29,8 +29,8 @@
   </div>
 {else}
   <div class="help">
-    <span><i class="crm-i fas fa-info-circle" aria-hidden="true"></i> Total Mandates synced from Smart Debit: {$totalMandates}</span><br/>
-    <span><i class="crm-i fas fa-question-circle" aria-hidden="true"></i>  If you need to refresh mandates from Smart Debit: <a href="{crmURL p='civicrm/smartdebit/reconciliation/list' q='sync=1' h=0}">Click Here</a></span>
+    <span><i class="crm-i fa fa-info-circle" aria-hidden="true"></i> Total Mandates synced from Smart Debit: {$totalMandates}</span><br/>
+    <span><i class="crm-i fa fa-question-circle" aria-hidden="true"></i>  If you need to refresh mandates from Smart Debit: <a href="{crmURL p='civicrm/smartdebit/reconciliation/list' q='sync=1' h=0}">Click Here</a></span>
   </div>
 {/if}
 {if $totalMandates gt 0}
@@ -39,7 +39,7 @@
         <tr>
             <td>
                 <div class="help">
-                    <span><i class="crm-i fas fa-question-circle" aria-hidden="true"></i> Select a filter from the list below to view mismatches.</span>
+                    <span><i class="crm-i fa fa-question-circle" aria-hidden="true"></i> Select a filter from the list below to view mismatches.</span>
                 </div>
                 <div style="crm-form">
                     <h4>Show All Mandates Missing from CiviCRM:</h4>
@@ -65,7 +65,7 @@
 <h3>{ts}Mis-Matched Contacts ({$totalRows} found for current filter){/ts}</h3>
 {if $fixMeContact}
 <div class="help">
-<span><i class="crm-i fas fa-info-circle" aria-hidden="true"></i>
+<span><i class="crm-i fa fa-info-circle" aria-hidden="true"></i>
 For "Payer Reference" errors you need to login to the Smart Debit control panel and update the Payer Reference manually.
 </span>
 </div>
