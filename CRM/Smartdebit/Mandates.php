@@ -176,22 +176,30 @@ class CRM_Smartdebit_Mandates {
       return FALSE;
     }
 
-    $csvFirstRow = TRUE;
+    // If we have retrieved a single record, an optional setting at smartdebit allows it to return account name,number and sortcode.
+    // Unfortunately the headers returned by the API do not include these and we get an error.
+    // So we hardcode the headers here and detect which set of headers to use (ie. if values > headers we use extended headers)
+    $csvHeaders = explode(',','payer_reference,reference_number,frequency_type,frequency_factor,start_date,title,first_name,last_name,email_address,address_1,address_2,address_3,town,county,postcode,regular_amount,first_amount,current_state,support_gift_aid');
+    if (($format === 'CSV') && (count($smartDebitPayerContactDetails) == 1)) {
+      $csvValues = str_getcsv(CRM_Utils_Array::first($smartDebitPayerContactDetails), ',');
+      if (count($csvValues) == count($csvHeaders)) {
+        // Ok, use standard headers
+      }
+      elseif (count($csvValues) == (count($csvHeaders) + 3)) {
+        $csvHeaders = explode(',', 'payer_reference,reference_number,frequency_type,frequency_factor,start_date,account_name,sort_code,account_no,title,first_name,last_name,email_address,address_1,address_2,address_3,town,county,postcode,regular_amount,first_amount,current_state,support_gift_aid');
+      }
+      else {
+        throw new CRM_Core_Exception('Count of headers does not match count of values returned from Smartdebit API for Mandate');
+      }
+    }
+
     // Insert mandates into table
     foreach ($smartDebitPayerContactDetails as $smartDebitValues) {
       if ($format === 'CSV') {
         // We do the CSV parsing here to avoid running out of memory on really large datasets (> 50k)
-        if ($csvFirstRow) {
-          // Headers row
-          $columnNames = str_getcsv($smartDebitValues, ',');
-          $columnNames = array_map('trim', $columnNames);
-          $csvFirstRow = FALSE;
-          continue;
-        }
-
         $csvValues = str_getcsv($smartDebitValues, ',');
-        for ($index = 0; $index < count($columnNames); $index++) {
-          $smartDebitRecord[$columnNames[$index]] = $csvValues[$index];
+        for ($index = 0; $index < count($csvHeaders); $index++) {
+          $smartDebitRecord[$csvHeaders[$index]] = $csvValues[$index];
         }
       }
       else {
@@ -308,7 +316,7 @@ class CRM_Smartdebit_Mandates {
 
       case 'CSV':
         $url = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/data/dump', "query[service_user][pslid]="
-          . $userDetails['signature'] . "&query[report_format]=CSV" . "&query[include_header]=true");
+          . $userDetails['signature'] . "&query[report_format]=CSV" . "&query[include_header]=false");
         break;
     }
 
