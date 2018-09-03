@@ -1,3 +1,10 @@
+## Release 1.26
+* Handle case when bank details are returned as part of mandate and API returns the wrong headers causing save to fail.
+* Fix cancel subscription failing.
+* Add fa/fas css selector for font-awesome.
+* Add descriptions to payment fields metadata.
+* Restrict account number / sort code to 8 / 6 digits.
+
 ## Release 1.25
 * Change how we change membership from Pending to New as we were overwriting join_date when we shouldn't have been.
 * Update mandate text in line with BACS requirements (#24).
