@@ -316,9 +316,10 @@ function smartdebit_civicrm_pageRun(&$page) {
         $smartDebitMandate = CRM_Smartdebit_Mandates::getbyReference($recurDetails);
         if ($smartDebitMandate) {
           $contributionRecurDetails = CRM_Smartdebit_Form_Payerdetails::formatDetails($smartDebitMandate);
-          if (CRM_Smartdebit_Sync::updateRecur($smartDebitMandate)) {
+          $refreshed = CRM_Utils_Request::retrieve('refreshed', 'Boolean');
+          if (CRM_Smartdebit_Sync::updateRecur($smartDebitMandate) && !$refreshed) {
             // Reload the page so we show correct info
-            CRM_Utils_System::redirect(CRM_Utils_Array::value('REQUEST_URI', $_SERVER));
+            CRM_Utils_System::redirect(CRM_Utils_Array::value('REQUEST_URI', $_SERVER) . '&refreshed=1');
           }
         }
       }
