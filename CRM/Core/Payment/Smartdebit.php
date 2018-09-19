@@ -28,8 +28,10 @@
  *
  * Implementation of the Smartdebit payment processor class
  */
-class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
-{
+class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
+
+  use CRM_Core_PaymentTrait;
+
   /**
    * We only need one instance of this object. So we use the singleton
    * pattern and cache the instance in this variable
@@ -446,41 +448,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
   }
 
   /**
-   * Get contact email for POSTing to Smart Debit API
-   *
-   * @param $params
-   *
-   * @return mixed
-   */
-  private static function getUserEmail($params)
-  {
-    $useremail = NULL;
-    // Set email
-    if (!empty($params['email-Primary'])) {
-      $useremail = $params['email-Primary'];
-    }
-    elseif (!empty($params['email-5'])) {
-      $useremail = $params['email-5'];
-    }
-    else {
-      // Get email from contact ID
-      $contactId = CRM_Utils_Array::value('cid', $_REQUEST);
-      try {
-        $emailResult = civicrm_api3('Email', 'getsingle', array(
-          'contact_id' => $contactId,
-          'options' => array('limit' => 1, 'sort' => "is_primary DESC"),
-        ));
-        $useremail = $emailResult['email'];
-      }
-      catch (CiviCRM_API3_Exception $e) {
-        // No email found!
-        Civi::log()->warning('Smartdebit getUserEmail: Contact '. $contactId . ' has no email address!');
-      }
-    }
-    return $useremail;
-  }
-
-  /**
    * From the selected collection day determine when the actual collection start date could be
    * For direct debit we need to allow 10 working days prior to collection for cooling off
    * We also may need to send them a letter etc
@@ -781,27 +748,27 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
     $collectionDate = self::getCollectionStartDate($params);
     $params['start_date'] = $params['next_sched_contribution_date'] = $collectionDate->format('Y-m-d');
 
-    $payerReference = CRM_Utils_Array::value('contactID', $params, CRM_Utils_Array::value('cms_contactID', $params, CRM_Utils_Array::value('cid', $params, 'CIVICRMEXT')));
-    $billingID = CRM_Core_BAO_LocationType::getBilling();
+    $contactId = self::getContactId($params);
+    $billingLocationID = CRM_Core_BAO_LocationType::getBilling();
 
     // Construct params list to send to Smart Debit ...
     $smartDebitParams = array(
       'variable_ddi[service_user][pslid]' => $this->getSignature(),
       'variable_ddi[reference_number]' => CRM_Utils_Array::value('ddi_reference', $params),
-      'variable_ddi[payer_reference]' => $payerReference,
+      'variable_ddi[payer_reference]' => $contactId,
       'variable_ddi[first_name]' => CRM_Utils_Array::value('billing_first_name', $params),
       'variable_ddi[last_name]' => CRM_Utils_Array::value('billing_last_name', $params),
-      'variable_ddi[address_1]' => CRM_Utils_Array::value('billing_street_address-' . $billingID, $params),
-      'variable_ddi[town]' => CRM_Utils_Array::value('billing_city-' . $billingID, $params),
-      'variable_ddi[postcode]' => CRM_Utils_Array::value('billing_postal_code-' . $billingID, $params),
-      'variable_ddi[country]' => CRM_Utils_Array::value('billing_country_id-' . $billingID, $params),
+      'variable_ddi[address_1]' => CRM_Utils_Array::value('billing_street_address-' . $billingLocationID, $params),
+      'variable_ddi[town]' => CRM_Utils_Array::value('billing_city-' . $billingLocationID, $params),
+      'variable_ddi[postcode]' => CRM_Utils_Array::value('billing_postal_code-' . $billingLocationID, $params),
+      'variable_ddi[country]' => CRM_Utils_Array::value('billing_country_id-' . $billingLocationID, $params),
       'variable_ddi[account_name]' => CRM_Utils_Array::value('account_holder', $params),
       'variable_ddi[sort_code]' => CRM_Utils_Array::value('bank_identification_number', $params),
       'variable_ddi[account_number]' => CRM_Utils_Array::value('bank_account_number', $params),
       'variable_ddi[first_amount]' => CRM_Utils_Array::value('amount', $params, 0),
       'variable_ddi[default_amount]' => CRM_Utils_Array::value('amount', $params, 0),
       'variable_ddi[start_date]' => $params['start_date'],
-      'variable_ddi[email_address]' => self::getUserEmail($params),
+      'variable_ddi[email_address]' => self::getBillingEmail($params, $contactId),
     );
     $smartDebitParams = array_merge((array)$smartDebitParams, (array)self::getCollectionFrequencyPostParams($params));
     return $smartDebitParams;
@@ -897,7 +864,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         if (empty($params['receive_date'])) {
           $params['receive_date'] = date('YmdHis');
         }
-        $recurParams['contact_id'] = $params['contactID'];
+        $recurParams['contact_id'] = self::getContactId($params);
         $recurParams['create_date'] = $params['receive_date'];
         $recurParams['modified_date'] = $params['receive_date'];
         $recurParams['start_date'] = $params['start_date'];
@@ -917,7 +884,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment
         // We need to link the recurring contribution and contribution record, as Civi won't do it for us (4.7.21)
         $contributionParams = [
           'contribution_recur_id' => $params['contribution_recur_id'],
-          'contact_id' => $params['contactID'],
+          'contact_id' => self::getContactId($params),
           'contribution_status_id' => self::getInitialContributionStatus(FALSE),
           'is_test' => $params['is_test'],
         ];

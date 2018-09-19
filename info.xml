@@ -21,6 +21,9 @@
   <compatibility>
     <ver>5.0</ver>
   </compatibility>
+  <requires>
+    <ext>org.civicrm.paymentlib</ext>
+  </requires>
   <comments>Based on the vedaconsulting (https://vedaconsulting.co.uk) ukdirectdebit, smartdebit and smartdebit_reconciliation modules.
   Re-written for CiviCRM 4.7</comments>
   <civix>
