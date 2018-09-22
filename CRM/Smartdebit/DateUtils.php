@@ -32,7 +32,7 @@
 class CRM_Smartdebit_DateUtils {
 
   /**
-   * Calculate the earliest possible collection date based on todays date plus the collection interval setting.
+   * Calculate the earliest possible collection date based on today's date plus the collection interval setting.
    * @param $collectionDay
    *
    * @return DateTime
@@ -184,12 +184,11 @@ class CRM_Smartdebit_DateUtils {
    *
    * @param string $date_1
    * @param string $date_2
-   * @param string $differenceFormat
+   * @param string $differenceFormat (default days = %a)
    *
    * @return string
    */
-  public static function dateDifference($date_1, $date_2, $differenceFormat = '%a')
-  {
+  public static function dateDifference($date_1, $date_2, $differenceFormat = '%a') {
     $datetime1 = date_create($date_1);
     $datetime2 = date_create($date_2);
 
@@ -213,16 +212,16 @@ class CRM_Smartdebit_DateUtils {
         $days = $frequencyInterval * 1;
         break;
       case 'month':
-        $days = $frequencyInterval * 7;
+        $days = $frequencyInterval * 14;
         break;
       case 'year':
-        $days = $frequencyInterval * 30;
+        $days = $frequencyInterval * 182;
         break;
       case 'lifetime':
         $days = 0;
         break;
       default:
-        $days = 30;
+        $days = 182;
         break;
     }
     return $days;
