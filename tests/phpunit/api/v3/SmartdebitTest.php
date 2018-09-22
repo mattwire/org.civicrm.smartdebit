@@ -50,6 +50,7 @@ class api_v3_SmartdebitTest extends \PHPUnit_Framework_TestCase implements Headl
     $mandateParams = array(
       'trxn_id' => 'ABC00000128',
       'refresh' => 1,
+      'format' => 'XML',
     );
     $mandateResult = $this->callAPISuccess('Smartdebit', 'getmandates', $mandateParams);
     $this->assertEquals('55.83', $mandateResult['values'][$mandateParams['trxn_id']]['default_amount']);

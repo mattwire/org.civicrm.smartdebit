@@ -305,7 +305,7 @@ class CRM_Smartdebit_Mandates {
     // Originally we did everything in XML format, but for sites with > 50000 mandates the report is too big
     // and we get server timeouts.  It's not possible to retrieve partial results (either one or all) so we switch
     // to CSV which takes around 60seconds for 50000 mandates.
-    $format = 'CSV';
+    $format = CRM_Utils_Array::value('format', $recurParams, 'CSV');
 
     // Send payment POST to the target URL
     switch($format) {
