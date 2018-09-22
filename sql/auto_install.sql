@@ -89,10 +89,9 @@ CREATE TABLE IF NOT EXISTS `veda_smartdebit_mandates` (
             `reference_number` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
             `payerReference` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
             `recur_id` int(10) unsigned COMMENT 'ID of recurring contribution',
+            INDEX reference_number_idx (reference_number),
             PRIMARY KEY (`id`)
            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
-ALTER TABLE veda_smartdebit_mandates ADD index reference_number_idx(reference_number);
 
 /* This table is used to store the last set of successful imports */
 CREATE TABLE IF NOT EXISTS `veda_smartdebit_syncresults` (
