@@ -175,7 +175,26 @@ class CRM_Smartdebit_DateUtils {
    */
   public static function getNextScheduledDate($paymentDateString, $recurParams) {
     $paymentDate = new DateTime($paymentDateString);
+
+    if ($recurParams['frequency_unit'] === 'month') {
+      // If we are adding a monthly interval, cope with the situation where it's the last day of the month
+      // Add a day on so we roll over to the next day of the month (or not)
+      $day = $paymentDate->format('d');
+      $year = $paymentDate->format('Y');
+      $month = $paymentDate->format('m');
+      $paymentDate->setDate($year, $month, 1);
+    }
     $paymentDate->modify('+' . $recurParams['frequency_interval'] . ' ' . $recurParams['frequency_unit']);
+    if ($recurParams['frequency_unit'] === 'month') {
+      // Set the day
+      $lastDayOfMonth = $paymentDate->format('t');
+      if ($day > $lastDayOfMonth) {
+        $day = $lastDayOfMonth;
+      }
+      $year = $paymentDate->format('Y');
+      $month = $paymentDate->format('m');
+      $paymentDate->setDate($year, $month, $day);
+    }
     return $paymentDate->format('Ymd');
   }
 
