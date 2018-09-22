@@ -30,7 +30,7 @@ class api_v3_SmartdebitTest extends \PHPUnit_Framework_TestCase implements Headl
     // Civi\Test has many helpers, like install(), uninstall(), sql(), and sqlFile().
     // See: https://github.com/civicrm/org.civicrm.testapalooza/blob/master/civi-test.md
     return \Civi\Test::headless()
-      ->installMe(__DIR__)
+      ->install(array('org.civicrm.paymentlib','org.civicrm.smartdebit'))
       ->apply();
   }
 
