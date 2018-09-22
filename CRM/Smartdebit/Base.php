@@ -26,7 +26,6 @@
 /**
  * Class CRM_Smartdebit_Base
  *
- * Base class for classes that interact with Xero using push and pull methods.
  */
 class CRM_Smartdebit_Base
 {
@@ -153,120 +152,11 @@ WHERE  ddi_reference = %0";
   }
 
   /**
-   * Calculate the earliest possible collection date based on todays date plus the collection interval setting.
-   * @param $collectionDay
-   *
-   * @return DateTime
-   */
-  public static function firstCollectionDate($collectionDay) {
-    // Initialise date objects with today's date
-    $today                    = new DateTime();
-    $earliestCollectionDate   = new DateTime();
-    $collectionDateThisMonth  = new DateTime();
-    $collectionDateNextMonth  = new DateTime();
-    $collectionDateMonthAfter = new DateTime();
-    $collectionInterval = (int) CRM_Smartdebit_Settings::getValue('collection_interval');
-
-    // Calculate earliest possible collection date
-    $earliestCollectionDate->add(new DateInterval( 'P'.$collectionInterval.'D' ));
-
-    // Get the current year, month and next month to create the 2 potential collection dates
-    $todaysMonth = (int) $today->format('m');
-    $nextMonth   = (int) $today->format('m') + 1;
-    $monthAfter  = (int) $today->format('m') + 2;
-    $todaysYear  = (int) $today->format('Y');
-
-    $collectionDateThisMonth->setDate($todaysYear, $todaysMonth, $collectionDay);
-    $collectionDateNextMonth->setDate($todaysYear, $nextMonth, $collectionDay);
-    $collectionDateMonthAfter->setDate($todaysYear, $monthAfter, $collectionDay);
-
-    // Calculate first collection date
-    if ($earliestCollectionDate > $collectionDateNextMonth) {
-      // Month after next
-      return $collectionDateMonthAfter;
-    }
-    elseif ($earliestCollectionDate > $collectionDateThisMonth) {
-      // Next Month
-      return $collectionDateNextMonth;
-    }
-    else {
-      // This month
-      return $collectionDateThisMonth;
-    }
-  }
-
-  /**
-   * Format collection day like 1st, 2nd, 3rd, 4th etc.
-   *
-   * @param $collectionDay
-   *
-   * @return string
-   */
-  private static function formatPreferredCollectionDay($collectionDay) {
-    $ends = array( 'th'
-    , 'st'
-    , 'nd'
-    , 'rd'
-    , 'th'
-    , 'th'
-    , 'th'
-    , 'th'
-    , 'th'
-    , 'th'
-    );
-    if ((($collectionDay%100) >= 11) && (($collectionDay%100) <= 13))
-      $abbreviation = $collectionDay . 'th';
-    else
-      $abbreviation = $collectionDay . $ends[$collectionDay % 10];
-
-    return $abbreviation;
-  }
-
-  /**
-   * Function will return the possible array of collection days with formatted label
-   *
-   * @return mixed
-   */
-  public static function getCollectionDaysOptions() {
-    $intervalDate = new DateTime();
-    $interval = (int) CRM_Smartdebit_Settings::getValue('collection_interval');
-
-    $intervalDate->modify("+$interval day");
-    $intervalDay = $intervalDate->format('d');
-
-    $collectionDays = CRM_Smartdebit_Settings::getValue('collection_days');
-
-    // Split the array
-    $tempCollectionDaysArray  = explode(',', $collectionDays);
-    $earlyCollectionDaysArray = array();
-    $lateCollectionDaysArray  = array();
-
-    // Build 2 arrays around next collection date
-    foreach($tempCollectionDaysArray as $key => $value){
-      if ($value >= $intervalDay) {
-        $earlyCollectionDaysArray[] = $value;
-      }
-      else {
-        $lateCollectionDaysArray[]  = $value;
-      }
-    }
-    // Merge arrays for select list
-    $allCollectionDays = array_merge($earlyCollectionDaysArray, $lateCollectionDaysArray);
-
-    // Loop through and format each label
-    $collectionDaysArray = array();
-    foreach($allCollectionDays as $key => $value){
-      $collectionDaysArray[$value] = self::formatPreferredCollectionDay($value);
-    }
-    return $collectionDaysArray;
-  }
-
-  /**
    * Function will return the possible confirm by options
    *
    * @return mixed
    */
-  static function getConfirmByOptions() {
+  public static function getConfirmByOptions() {
     $confirmBy['EMAIL'] = (boolean) CRM_Smartdebit_Settings::getValue('confirmby_email');
     $confirmBy['POST'] = (boolean) CRM_Smartdebit_Settings::getValue('confirmby_post');
     if (!empty($confirmBy['EMAIL'])) {
@@ -355,52 +245,6 @@ WHERE  ddi_reference = %0";
   }
 
   /**
-   * Translate Smart Debit Frequency Unit/Factor to CiviCRM frequency unit/interval (eg. W,1 = day,7)
-   * @param $sdFrequencyUnit
-   * @param $sdFrequencyFactor
-   *
-   * @return array ($civicrm_frequency_unit, $civicrm_frequency_interval)
-   */
-  public static function translateSmartdebitFrequencytoCiviCRM($sdFrequencyUnit, $sdFrequencyFactor) {
-    if (empty($sdFrequencyFactor)) {
-      $sdFrequencyFactor = 1;
-    }
-    switch ($sdFrequencyUnit) {
-      case 'W':
-        $unit = 'day';
-        $interval = $sdFrequencyFactor * 7;
-        break;
-      case 'M':
-        $unit = 'month';
-        $interval = $sdFrequencyFactor;
-        break;
-      case 'Q':
-        $unit = 'month';
-        $interval = $sdFrequencyFactor*3;
-        break;
-      case 'Y':
-      default:
-        $unit = 'year';
-        $interval = $sdFrequencyFactor;
-    }
-    return array ($unit, $interval);
-  }
-
-  /**
-   * Get the next scheduled date for the recurring contribution
-   *
-   * @param string $paymentDateString
-   * @param array $recurParams
-   *
-   * @return string
-   */
-  public static function getNextScheduledDate($paymentDateString, $recurParams) {
-    $paymentDate = new DateTime($paymentDateString);
-    $paymentDate->modify('+' . $recurParams['frequency_interval'] . ' ' . $recurParams['frequency_unit']);
-    return $paymentDate->format('Ymd');
-  }
-
-  /**
    * Create a new recurring contribution for the direct debit instruction we set up.
    *
    * @param $recurParams
@@ -433,7 +277,7 @@ WHERE  ddi_reference = %0";
         $recurParams['frequency_factor'] = 1;
       }
       // Convert Smartdebit frequency params if we have them
-      list($recurParams['frequency_unit'], $recurParams['frequency_interval']) = CRM_Smartdebit_Base::translateSmartdebitFrequencytoCiviCRM($recurParams['frequency_type'], $recurParams['frequency_factor']);
+      list($recurParams['frequency_unit'], $recurParams['frequency_interval']) = CRM_Smartdebit_DateUtils::translateSmartdebitFrequencytoCiviCRM($recurParams['frequency_type'], $recurParams['frequency_factor']);
     }
     if (empty($recurParams['frequency_unit']) && empty($recurParams['frequency_interval'])) {
       // Default to 1 year if undefined

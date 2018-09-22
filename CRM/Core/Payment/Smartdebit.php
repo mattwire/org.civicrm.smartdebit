@@ -177,7 +177,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
     $defaults = array();
     $defaults['ddi_reference'] = CRM_Smartdebit_Base::getDDIReference();
     // Set preferred collection day default to the first choice.
-    $collectionDaysArray = CRM_Smartdebit_Base::getCollectionDaysOptions();
+    $collectionDaysArray = CRM_Smartdebit_DateUtils::getCollectionDaysOptions();
     if (count($collectionDaysArray) > 0) {
       $defaults['preferred_collection_day'] = CRM_Utils_Array::first(array_keys($collectionDaysArray));
     }
@@ -328,7 +328,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    */
   public function getPaymentFormFieldsMetadata() {
     // Get the collection days options
-    $collectionDaysArray = CRM_Smartdebit_Base::getCollectionDaysOptions();
+    $collectionDaysArray = CRM_Smartdebit_DateUtils::getCollectionDaysOptions();
     $confirmBy = CRM_Smartdebit_Base::getConfirmByOptions();
 
     return array(
@@ -456,11 +456,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    *     preferred_collection_day: integer
    *
    * @return \DateTime
+   * @throws \Exception
    */
-  public static function getCollectionStartDate($params)
-  {
+  public static function getCollectionStartDate($params) {
     $preferredCollectionDay = $params['preferred_collection_day'];
-    return CRM_Smartdebit_Base::firstCollectionDate($preferredCollectionDay);
+    return CRM_Smartdebit_DateUtils::firstCollectionDate($preferredCollectionDay);
   }
 
   /**
@@ -470,6 +470,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    *      collection_interval: Smartdebit formatted collection interval
    *
    * @return \DateTime|bool
+   * @throws \Exception
    */
   public static function getCollectionEndDate($params) {
     if (!empty($params['installments'])) {
@@ -523,8 +524,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    *
    * @return array (string Y,Q,M,W,O; int frequencyInterval)
    */
-  private static function getCollectionFrequency($params)
-  {
+  private static function getCollectionFrequency($params) {
     // Smart Debit supports Y, Q, M, W parameters
     // We return 'O' if the payment is not recurring.  You should then supply an end date to smart debit
     //    to ensure only a single payment is taken.
@@ -601,6 +601,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    * @param array $params
    *
    * @return array
+   * @throws \Exception
    */
   private static function getCollectionFrequencyPostParams($params) {
     $collectionDate = self::getCollectionStartDate($params);
@@ -732,9 +733,9 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    * @param null $self
    *
    * @return array
+   * @throws \Exception
    */
-  private function preparePostArray(&$params)
-  {
+  private function preparePostArray(&$params) {
     // When passed in from backend forms via AJAX (ie. select from multiple payprocs
     //  $params is not fully set for doDirectPayment, but $_REQUEST has the missing info
     foreach ($_REQUEST as $key => $value) {
@@ -935,8 +936,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    *
    * @param array $direct_debit_response
    */
-  private static function recordSmartDebitResponse($direct_debit_response)
-  {
+  private static function recordSmartDebitResponse($direct_debit_response) {
     $sql = "
 UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
                  created                  = NOW()
@@ -973,8 +973,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    * @throws \Civi\Payment\Exception\PaymentProcessorException
    * @throws \Exception
    */
-  public function doTransferCheckout(&$params, $component)
-  {
+  public function doTransferCheckout(&$params, $component) {
     self::doDirectPayment($params);
   }
 
@@ -1140,8 +1139,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    * @return bool
    * @throws \Exception
    */
-  public function updateSubscriptionBillingInfo(&$message = '', $params = array())
-  {
+  public function updateSubscriptionBillingInfo(&$message = '', $params = array()) {
     $reference = $params['subscriptionId'];
 
     $smartDebitParams = array(

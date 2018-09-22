@@ -429,7 +429,7 @@ class CRM_Smartdebit_Sync
 
       // Update Recurring contribution to "In Progress"
       $contributionRecur['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
-      $contributionRecur['next_sched_contribution_date'] = CRM_Smartdebit_Base::getNextScheduledDate($contributeParams['receive_date'], $contributionRecur);
+      $contributionRecur['next_sched_contribution_date'] = CRM_Smartdebit_DateUtils::getNextScheduledDate($contributeParams['receive_date'], $contributionRecur);
       if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: Updating contributionrecur=' . $contributionRecur['id']); }
       CRM_Smartdebit_Base::createRecurContribution($contributionRecur);
 
@@ -644,9 +644,9 @@ class CRM_Smartdebit_Sync
 
       if (!empty($contributionDetails['receive_date']) && !empty($newContribution['receive_date'])) {
         // Find the date difference between the contribution date and new collection date
-        $dateDiff = CRM_Smartdebit_Sync::dateDifference($newContribution['receive_date'], $contributionDetails['receive_date']);
+        $dateDiff = CRM_Smartdebit_DateUtils::dateDifference($newContribution['receive_date'], $contributionDetails['receive_date']);
         // Get days difference to determine if this is first payment
-        $days = CRM_Smartdebit_Sync::daysDifferenceForFrequency($contributionRecur['frequency_unit'], $contributionRecur['frequency_interval']);
+        $days = CRM_Smartdebit_DateUtils::daysDifferenceForFrequency($contributionRecur['frequency_unit'], $contributionRecur['frequency_interval']);
 
         // if diff is less than set number of days, return Contribution ID to update the contribution
         // If $days == 0 it's a lifetime membership
@@ -663,62 +663,12 @@ class CRM_Smartdebit_Sync
   }
 
   /**
-   * Return difference between two dates in format
-   *
-   * @param string $date_1
-   * @param string $date_2
-   * @param string $differenceFormat
-   *
-   * @return string
-   */
-  private static function dateDifference($date_1, $date_2, $differenceFormat = '%a')
-  {
-    $datetime1 = date_create($date_1);
-    $datetime2 = date_create($date_2);
-
-    $interval = date_diff($datetime1, $datetime2);
-
-    return $interval->format($differenceFormat);
-
-  }
-
-  /**
-   * Function to return number of days difference to check between current date
-   * and payment date to determine if this is first payment or not
-   *
-   * @param string $frequencyUnit
-   * @param int $frequencyInterval
-   *
-   * @return int
-   */
-  private static function daysDifferenceForFrequency($frequencyUnit, $frequencyInterval) {
-    switch ($frequencyUnit) {
-      case 'day':
-        $days = $frequencyInterval * 1;
-        break;
-      case 'month':
-        $days = $frequencyInterval * 7;
-        break;
-      case 'year':
-        $days = $frequencyInterval * 30;
-        break;
-      case 'lifetime':
-        $days = 0;
-        break;
-      default:
-        $days = 30;
-        break;
-    }
-    return $days;
-  }
-
-  /**
    * Helper function to trigger updateRecurringContributions via taskrunner
    *
    * @param \CRM_Queue_TaskContext $ctx
    *
-   * @return int
-   * @throws \CiviCRM_API3_Exception
+   * @return int CRM_Queue_Task
+   * @throws \Exception
    */
   public static function updateRecurringContributionsTask(CRM_Queue_TaskContext $ctx) {
     self::updateRecurringContributions();
@@ -799,7 +749,7 @@ class CRM_Smartdebit_Sync
     // Update the recurring contribution
     $recurContribution['amount'] = CRM_Smartdebit_Utils::getCleanSmartdebitAmount($smartDebitMandate['default_amount']);
     list($recurContribution['frequency_unit'], $recurContribution['frequency_interval']) =
-      CRM_Smartdebit_Base::translateSmartdebitFrequencytoCiviCRM($smartDebitMandate['frequency_type'], $smartDebitMandate['frequency_factor']);
+      CRM_Smartdebit_DateUtils::translateSmartdebitFrequencytoCiviCRM($smartDebitMandate['frequency_type'], $smartDebitMandate['frequency_factor']);
     // We have no way of knowing the end_date (API doesn't report it) but we'll assume that there is no end date if we changed frequency.
     if (CRM_Utils_Array::value('installments', $recurContribution) == 1) {
       if (($recurContribution['frequency_interval'] != $recurContributionOriginal['frequency_interval'])
