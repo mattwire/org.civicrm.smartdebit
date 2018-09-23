@@ -1076,6 +1076,11 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
 
     // Update the cached mandate
     CRM_Smartdebit_Mandates::getbyReference($recurRecord);
+
+    if (!empty($startDate)) {
+      // Update the date of the linked Contribution to match the new start date
+      CRM_Smartdebit_Base::updateContributionDateToMatchRecur($recurRecord, $startDate);
+    }
     return TRUE;
   }
 

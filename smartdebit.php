@@ -484,5 +484,15 @@ function smartdebit_civicrm_pre($op, $objectName, $id, &$params) {
         $params['start_date'] = CRM_Utils_Array::value('start_date', $dates);
         $params['end_date'] = CRM_Utils_Array::value('end_date', $dates);
       }
+      break;
+
+    case 'ContributionRecur':
+      if ($op !== 'edit') {
+        return;
+      }
+      if (!empty($params['start_date'])) {
+        // If we are changing the start_date we need to set the next scheduled contribution date to match
+        $params['next_sched_contribution_date'] = $params['start_date'];
+      }
   }
 }

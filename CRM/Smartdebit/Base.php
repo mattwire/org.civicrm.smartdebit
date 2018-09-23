@@ -478,6 +478,20 @@ WHERE  ddi_reference = %0";
     return $result;
   }
 
+  public static function updateContributionDateToMatchRecur($recurContribution, $newReceiveDate) {
+    try {
+      $contribution = civicrm_api3('Contribution', 'getsingle', [
+        'contribution_recur_id' => $recurContribution['id'],
+        'receive_date' => $recurContribution['start_date'],
+        'options' => ['limit' => 1],
+      ]);
+      civicrm_api3('Contribution', 'create', ['receive_date' => $newReceiveDate, 'id' => $contribution['id']]);
+    }
+    catch (Exception $e) {
+      return;
+    }
+  }
+
   /**
    * Add optional limits
    *

@@ -778,18 +778,11 @@ class CRM_Smartdebit_Sync
         break;
     }
 
-    // Set start date to date of first contribution
-    try {
-      $firstContribution = civicrm_api3('Contribution', 'getsingle', array(
-        'contribution_recur_id' => $recurContribution['id'],
-        'options' => array('limit' => 1, 'sort' => "receive_date ASC"),
-      ));
-      if (!empty($firstContribution['receive_date'])) {
-        $recurContribution['start_date'] = $firstContribution['receive_date'];
-      }
-    }
-    catch (CiviCRM_API3_Exception $e) {
-      // No contribution, so don't update start date.
+    if ($recurContribution['start_date'] !== $smartDebitMandate['start_date']) {
+      // Update the date of the linked Contribution to match the new start date
+      CRM_Smartdebit_Base::updateContributionDateToMatchRecur($recurContribution, $smartDebitMandate['start_date']);
+      $recurContribution['start_date'] = $smartDebitMandate['start_date'];
+      $recurContribution['next_sched_contribution_date'] = $smartDebitMandate['start_date'];
     }
 
     // Hook to allow modifying recurring contribution during sync task
