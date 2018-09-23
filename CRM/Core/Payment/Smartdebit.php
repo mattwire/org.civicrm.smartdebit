@@ -1021,33 +1021,28 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
       return FALSE;
     }
 
-    $amount = isset($recurContributionParams['amount']) ? $recurContributionParams['amount'] : 0;
-
-    if (!empty($recurContributionParams['end_date'])) {
-      $eDate = $recurContributionParams['end_date'];
-    }
-    else {
-      $eDate = $recurRecord['end_date'];
+    if (empty($recurRecord['trxn_id'])) {
+      CRM_Core_Session::setStatus('Update Subscription - No trxn_id!', 'Smart Debit', 'error');
+      return FALSE;
     }
 
-    if (!empty($eDate)) {
-      $endDate = strtotime($eDate);
-      $endDate = date("Y-m-d", $endDate);
-    }
-    else {
-      $endDate = NULL;
-    }
+    $recurContributionParams['amount'] = isset($recurContributionParams['amount']) ? $recurContributionParams['amount'] : 0;
 
     $smartDebitParams = array(
       'variable_ddi[service_user][pslid]' => self::getSignatureStatic($paymentProcessor),
-      'variable_ddi[default_amount]' => $amount,
+      'variable_ddi[default_amount]' => $recurContributionParams['amount'],
     );
+
+    // End Date
+    $recurContributionParams['end_date'] = CRM_Utils_Array::value('end_date', $recurContributionParams, CRM_Utils_Array::value('end_date', $recurRecord, NULL));
+    if (!empty($recurContributionParams['end_date'])) {
+      $smartDebitParams['variable_ddi[end_date]'] = date("Y-m-d", strtotime($recurContributionParams['end_date']));
+    }
+
     if (!empty($startDate)) {
       // We want to update the start_date
       $smartDebitParams['variable_ddi[start_date]'] = $startDate;
-    }
-    if (!empty($endDate)) {
-      $smartDebitParams['variable_ddi[end_date]'] = $endDate;
+      $recurContributionParams['start_date'] = $startDate;
     }
 
     if (!isset($recurContributionParams['frequency_unit'])) {
@@ -1058,6 +1053,17 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     }
     if (isset($recurContributionParams['frequency_unit']) || isset($recurContributionParams['frequency_interval'])) {
       $smartDebitParams = array_merge($smartDebitParams, self::getCollectionFrequencyPostParams($recurContributionParams));
+    }
+
+    $paramsThatChange = ['frequency_unit', 'frequency_interval', 'amount', 'start_date', 'end_date'];
+    foreach ($paramsThatChange as $param) {
+      if ($recurRecord[$param] !== $recurContributionParams[$param]) {
+        $changed = TRUE;
+      }
+    }
+
+    if (!$changed) {
+      return TRUE;
     }
 
     CRM_Smartdebit_Hook::alterVariableDDIParams($recurContributionParams, $smartDebitParams, 'edit');
