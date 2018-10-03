@@ -96,11 +96,11 @@ class CRM_Smartdebit_DateUtilsTest extends \PHPUnit_Framework_TestCase implement
   /**
    * @dataProvider dataProviderGetCollectionDaysOptions
    */
-  public function testGetCollectionDaysOptions($timestamp, $colInterval, $colDays, $expected) {
+  public function testGetCollectionDaysOptions($timestamp, $colInterval, $colDays, $formatted, $expected) {
     timecop_travel(strtotime($timestamp));
     $settings = ['collection_interval' => $colInterval, 'collection_days' => $colDays];
     CRM_Smartdebit_Settings::save($settings);
-    $result = CRM_Smartdebit_DateUtils::getCollectionDaysOptions();
+    $result = CRM_Smartdebit_DateUtils::getCollectionDaysOptions($formatted);
     $orderMatches = ($result === $expected);
     $this->assertEquals($expected, $result);
     $this->assertTrue($orderMatches, 'The order of the array does not match');
@@ -109,9 +109,12 @@ class CRM_Smartdebit_DateUtilsTest extends \PHPUnit_Framework_TestCase implement
   public function dataProviderGetCollectionDaysOptions() {
     // start_timestamp, collection_interval, collection_days, expected
     return [
-      ['2018-01-01', 10, '1,20', [20 => '20th', 1 => '1st']],
-      ['2018-01-21', 10, '1,20', [1 => '1st', 20 => '20th']],
-      ['2018-01-19', 10, '1,20', [1 => '1st', 20 => '20th']],
+      ['2018-01-01', 10, '1,20', TRUE, [20 => '20th', 1 => '1st']],
+      ['2018-01-21', 10, '1,20', TRUE, [1 => '1st', 20 => '20th']],
+      ['2018-01-19', 10, '1,20', TRUE, [1 => '1st', 20 => '20th']],
+      ['2018-01-01', 10, '1,20', FALSE, [20 => '20', 1 => '1']],
+      ['2018-01-21', 10, '1,20', FALSE, [1 => '1', 20 => '20']],
+      ['2018-01-19', 10, '1,20', FALSE, [1 => '1', 20 => '20']],
     ];
   }
 

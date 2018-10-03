@@ -97,9 +97,11 @@ class CRM_Smartdebit_DateUtils {
   /**
    * Function will return the possible array of collection days with formatted label
    *
-   * @return mixed
+   * @param bool $formatted
+   *
+   * @return array [1 => '1st'] or [1 => 1]
    */
-  public static function getCollectionDaysOptions() {
+  public static function getCollectionDaysOptions($formatted = TRUE) {
     $intervalDate = new DateTime();
     $interval = (int) CRM_Smartdebit_Settings::getValue('collection_interval');
 
@@ -127,8 +129,13 @@ class CRM_Smartdebit_DateUtils {
 
     // Loop through and format each label
     $collectionDaysArray = array();
-    foreach($allCollectionDays as $key => $value){
-      $collectionDaysArray[$value] = self::formatPreferredCollectionDay($value);
+    foreach ($allCollectionDays as $key => $value) {
+      if ($formatted) {
+        $collectionDaysArray[$value] = self::formatPreferredCollectionDay($value);
+      }
+      else {
+        $collectionDaysArray[$value] = $value;
+      }
     }
     return $collectionDaysArray;
   }
