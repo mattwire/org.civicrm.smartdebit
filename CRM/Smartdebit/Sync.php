@@ -374,6 +374,11 @@ class CRM_Smartdebit_Sync
       $completedStatusId = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed');
       if ($firstPayment) {
         if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: success firstpayment (recur:' . $contributionRecur['id'] . ')'); }
+        // We need to keep the contribution in "Pending" status in order to run Contribution.completetransaction later.
+        // But we can only do that if it hasn't already been set to "Completed".
+        if (empty($contributeParams['contribution_status_id'])) {
+          $contributeParams['contribution_status_id'] = 'Pending';
+        }
         // Update the matching contribution that was created when we setup the recurring/contribution.
         $contributeResult = CRM_Smartdebit_Base::createContribution($contributeParams);
         if (isset($contributeResult['values'][$contributeResult['id']])) {
