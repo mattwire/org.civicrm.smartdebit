@@ -216,26 +216,27 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
     $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/validate');
     $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $this->getUser(), $this->getPassword());
 
-    $direct_debit_response = array();
-    $direct_debit_response['data_type'] = 'recurring';
-    $direct_debit_response['entity_type'] = 'contribution_recur';
-    $direct_debit_response['first_collection_date'] = $smartDebitParams['variable_ddi[start_date]'];
-    $direct_debit_response['preferred_collection_day'] = $params['preferred_collection_day'];
-    $direct_debit_response['confirmation_method'] = $params['confirmation_method'];
-    $direct_debit_response['ddi_reference'] = $params['ddi_reference'];
-    $direct_debit_response['response_status'] = $response['message'];
+    $directDebitResponse = [
+      'data_type' => 'recurring',
+      'entity_type' => 'contribution_recur',
+      'first_collection_date' => $smartDebitParams['variable_ddi[start_date]'],
+      'preferred_collection_day' => $params['preferred_collection_day'],
+      'confirmation_method' => $params['confirmation_method'],
+      'ddi_reference' => $params['ddi_reference'],
+      'response_status' => $response['message'],
+    ];
 
     // On success an array is returned, last success element is an array of attributes
     if ((is_array($response['success'])) && isset(end($response['success'])['@attributes'])) {
       foreach (end($response['success'])['@attributes'] as $key => $value) {
-        $direct_debit_response[$key] = $value;
+        $directDebitResponse[$key] = $value;
       }
     }
 
     // Take action based upon the response status
     if ($response['success']) {
-      $direct_debit_response['entity_id'] = isset($params['entity_id']) ? $params['entity_id'] : 0;
-      self::recordSmartDebitResponse($direct_debit_response);
+      $directDebitResponse['entity_id'] = isset($params['entity_id']) ? $params['entity_id'] : 0;
+      self::recordSmartDebitResponse($directDebitResponse);
     }
     else {
       self::formatErrorsForContributionForm($response['error'], $errors, $params);

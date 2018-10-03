@@ -334,23 +334,21 @@ class CRM_Smartdebit_Sync
       $contributionRecur['financial_type_id'] = CRM_Smartdebit_Settings::getValue('smartdebit_financial_type');
     }
 
-    $contributeParams =
-      array(
-        'contact_id' => $contributionRecur['contact_id'],
-        'contribution_recur_id' => $contributionRecur['id'],
-        'total_amount' => $amount,
-        'invoice_id' => md5(uniqid(rand(), TRUE)),
-        'trxn_id' => $trxnId . '/' . $receiveDate,
-        'financial_type_id' => $contributionRecur['financial_type_id'],
-        'payment_instrument_id' => $contributionRecur['payment_instrument_id'],
-        'receive_date' => $receiveDate,
-        // We don't want to send out email receipts for repeat contributions. That's handled by Smartdebit or by CiviCRM scheduled reminders/rules if required.
-        'is_email_receipt' => FALSE,
-      );
+    $contributeParams = [
+      'contact_id' => $contributionRecur['contact_id'],
+      'contribution_recur_id' => $contributionRecur['id'],
+      'total_amount' => $amount,
+      'invoice_id' => md5(uniqid(rand(), TRUE)),
+      'trxn_id' => $trxnId . '/' . $receiveDate,
+      'financial_type_id' => $contributionRecur['financial_type_id'],
+      'payment_instrument_id' => $contributionRecur['payment_instrument_id'],
+      'receive_date' => $receiveDate,
+      // We don't want to send out email receipts for repeat contributions. That's handled by Smartdebit or by CiviCRM scheduled reminders/rules if required.
+      'is_email_receipt' => FALSE,
+    ];
 
     // Check if the contribution is first payment
-    // if yes, update the contribution instead of creating one
-    // as CiviCRM should have created the first contribution
+    // if yes, update the contribution instead of creating one as CiviCRM should have already created the first contribution
     list($firstPayment, $contributeParams) = self::checkIfFirstPayment($contributeParams, $contributionRecur);
 
     $contributeParams['source'] = $collectionDescription;
