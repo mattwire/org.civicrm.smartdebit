@@ -381,23 +381,16 @@ class CRM_Smartdebit_Sync
         }
         // Update the matching contribution that was created when we setup the recurring/contribution.
         $contributeResult = CRM_Smartdebit_Base::createContribution($contributeParams);
-        if (isset($contributeResult['values'][$contributeResult['id']])) {
-          $newContributionParams = $contributeResult['values'][$contributeResult['id']];
+        if ($contributeResult) {
+          $newContributionParams = $contributeResult;
         }
         else {
           Civi::log()->error('Smartdebit processCollection: Failed to create contribution: $contributionParams: ' . print_r($contributeParams, TRUE));
           return FALSE;
         }
-        // If we are in "Pending" status call completetransaction to update related objects (ie. memberships Pending->New).
-        $pendingStatusId = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
-        if ($newContributionParams['contribution_status_id'] === $pendingStatusId) {
-          try {
-            $contributeResult = civicrm_api3('Contribution', 'completetransaction', $newContributionParams);
-          }
-          catch (Exception $e) {
-            Civi::log()->error('Smartdebit processCollection: Failed to run completetransaction on C' . $newContributionParams['id']);
-            return FALSE;
-          }
+        $contributeResult = self::completeTransaction($newContributionParams);
+        if (!$contributeResult) {
+          return FALSE;
         }
       }
       else {
@@ -425,7 +418,7 @@ class CRM_Smartdebit_Sync
     if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: $contributeParams=' . print_r($contributeParams, true)); }
     if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: $contributeResult=' . print_r($contributeResult, true)); }
 
-    if (!empty($contributeResult['id'])) {
+    if ($contributeResult) {
       // Get recurring contribution ID
       // get contact display name to display in result screen
       $contactResult = civicrm_api3('Contact', 'getsingle', array('id' => $contributionRecur['contact_id']));
@@ -454,45 +447,77 @@ class CRM_Smartdebit_Sync
   }
 
   /**
+   * Wrapper around Contribution.completetransaction API
+   *
+   * @param $contributionParams
+   *
+   * @return array|bool Contribution parameters or FALSE on failure
+   */
+  private static function completeTransaction($contributionParams) {
+    // If we are in "Pending" status call completetransaction to update related objects (ie. memberships Pending->New).
+    $pendingStatusId = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
+    if ($contributionParams['contribution_status_id'] === $pendingStatusId) {
+      try {
+        return civicrm_api3('Contribution', 'completetransaction', $contributionParams);
+      }
+      catch (Exception $e) {
+        Civi::log()->error('Smartdebit completeTransaction: Failed on C' . $contributionParams['id']);
+        return FALSE;
+      }
+    }
+  }
+
+  /**
    * Wrapper around Contribution.repeattransaction API
    * This function will only be called when there is an existing (current or previous) contribution for the recurring contribution
    *
    * @param $contributeParams
    *
-   * @return array|bool
+   * @return array|bool Contribution parameters or FALSE on failure
    */
   private static function repeatTransaction($contributeParams) {
-    if (empty($contributeParams['id'])) {
-      Civi::log()->error('Smartdebit repeatTransaction: Missing mandatory parameter $contributeParams["id"]');
-      return FALSE;
+    $mandatoryParams = ['id', 'trxn_id'];
+    foreach ($mandatoryParams as $key => $value) {
+      if (empty($contributeParams[$key])) {
+        Civi::log()->error('Smartdebit repeatTransaction: Missing mandatory parameter: ' . $key);
+        return FALSE;
+      }
     }
+
     try {
       // Check for duplicate transaction IDs.
-      if (!empty($contributeParams['trxn_id'])) {
-        $existingContribution = civicrm_api3('Contribution', 'get', array(
-          'trxn_id' => $contributeParams['trxn_id'],
-        ));
-        if ($existingContribution['count'] > 0) {
-          // We already have a contribution with matching transaction ID
-          // ... so update it instead of creating a new one.
-          if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit repeatTransaction: Updating existing contribution ' . $existingContribution['id']); }
-          $contributeParams['id'] = $existingContribution['id'];
-          // TODO: do we need to call completeTransaction here, maybe only when going from Pending->Completed?
-          return CRM_Smartdebit_Base::createContribution($contributeParams);
+      $existingContribution = civicrm_api3('Contribution', 'get', ['trxn_id' => $contributeParams['trxn_id']]);
+      if ($existingContribution['count'] > 0) {
+        // We already have a contribution with matching transaction ID
+        // ... so update it instead of creating a new one.
+        if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit repeatTransaction: Updating existing contribution ' . $existingContribution['id']); }
+        $contributeParams['id'] = $existingContribution['id'];
+
+        // As we are using an existing contribution we need to preserve it's status for completeTransaction
+        // But we can only do that if it hasn't already been set to "Completed".
+        if (!empty($existingContribution['contribution_status_id'])) {
+          $contributionParams['contribution_status_id'] = $existingContribution['contribution_status_id'];
         }
-        else {
-          // We already have one (or more) contribution but none with a matching transaction ID
-          // ... so use the ID of the one passed in via $contributeParams as a template for repeattransaction
-          // Set original contribution ID for repeattransaction, make sure id is not set as we don't want to update an existing one!
-          $contributeParams['original_contribution_id'] = $contributeParams['id'];
-          unset($contributeParams['id']);
-          return civicrm_api3('contribution', 'repeattransaction', $contributeParams);
+        elseif (empty($contributeParams['contribution_status_id'])) {
+          $contributeParams['contribution_status_id'] = 'Pending';
         }
+        $updatedContributionParams = CRM_Smartdebit_Base::createContribution($contributeParams);
+        return self::completeTransaction($updatedContributionParams);
+      }
+      else {
+        // We already have one (or more) contribution but none with a matching transaction ID
+        // ... so use the ID of the one passed in via $contributeParams as a template for repeattransaction
+        // Set original contribution ID for repeattransaction, make sure id is not set as we don't want to update an existing one!
+        $contributeParams['original_contribution_id'] = $contributeParams['id'];
+        unset($contributeParams['id']);
+        $newContribution = civicrm_api3('contribution', 'repeattransaction', $contributeParams);
+        return CRM_Utils_Array::first($newContribution['values']);
       }
     }
     catch (CiviCRM_API3_Exception $e) {
       Civi::log()->error('Smartdebit repeatTransaction error: ' . $e->getMessage() . ' ' . print_r($contributeParams, TRUE));
     }
+    return FALSE;
   }
 
   /**
