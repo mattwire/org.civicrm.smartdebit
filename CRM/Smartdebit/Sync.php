@@ -626,7 +626,8 @@ class CRM_Smartdebit_Sync
         }
       }
 
-      $contributionDetails = $contributionResult['values'][0];
+      // No identical contribution found, select the most recent one
+      $contributionDetails = CRM_Utils_Array::first($contributionResult['values']);
       // Check if the transaction Id is one of ours, and not identical
       if (!empty($contributionDetails['trxn_id'])) {
         // Does our trxn_id start with the recurring one?
