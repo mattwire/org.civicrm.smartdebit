@@ -30,8 +30,6 @@
  */
 class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
 
-  use CRM_Core_PaymentTrait;
-
   /**
    * We only need one instance of this object. So we use the singleton
    * pattern and cache the instance in this variable
@@ -1239,4 +1237,54 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     return $paymentProcessorName;
   }
 
+  /*******************************************************************
+   * THE FOLLOWING FUNCTIONS SHOULD BE REMOVED ONCE THEY ARE IN CORE
+   * getBillingEmail
+   * getContactId
+   ******************************************************************/
+
+  /**
+   * Get the billing email address
+   *
+   * @param array $params
+   * @param int $contactId
+   *
+   * @return string|NULL
+   */
+  protected static function getBillingEmail($params, $contactId) {
+    $billingLocationId = CRM_Core_BAO_LocationType::getBilling();
+
+    $emailAddress = CRM_Utils_Array::value("email-{$billingLocationId}", $params,
+      CRM_Utils_Array::value('email-Primary', $params,
+        CRM_Utils_Array::value('email', $params, NULL)));
+
+    if (empty($emailAddress) && !empty($contactId)) {
+      // Try and retrieve an email address from Contact ID
+      try {
+        $emailAddress = civicrm_api3('Email', 'getvalue', array(
+          'contact_id' => $contactId,
+          'return' => ['email'],
+        ));
+      }
+      catch (CiviCRM_API3_Exception $e) {
+        return NULL;
+      }
+    }
+    return $emailAddress;
+  }
+
+  /**
+   * Get the contact id
+   *
+   * @param array $params
+   *
+   * @return int ContactID
+   */
+  protected static function getContactId($params) {
+    return CRM_Utils_Array::value('contactID', $params,
+      CRM_Utils_Array::value('contact_id', $params,
+        CRM_Utils_Array::value('cms_contactID', $params,
+          CRM_Utils_Array::value('cid', $params, NULL
+          ))));
+  }
 }
