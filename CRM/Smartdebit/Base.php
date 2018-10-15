@@ -478,17 +478,25 @@ WHERE  ddi_reference = %0";
     return CRM_Utils_Array::first($result['values']);
   }
 
-  public static function updateContributionDateToMatchRecur($recurContribution, $newReceiveDate) {
+  /**
+   * @param int $recurId
+   * @param string $oldReceiveDate (eg. 2018-01-10)
+   * @param string $newReceiveDate (eg. 2018-01-10)
+   *
+   * @return bool
+   */
+  public static function updateContributionDateForLinkedRecur($recurId, $oldReceiveDate, $newReceiveDate) {
     try {
       $contribution = civicrm_api3('Contribution', 'getsingle', [
-        'contribution_recur_id' => $recurContribution['id'],
-        'receive_date' => $recurContribution['start_date'],
+        'contribution_recur_id' => $recurId,
+        'receive_date' => $oldReceiveDate,
         'options' => ['limit' => 1],
       ]);
       civicrm_api3('Contribution', 'create', ['receive_date' => $newReceiveDate, 'id' => $contribution['id']]);
+      return TRUE;
     }
     catch (Exception $e) {
-      return;
+      return FALSE;
     }
   }
 

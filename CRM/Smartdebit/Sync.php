@@ -128,14 +128,6 @@ class CRM_Smartdebit_Sync
       $queue->createItem($task);
     }
 
-    // Update recurring contributions
-    $task = new CRM_Queue_Task(
-      array('CRM_Smartdebit_Sync', 'updateRecurringContributionsTask'),
-      array(),
-      'Updated Recurring Contributions in CiviCRM'
-    );
-    $queue->createItem($task);
-
     $task = new CRM_Queue_Task(
       array('CRM_Smartdebit_CollectionReports', 'removeOld'),
       array(),
@@ -287,7 +279,8 @@ class CRM_Smartdebit_Sync
     }
 
     // Check we have a mandate for the payment
-    if (!CRM_Smartdebit_Mandates::getbyReference(['trxn_id' => $trxnId])) {
+    $smartDebitMandate = CRM_Smartdebit_Mandates::getbyReference(['trxn_id' => $trxnId]);
+    if (!$smartDebitMandate) {
       if (CRM_Smartdebit_Settings::getValue('debug')) {
         Civi::log()->debug('Smartdebit syncSmartdebitRecords: No mandate available for ' . $trxnId);
       }
@@ -425,9 +418,8 @@ class CRM_Smartdebit_Sync
 
       // Update Recurring contribution to "In Progress"
       $contributionRecur['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
-      $contributionRecur['next_sched_contribution_date'] = CRM_Smartdebit_DateUtils::getNextScheduledDate($contributeParams['receive_date'], $contributionRecur);
       if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit processCollection: Updating contributionrecur=' . $contributionRecur['id']); }
-      CRM_Smartdebit_Base::createRecurContribution($contributionRecur);
+      self::updateRecur($smartDebitMandate, CRM_Smartdebit_DateUtils::getNextScheduledDate($contributeParams['receive_date'], $contributionRecur));
 
       $resultValues = [
         'type' => $collectionType,
@@ -692,19 +684,6 @@ class CRM_Smartdebit_Sync
   }
 
   /**
-   * Helper function to trigger updateRecurringContributions via taskrunner
-   *
-   * @param \CRM_Queue_TaskContext $ctx
-   *
-   * @return int CRM_Queue_Task
-   * @throws \Exception
-   */
-  public static function updateRecurringContributionsTask(CRM_Queue_TaskContext $ctx) {
-    self::updateRecurringContributions();
-    return CRM_Queue_Task::TASK_SUCCESS;
-  }
-
-  /**
    * Update parameters of CiviCRM recurring contributions that represent Smartdebit Direct Debit Mandates
    *
    * @param array $transactionIds Optional array of transaction IDs to update recurring contributions for
@@ -762,8 +741,8 @@ class CRM_Smartdebit_Sync
    * @return bool|array new $recur params if recur was modified, FALSE otherwise.
    * @throws \CiviCRM_API3_Exception
    */
-  public static function updateRecur($smartDebitMandate) {
-    // Get recur
+  public static function updateRecur($smartDebitMandate, $nextPaymentDate = NULL) {
+    // Get the recurring contribution that is linked to the Smartdebit mandate
     try {
       $recurContribution = civicrm_api3('ContributionRecur', 'getsingle', array(
         'trxn_id' => $smartDebitMandate['reference_number'],
@@ -788,30 +767,39 @@ class CRM_Smartdebit_Sync
     }
 
     switch ($smartDebitMandate['current_state']) {
-      case CRM_Smartdebit_Api::SD_STATE_LIVE:
       case CRM_Smartdebit_Api::SD_STATE_NEW:
-        // Clear cancel date and set status if live
-        if (isset($recurContribution['cancel_date'])) {
-          $recurContribution['cancel_date'] = '';
-        }
-        if (($recurContribution['contribution_status_id'] != CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending'))
-          && ($recurContribution['contribution_status_id'] != CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress'))) {
-          $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
-        }
+        // Clear cancel date and set status if live/new
+        isset($recurContribution['cancel_date']) ? $recurContribution['cancel_date'] = '' : NULL;
+        $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
         break;
+
+      case CRM_Smartdebit_Api::SD_STATE_LIVE:
+        // Clear cancel date and set status if live/new
+        isset($recurContribution['cancel_date']) ? $recurContribution['cancel_date'] = '' : NULL;
+        $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
+        break;
+
       case CRM_Smartdebit_Api::SD_STATE_CANCELLED:
         $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Cancelled');
         break;
+
       case CRM_Smartdebit_Api::SD_STATE_REJECTED:
         $recurContribution['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Failed');
         break;
     }
 
-    if ($recurContribution['start_date'] !== $smartDebitMandate['start_date']) {
-      // Update the date of the linked Contribution to match the new start date
-      CRM_Smartdebit_Base::updateContributionDateToMatchRecur($recurContribution, $smartDebitMandate['start_date']);
-      $recurContribution['start_date'] = $smartDebitMandate['start_date'];
-      $recurContribution['next_sched_contribution_date'] = $smartDebitMandate['start_date'];
+    // If a date is passed in we use that as the next scheduled date, otherwise we set it to start date.
+    if ($nextPaymentDate) {
+      $recurContribution['next_sched_contribution_date'] = $nextPaymentDate;
+    }
+    else {
+      if ($recurContribution['start_date'] !== $smartDebitMandate['start_date']) {
+        // Update the date of the linked Contribution to match the next scheduled contribution date
+        $recurContribution['next_sched_contribution_date'] = $smartDebitMandate['start_date'];
+        // FIXME: We may need to call this when nextPaymentDate is set as well.
+        CRM_Smartdebit_Base::updateContributionDateForLinkedRecur($recurContribution['id'], $recurContribution['start_date'], $smartDebitMandate['start_date']);
+        $recurContribution['start_date'] = $smartDebitMandate['start_date'];
+      }
     }
 
     // Hook to allow modifying recurring contribution during sync task

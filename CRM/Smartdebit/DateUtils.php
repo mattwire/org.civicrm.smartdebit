@@ -33,22 +33,36 @@ class CRM_Smartdebit_DateUtils {
 
   /**
    * Calculate the earliest possible collection date based on today's date plus the collection interval setting.
-   * @param $collectionDay
+   * From the selected collection day determine when the actual collection start date could be
+   * For direct debit we need to allow 10 working days prior to collection for cooling off
+   * We also may need to send them a letter etc
    *
-   * @return DateTime
+   * @param int $collectionDay
+   * @param bool $first
+   *
+   * @return \DateTime
    * @throws \Exception
    */
-  public static function firstCollectionDate($collectionDay) {
+  public static function getNextAvailableCollectionDate($collectionDay = NULL, $first = FALSE) {
+    if (empty($collectionDay)) {
+      $collectionDay = CRM_Utils_Array::first(self::getCollectionDaysOptions(FALSE));
+    }
+
     // Initialise date objects with today's date
     $today                    = new DateTime();
     $earliestCollectionDate   = new DateTime();
     $collectionDateThisMonth  = new DateTime();
     $collectionDateNextMonth  = new DateTime();
     $collectionDateMonthAfter = new DateTime();
-    $collectionInterval = (int) CRM_Smartdebit_Settings::getValue('collection_interval');
+    if ($first) {
+      $noticePeriod = (int) CRM_Smartdebit_Settings::getValue('collection_interval');
+    }
+    else {
+      $noticePeriod = (int) CRM_Smartdebit_Settings::getValue('notice_period');
+    }
 
     // Calculate earliest possible collection date
-    $earliestCollectionDate->add(new DateInterval( 'P'.$collectionInterval.'D' ));
+    $earliestCollectionDate->add(new DateInterval( 'P'.$noticePeriod.'D' ));
 
     // Get the current year, month and next month to create the 2 potential collection dates
     $todaysMonth = (int) $today->format('m');

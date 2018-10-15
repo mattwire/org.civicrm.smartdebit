@@ -447,22 +447,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
   }
 
   /**
-   * From the selected collection day determine when the actual collection start date could be
-   * For direct debit we need to allow 10 working days prior to collection for cooling off
-   * We also may need to send them a letter etc
-   *
-   * @param $params:
-   *     preferred_collection_day: integer
-   *
-   * @return \DateTime
-   * @throws \Exception
-   */
-  public static function getCollectionStartDate($params) {
-    $preferredCollectionDay = $params['preferred_collection_day'];
-    return CRM_Smartdebit_DateUtils::firstCollectionDate($preferredCollectionDay);
-  }
-
-  /**
    * @param $params
    *      collection_start_date: DateTime
    *      collection_frequency: Smartdebit formatted collection frequency
@@ -603,7 +587,8 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    * @throws \Exception
    */
   private static function getCollectionFrequencyPostParams($params) {
-    $collectionDate = self::getCollectionStartDate($params);
+    $collectionDate = CRM_Smartdebit_DateUtils::getNextAvailableCollectionDate($params['preferred_collection_day'], TRUE);
+    $smartDebitParams['variable_ddi[start_date]'] = $collectionDate->format('Y-m-d');
     list($collectionFrequency, $collectionInterval) = self::getCollectionFrequency($params);
     $params['collection_start_date'] = $collectionDate;
     $params['collection_frequency'] = $collectionFrequency;
@@ -728,13 +713,12 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
   /**
    * Prepare Post Array for POSTing to Smart Debit APi
    *
-   * @param $params
-   * @param null $self
+   * @param array $params
    *
    * @return array
    * @throws \Exception
    */
-  private function preparePostArray(&$params) {
+  private function preparePostArray($params) {
     // When passed in from backend forms via AJAX (ie. select from multiple payprocs
     //  $params is not fully set for doDirectPayment, but $_REQUEST has the missing info
     foreach ($_REQUEST as $key => $value) {
@@ -742,11 +726,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
         $params[$key] = CRM_Utils_Array::value($key, $_REQUEST);
       }
     }
-
-    // Calculate the first collection date (start date)
-    // Store in params start_date and next_sched_collection_date so we can save to recur
-    $collectionDate = self::getCollectionStartDate($params);
-    $params['start_date'] = $params['next_sched_contribution_date'] = $collectionDate->format('Y-m-d');
 
     $contactId = self::getContactId($params);
     $billingLocationID = CRM_Core_BAO_LocationType::getBilling();
@@ -767,10 +746,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
       'variable_ddi[account_number]' => CRM_Utils_Array::value('bank_account_number', $params),
       'variable_ddi[first_amount]' => CRM_Utils_Array::value('amount', $params, 0),
       'variable_ddi[default_amount]' => CRM_Utils_Array::value('amount', $params, 0),
-      'variable_ddi[start_date]' => $params['start_date'],
       'variable_ddi[email_address]' => self::getBillingEmail($params, $contactId),
     );
-    $smartDebitParams = array_merge((array)$smartDebitParams, (array)self::getCollectionFrequencyPostParams($params));
+
+    $smartDebitFrequencyParams = self::getCollectionFrequencyPostParams($params);
+    $smartDebitParams = array_merge($smartDebitParams, $smartDebitFrequencyParams);
     return $smartDebitParams;
   }
 
@@ -795,6 +775,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
     if ($response['success']) {
       if (isset($smartDebitParams['variable_ddi[reference_number]'])) {
         $params['trxn_id'] = $smartDebitParams['variable_ddi[reference_number]'];
+      }
+      // Record the start/end date for the recurring contribution
+      if (isset($smartDebitParams['variable_ddi[start_date]'])) {
+        $params['start_date'] = $smartDebitParams['variable_ddi[start_date]'];
+        $params['next_sched_contribution_date'] = $params['start_date'];
       }
       if (isset($smartDebitParams['variable_ddi[end_date]'])) {
         $params['end_date'] = $smartDebitParams['variable_ddi[end_date]'];
@@ -868,6 +853,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
         $recurParams['create_date'] = $params['receive_date'];
         $recurParams['modified_date'] = $params['receive_date'];
         $recurParams['start_date'] = $params['start_date'];
+        $recurParams['next_sched_contribution_date'] = $params['next_sched_contribution_date'];
         $recurParams['amount'] = $params['amount'];
         $recurParams['frequency_unit'] = 'year';
         $recurParams['frequency_interval'] = '1';
@@ -1038,12 +1024,6 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
       $smartDebitParams['variable_ddi[end_date]'] = date("Y-m-d", strtotime($recurContributionParams['end_date']));
     }
 
-    if (!empty($startDate)) {
-      // We want to update the start_date
-      $smartDebitParams['variable_ddi[start_date]'] = $startDate;
-      $recurContributionParams['start_date'] = $startDate;
-    }
-
     if (!isset($recurContributionParams['frequency_unit'])) {
       $recurContributionParams['frequency_unit'] = $recurRecord['frequency_unit'];
     }
@@ -1051,7 +1031,14 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
       $recurContributionParams['frequency_interval'] = $recurRecord['frequency_interval'];
     }
     if (isset($recurContributionParams['frequency_unit']) || isset($recurContributionParams['frequency_interval'])) {
-      $smartDebitParams = array_merge($smartDebitParams, self::getCollectionFrequencyPostParams($recurContributionParams));
+      $smartDebitFrequencyParams = self::getCollectionFrequencyPostParams($recurContributionParams);
+      $smartDebitParams = array_merge($smartDebitParams, $smartDebitFrequencyParams);
+    }
+
+    if (!empty($startDate)) {
+      // We want to update the start_date
+      $smartDebitParams['variable_ddi[start_date]'] = $startDate;
+      $recurContributionParams['start_date'] = $startDate;
     }
 
     $paramsThatChange = ['frequency_unit', 'frequency_interval', 'amount', 'start_date', 'end_date'];
@@ -1084,7 +1071,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
 
     if (!empty($startDate)) {
       // Update the date of the linked Contribution to match the new start date
-      CRM_Smartdebit_Base::updateContributionDateToMatchRecur($recurRecord, $startDate);
+      CRM_Smartdebit_Base::updateContributionDateForLinkedRecur($recurRecord['id'], $recurRecord['start_date'], $startDate);
     }
     return TRUE;
   }

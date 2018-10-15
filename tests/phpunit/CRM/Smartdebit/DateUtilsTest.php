@@ -44,15 +44,15 @@ class CRM_Smartdebit_DateUtilsTest extends \PHPUnit_Framework_TestCase implement
   }
 
   /**
-   * @dataProvider dataProviderFirstCollectionDate
+   * @dataProvider dataProviderGetNextAvailableCollectionDate
    */
-  public function testFirstCollectionDate($timestamp, $collectionDay, $expectedCollectionDate) {
+  public function testGetNextAvailableCollectionDate($timestamp, $collectionDay, $expectedCollectionDate) {
     timecop_travel(strtotime($timestamp));
-    $firstCollectionDate = CRM_Smartdebit_DateUtils::firstCollectionDate($collectionDay);
+    $firstCollectionDate = CRM_Smartdebit_DateUtils::getNextAvailableCollectionDate($collectionDay);
     $this->assertEquals($expectedCollectionDate, $firstCollectionDate->format('Y-m-d'));
   }
 
-  public function dataProviderFirstCollectionDate() {
+  public function dataProviderGetNextAvailableCollectionDate() {
     // start_timestamp, collection_day, expected_collection_date
     return [
       ['2018-01-01', 1, '2018-02-01'],
