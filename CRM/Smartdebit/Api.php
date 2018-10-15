@@ -150,6 +150,16 @@ class CRM_Smartdebit_Api {
           $resultsArray['message'] = 'UNPROCESSABLE ENTITY';
           $resultsArray['success'] = FALSE;
           break;
+        case 500:
+          // Sometimes we get an XML array containing an error, try and extract it.
+          if (!empty($resultsArray['Data']) && !empty($resultsArray['Data'][0])) {
+            $xmlData = json_decode(json_encode((array) simplexml_load_string($resultsArray['Data'][0])),1);
+            if (isset($xmlData['error'])) {
+              $resultsArray['message'] = $xmlData['error'];
+              $resultsArray['success'] = FALSE;
+              break;
+            }
+          }
         default:
           $resultsArray['message'] = 'Unknown Error';
           $resultsArray['success'] = FALSE;
