@@ -205,7 +205,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    * @throws \Exception
    */
   public function validatePaymentInstrument($params, &$errors) {
-    parent::validatePaymentInstrument($params, $errors);
+    CRM_Core_Form::validateMandatoryFields($this->getMandatoryFields(), $params, $errors);
 
     $smartDebitParams = self::preparePostArray($params);
     CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'validate');
