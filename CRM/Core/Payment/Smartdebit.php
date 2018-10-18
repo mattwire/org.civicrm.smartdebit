@@ -1015,6 +1015,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
 
     $smartDebitParams = array(
       'variable_ddi[service_user][pslid]' => self::getSignatureStatic($paymentProcessor),
+      'variable_ddi[first_amount]' => $recurContributionParams['amount'],
       'variable_ddi[default_amount]' => $recurContributionParams['amount'],
     );
 
@@ -1054,10 +1055,8 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
 
     CRM_Smartdebit_Hook::alterVariableDDIParams($recurContributionParams, $smartDebitParams, 'edit');
     self::checkSmartDebitParams($smartDebitParams);
+    $response = CRM_Smartdebit_Api::requestUpdate($paymentProcessor, $recurRecord['trxn_id'], $smartDebitParams);
 
-    $url = CRM_Smartdebit_Api::buildUrl($paymentProcessor, 'api/ddi/variable/' . $recurRecord['trxn_id'] . '/update');
-    if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit changeSubscription: ' . $url . print_r($smartDebitParams, TRUE)); }
-    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, self::getUserStatic($paymentProcessor), self::getPasswordStatic($paymentProcessor));
     if (!$response['success']) {
       $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
       $msg .= '<br />Update Subscription Failed.';
@@ -1154,8 +1153,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'updatebilling');
     self::checkSmartDebitParams($smartDebitParams);
 
-    $url = CRM_Smartdebit_Api::buildUrl($this->_paymentProcessor, 'api/ddi/variable/' . $reference . '/update');
-    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams, $this->getUser(), $this->getPassword());
+    $response = CRM_Smartdebit_Api::requestUpdate($this->_paymentProcessor, $reference, $smartDebitParams);
     if (!$response['success']) {
       $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
       CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');

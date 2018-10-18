@@ -54,13 +54,13 @@ class CRM_Smartdebit_Api {
    *
    * @return array
    */
-  private static function doPost($url, $data, $username, $password, $retry = 3) {
+  private static function doPost($url, $data, $username, $password, $retry = 3, $method = 'POST') {
     while ($retry > 0) {
       if (getenv('CIVICRM_UF') === 'UnitTests') {
-        list($header, $output, $error) = CRM_Smartdebit_Mock::post($url, $data, $username, $password);
+        list($header, $output, $error) = CRM_Smartdebit_Mock::post($url, $data, $username, $password, $method);
       }
       else {
-        list($header, $output, $error) = self::post($url, $data, $username, $password);
+        list($header, $output, $error) = self::post($url, $data, $username, $password, $method);
       }
 
       if($error['code']) {
@@ -78,6 +78,15 @@ class CRM_Smartdebit_Api {
     return array($header, $output, $error);
   }
 
+  public static function requestUpdate($paymentProcessor, $reference, $smartDebitParams) {
+    $url = CRM_Smartdebit_Api::buildUrl($paymentProcessor, 'api/ddi/variable/' . $reference);
+    if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit requestUpdate: ' . $url . print_r($smartDebitParams, TRUE)); }
+    $response = CRM_Smartdebit_Api::requestPost($url, $smartDebitParams,
+      CRM_Core_Payment_Smartdebit::getUserStatic($paymentProcessor),
+      CRM_Core_Payment_Smartdebit::getPasswordStatic($paymentProcessor), 'XML', 'PUT');
+    return $response;
+  }
+
   /**
    *   Send a post request with cURL
    *
@@ -88,11 +97,11 @@ class CRM_Smartdebit_Api {
    *
    * @return array
    */
-  public static function requestPost($url, $data, $username, $password, $format='XML') {
+  public static function requestPost($url, $data, $username, $password, $format='XML', $method = 'POST') {
     // Prepare data
     $data = self::encodePostParams($data);
 
-    list($header, $output, $error) = self::doPost($url, $data, $username, $password);
+    list($header, $output, $error) = self::doPost($url, $data, $username, $password, 3, $method);
 
     // Set return values
     if (isset($header['http_code'])) {
@@ -169,24 +178,34 @@ class CRM_Smartdebit_Api {
     return $resultsArray;
   }
 
-  private static function post($url, $data, $username, $password) {
-    $options = array(
-      CURLOPT_RETURNTRANSFER => true, // return web page
-      CURLOPT_HEADER => false, // don't return headers
-      CURLOPT_POST => true,
+  private static function post($url, $data, $username, $password, $method) {
+    $options = [
+      CURLOPT_RETURNTRANSFER => TRUE, // return web page
+      CURLOPT_HEADER => FALSE, // don't return headers
       CURLOPT_USERPWD => $username . ':' . $password,
       CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
       CURLOPT_HTTPHEADER => array("Accept: application/xml"),
       CURLOPT_USERAGENT => "CiviCRM Smartdebit Client", // Let Smartdebit see who we are
       CURLOPT_SSL_VERIFYHOST => Civi::settings()->get('verifySSL') ? 2 : 0,
       CURLOPT_SSL_VERIFYPEER => Civi::settings()->get('verifySSL'),
-    );
+    ];
+
+    switch ($method) {
+      case 'POST':
+        $options[CURLOPT_POST] = TRUE;
+        $options[CURLOPT_POSTFIELDS] = $data;
+        // curl_setopt($curlSession, CURLOPT_POSTFIELDS, $data);
+        break;
+
+      case 'PUT':
+        $options[CURLOPT_CUSTOMREQUEST] = 'PUT';
+        $url .= '?' . $data;
+        // curl_setopt($curlSession, CURLOPT_POSTFIELDS, http_build_query($data));
+        break;
+    }
 
     $curlSession = curl_init($url);
     curl_setopt_array($curlSession, $options);
-
-    // Tell curl that this is the body of the POST
-    curl_setopt($curlSession, CURLOPT_POSTFIELDS, $data);
 
     // $output contains the output string
     $output = curl_exec($curlSession);
@@ -502,7 +521,8 @@ class CRM_Smartdebit_Api {
     $post = NULL;
 
     foreach ($params as $key => $value) {
-      if (!empty($value)) {
+      // We ignore empty parameters unless they are numeric (ie. 0)
+      if (!empty($value) || is_numeric($value)) {
         if (!empty($post)) {
           $post .= '&';
         }

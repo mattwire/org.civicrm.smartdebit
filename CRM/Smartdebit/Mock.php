@@ -6,7 +6,7 @@
  */
 class CRM_Smartdebit_Mock {
 
-  public static function post($url, $data, $username, $password) {
+  public static function post($url, $data, $username, $password, $method) {
 
     $baseUrl = 'https://secure.ddprocessing.co.uk/';
     $api = substr($url, strlen($baseUrl), strpos($url, '?') - strlen($baseUrl));
