@@ -447,15 +447,16 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
   }
 
   /**
-   * @param $params
+   * @param array $params
    *      collection_start_date: DateTime
    *      collection_frequency: Smartdebit formatted collection frequency
    *      collection_interval: Smartdebit formatted collection interval
+   * @param boolean $single Whether this is a recurring or one-off payment
    *
    * @return \DateTime|bool
    * @throws \Exception
    */
-  public static function getCollectionEndDate($params) {
+  public static function getCollectionEndDate($params, $single) {
     if (!empty($params['installments'])) {
       $installments = $params['installments'];
     }
@@ -488,8 +489,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
       }
       $intervalSpec= 'P' . $plus['years'] . 'Y' . $plus['months'] . 'M' . $plus['weeks'] . 'W';
     }
-    elseif (empty($params['collection_interval'])) {
-      // If collection_interval == 0 then it's a single payment.
+    elseif ($single) {
       // Set end date 6 days after start date (min DD freq with Smart Debit is 1 week/7days)
       $intervalSpec = 'P6D';
     }
@@ -526,6 +526,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
       $frequencyInterval = 1;
     }
 
+    $single = FALSE; // Used as a flag that it's a single payment
     switch (strtolower($frequencyUnit)) {
       case 'year':
         $collectionFrequency = 'Y';
@@ -575,9 +576,9 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
         break;
       default:
         $collectionFrequency = 'Y';
-        $frequencyInterval = 0; // Used as a flag that it's a single payment
+        $single = TRUE; // Used as a flag that it's a single payment
     }
-    return array($collectionFrequency, $frequencyInterval);
+    return array($collectionFrequency, $frequencyInterval, $single);
   }
 
   /**
@@ -589,11 +590,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
   private static function getCollectionFrequencyPostParams($params) {
     $collectionDate = CRM_Smartdebit_DateUtils::getNextAvailableCollectionDate($params['preferred_collection_day'], TRUE);
     $smartDebitParams['variable_ddi[start_date]'] = $collectionDate->format('Y-m-d');
-    list($collectionFrequency, $collectionInterval) = self::getCollectionFrequency($params);
+    list($collectionFrequency, $collectionInterval, $single) = self::getCollectionFrequency($params);
     $params['collection_start_date'] = $collectionDate;
     $params['collection_frequency'] = $collectionFrequency;
     $params['collection_interval'] = $collectionInterval;
-    $endDate = self::getCollectionEndDate($params);
+    $endDate = self::getCollectionEndDate($params, $single);
     if (!empty($endDate)) {
       $smartDebitParams['variable_ddi[end_date]'] = $endDate->format("Y-m-d");
     }
