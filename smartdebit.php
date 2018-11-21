@@ -197,17 +197,6 @@ function smartdebit_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
   _smartdebit_civix_civicrm_alterSettingsFolders($metaDataFolders);
 }
 
-// --- Functions below this ship commented out. Uncomment as required. ---
-
-/**
- * Implements hook_civicrm_preProcess().
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
- *
-function smartdebit_civicrm_preProcess($formName, &$form) {
-
-} // */
-
 /**
  * Implements hook_civicrm_navigationMenu().
  *

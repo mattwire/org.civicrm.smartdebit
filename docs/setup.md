@@ -15,7 +15,6 @@ Ask Smartdebit to confirm:
 
 
 ## CiviCRM Setup
-1. Download and install org.civicrm.paymentlib
 1. Download and install this extension!
 
 The following menu options will then be available:
