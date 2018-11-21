@@ -15,8 +15,8 @@
     <url desc="Author">https://www.mjwconsult.co.uk</url>
     <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
   </urls>
-  <releaseDate>2018-10-25</releaseDate>
-  <version>1.27</version>
+  <releaseDate>2018-11-21</releaseDate>
+  <version>1.27.1</version>
   <develStage>stable</develStage>
   <compatibility>
     <ver>5.5</ver>
