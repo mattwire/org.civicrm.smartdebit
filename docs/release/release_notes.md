@@ -1,3 +1,33 @@
+## Release 1.27.1
+* Fix check for "Pending" status fails in completeTransaction.
+
+## Release 1.27
+**Please upgrade to 1.27.1**
+
+*This release contains lots of minor fixes to resolve bugs / improve reliability. It should be a safe upgrade.*
+
+* Ensure we don't get into a redirect loop if we fail to update the recurring contribution
+* Pass through start_date to changeSubscription when changed in UI
+* Allow format for API (CSV/XML) to be specified via params
+* Fix SQL index on CREATE veda_smartdebit_mandates
+* Add unit tests for all date functions
+* Refactor date related functions into their own class
+* Change max days difference between payment and received date to be half of the payment interval
+* Refactor next_sched_collection_date and related date functions
+* Fix case where next scheduled date is the end of the month for a monthly recurring
+* When updating the recur start_date make sure we update the next_sched_contribution date and the linked contribution date
+* Don't update Mandate at Smartdebit if there are no changes in UpdateSubscription
+* Fix issue where existing contributions are not identified properly during sync
+* Refactor complete/repeat transaction to improve reliability of membership renewals
+* Make sure we don't change a Pending contribution to completed before running completetransaction when doing a sync
+* Parse another error from Smartdebit API
+* Use PUT for updating mandates, as POST does not reliably update (eg. zero amount)
+* Don't call parent validatePaymentInstrument function
+* Change the way we flag a one-off payment (internally)
+* Fix return value for Smartdebit.getmandates when retrieving a single mandate
+
+Thanks to @bhahumanists for help with troubleshooting many things that have gone into this release.
+
 ## Release 1.26
 * Handle case when bank details are returned as part of mandate and API returns the wrong headers causing save to fail.
 * Fix cancel subscription failing.
