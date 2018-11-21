@@ -448,7 +448,7 @@ class CRM_Smartdebit_Sync
   private static function completeTransaction($contributionParams) {
     // If we are in "Pending" status call completetransaction to update related objects (ie. memberships Pending->New).
     $pendingStatusId = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
-    if ($contributionParams['contribution_status_id'] === $pendingStatusId) {
+    if ($contributionParams['contribution_status_id'] == $pendingStatusId) {
       try {
         return civicrm_api3('Contribution', 'completetransaction', $contributionParams);
       }
