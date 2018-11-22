@@ -165,6 +165,7 @@ function _civicrm_api3_smartdebit_retrievecollectionreports_spec(&$spec) {
   $spec['daily']['type'] = CRM_Utils_Type::T_BOOLEAN;
   $spec['collection_date']['api.required'] = 0;
   $spec['collection_date']['title'] = 'Collection date (eg. 2010-02-12)';
+  $spec['collection_date']['description'] = 'This is the final date for checking for collection reports, for daily it will go back 7 days, otherwise it will go back the amount specified in collection period.';
   $spec['collection_date']['type'] = CRM_Utils_Type::T_STRING;
   $spec['collection_period']['api.required'] = 0;
   $spec['collection_period']['title'] = 'Collection period';
