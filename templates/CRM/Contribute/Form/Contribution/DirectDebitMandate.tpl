@@ -114,7 +114,7 @@
         </p>
         <h2 style="font-size: 1em;text-align: left;font-weight: bold;margin-bottom: 3px; margin-top: 15px;">{ts}Instruction to your Bank or Building Society{/ts}</h2>
         <p>
-          {ts 1=$dd_details.company_address.company_name}Please pay %1 Direct Debits from the account detailed in this Instruction subject to the safeguards
+          {ts 1=$dd_details.company_address.company_name_sd}Please pay %1 Direct Debits from the account detailed in this Instruction subject to the safeguards
             assured by the Direct Debit Guarantee. I understand that this Instruction may remain with %1 and, if so, details will be passed electronically
             to my Bank / Building Society.{/ts}
         </p>
@@ -142,16 +142,16 @@
       <div class="clear"></div>
       <ul style="margin: 0; padding: 10px 20px 10px 20px">
         <li style="margin-bottom: 10px">{ts}This Guarantee is offered by all banks and building societies that accept instructions to pay Direct Debits.{/ts}</li>
-        <li style="margin-bottom: 10px">{ts 1=$dd_details.company_address.company_name 2=$dd_details.notice_period}If there are any changes to the amount, date or frequency of your
+        <li style="margin-bottom: 10px">{ts 1=$dd_details.company_address.company_name_sd 2=$dd_details.notice_period}If there are any changes to the amount, date or frequency of your
             Direct Debit %1 will notify you %2 working days in advance of your account being debited or as otherwise agreed. If you
             request %1 to collect a payment, confirmation of the amount and date will be given to you at the time of the request.{/ts}</li>
-        <li style="margin-bottom: 10px">{ts 1=$dd_details.company_address.company_name}If an error is made in the payment of your Direct Debit, by %1 or your bank or building society,
+        <li style="margin-bottom: 10px">{ts 1=$dd_details.company_address.company_name_sd}If an error is made in the payment of your Direct Debit, by %1 or your bank or building society,
             you are entitled to a full and immediate refund of the amount paid from your bank or building society.{/ts}
           <ul>
-            <li style="margin-bottom: 10px">{ts 1=$dd_details.company_address.company_name}If you receive a refund you are not entitled to, you must pay it back when %1 asks you to.{/ts}</li>
+            <li style="margin-bottom: 10px">{ts 1=$dd_details.company_address.company_name_sd}If you receive a refund you are not entitled to, you must pay it back when %1 asks you to.{/ts}</li>
           </ul>
         </li>
-        <li>{ts 1=$dd_details.company_address.company_name}You can cancel a Direct Debit at any time by simply contacting your bank or building society. Written
+        <li>{ts 1=$dd_details.company_address.company_name_sd}You can cancel a Direct Debit at any time by simply contacting your bank or building society. Written
             confirmation may be required. Please also notify us.{/ts}</li>
       </ul>
     </div>

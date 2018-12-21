@@ -224,7 +224,14 @@ WHERE  ddi_reference = %0";
     $domain = CRM_Core_BAO_Domain::getDomain();
     $domainLoc = $domain->getLocationValues();
 
+    if (!empty(CRM_Smartdebit_Settings::getValue('service_user_name'))) {
+      $companyAddress['company_name_sd'] = CRM_Smartdebit_Settings::getValue('service_user_name');
+    }
+    else {
+      $companyAddress['company_name_sd'] = $domain->name;
+    }
     $companyAddress['company_name'] = $domain->name;
+
     if (!empty($domainLoc['address'])) {
       $companyAddress['address1']     = $domainLoc['address'][1]['street_address'];
       if (array_key_exists('supplemental_address_1', $domainLoc['address'][1])) {

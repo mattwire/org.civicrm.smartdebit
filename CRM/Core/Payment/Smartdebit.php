@@ -1267,10 +1267,20 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    * @return int ContactID
    */
   protected static function getContactId($params) {
-    return CRM_Utils_Array::value('contactID', $params,
+    $contactId = CRM_Utils_Array::value('contactID', $params,
       CRM_Utils_Array::value('contact_id', $params,
         CRM_Utils_Array::value('cms_contactID', $params,
           CRM_Utils_Array::value('cid', $params, NULL
           ))));
+    if (!empty($contactId)) {
+      return $contactId;
+    }
+    // FIXME: Ref: https://lab.civicrm.org/extensions/stripe/issues/16
+    // The problem is that when registering for a paid event, civicrm does not pass in the
+    // contact id to the payment processor (civicrm version 5.3). So, I had to patch your
+    // getContactId to check the session for a contact id. It's a hack and probably should be fixed in core.
+    // The code below is exactly what CiviEvent does, but does not pass it through to the next function.
+    $session = CRM_Core_Session::singleton();
+    return $session->get('transaction.userID', NULL);
   }
 }

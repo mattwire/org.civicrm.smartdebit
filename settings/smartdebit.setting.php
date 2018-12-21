@@ -162,6 +162,25 @@ return array(
     ),
   ),
 
+
+  // service_user_number
+  'smartdebit_service_user_name' => array(
+    'admin_group' => 'smartdebit_general',
+    'group_name' => 'Smart Debit Settings',
+    'group' => 'smartdebit',
+    'name' => 'smartdebit_service_user_name',
+    'type' => 'String',
+    'default' => '',
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'description' => 'Service User (Organisation) Name (Optional)',
+    'html_type' => 'Text',
+    'html_attributes' => array(
+      'size' => 50,
+    ),
+  ),
+
   // transaction_prefix
   'smartdebit_transaction_prefix' => array(
     'admin_group' => 'smartdebit_general',
