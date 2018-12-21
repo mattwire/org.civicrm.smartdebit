@@ -1,3 +1,7 @@
+## Release 1.28
+* Add a setting to allow specifying a separate service user name to display on the direct debit guarantee (as required by Smartdebit when the SUN (Service User Number) is owned by them).
+* Handle case when event registration does not pass contact ID through correctly.
+
 ## Release 1.27.1
 * Fix check for "Pending" status fails in completeTransaction.
 
