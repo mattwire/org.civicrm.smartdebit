@@ -36,7 +36,8 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
    * Build the form
    *
    * @access public
-   * @return void
+   *
+   * @throws \Exception
    */
   public function buildQuickForm() {
     if ($this->_flagSubmitted) return;
@@ -73,7 +74,7 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     $checkAmount = CRM_Utils_Array::value('checkAmount', $_GET);
     $checkFrequency = CRM_Utils_Array::value('checkFrequency', $_GET);
     $checkStatus = CRM_Utils_Array::value('checkStatus', $_GET);
-	$checkDate = CRM_Utils_Array::value('checkDate', $_GET);
+    $checkDate = CRM_Utils_Array::value('checkDate', $_GET);
     $checkPayerReference = CRM_Utils_Array::value('checkPayerReference', $_GET);
     $checkMissingFromCivi = CRM_Utils_Array::value('checkMissingFromCivi', $_GET);
     $checkMissingFromSD = CRM_Utils_Array::value('checkMissingFromSD', $_GET);
@@ -93,9 +94,6 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     // 2. Transaction Id in Smart Debit and Civi for different contacts
     // 3. Transaction Id in Smart Debit but none found in Civi
     // 4. Transaction Id in Civi but none in Smart Debit
-
-    // Loop through Contributions and Highlight Discrepencies
-    //foreach ($smartDebitArray as $key => $smartDebitRecord) {
 
     // Start Here
     if ($checkAmount || $checkFrequency || $checkStatus || $checkPayerReference || $checkDate) {
@@ -145,10 +143,10 @@ AND   opva.name = 'Direct Debit' ";
         }
 
         if ($checkDate) {
-	      // Check that date in CiviCRM matches amount in Smart Debit
-	      if ($dao->smart_debit_start_date != $dao->start_date) {
-		    $difference['date'] = TRUE;
-	      }
+          // Check that date in CiviCRM matches amount in Smart Debit
+          if ($dao->smart_debit_start_date != $dao->start_date) {
+            $difference['date'] = TRUE;
+          }
         }
 
         if ($checkFrequency) {
@@ -171,12 +169,12 @@ AND   opva.name = 'Direct Debit' ";
         // First case check if Smart Debit is new or live then CiviCRM is in progress
         if ($checkStatus) {
           if (($dao->current_state == CRM_Smartdebit_Api::SD_STATE_LIVE || $dao->current_state == CRM_Smartdebit_Api::SD_STATE_NEW)
-               && ($dao->contribution_status_id != $contributionInProgressId)) {
+            && ($dao->contribution_status_id != $contributionInProgressId)) {
             $difference['status'] = TRUE;
           }
           // Recurring record active in Civi, but smart debit record is not active
           if (!($dao->current_state == CRM_Smartdebit_Api::SD_STATE_LIVE || $dao->current_state == CRM_Smartdebit_Api::SD_STATE_NEW)
-               && ($dao->contribution_status_id == $contributionInProgressId)) {
+            && ($dao->contribution_status_id == $contributionInProgressId)) {
             $difference['status'] = TRUE;
           }
         }
@@ -215,9 +213,9 @@ AND   opva.name = 'Direct Debit' ";
                 case 'contact':
                   $differences .= 'Payer Reference(Contact Id)';
                   break;
-	            case 'date':
-	              $differences .= 'Date';
-	              break;
+                case 'date':
+                  $differences .= 'Date';
+                  break;
               }
             }
           }
@@ -390,8 +388,9 @@ AND   csd.id IS NULL LIMIT 100";
    * @param $params
    *
    * @return bool
+   * @throws \CiviCRM_API3_Exception
    */
-  static function reconcileRecordWithCiviCRM($params) {
+  public static function reconcileRecordWithCiviCRM($params) {
     foreach (array('contact_id', 'payer_reference') as $required) {
       if (empty($params[$required])) {
         throw new InvalidArgumentException("Missing params[$required]");
@@ -478,7 +477,7 @@ AND   csd.id IS NULL LIMIT 100";
    * @return array
    * @throws \CiviCRM_API3_Exception
    */
-  static function linkMembershipToRecurContribution($params) {
+  public static function linkMembershipToRecurContribution($params) {
     foreach (array(
                'contact_id',
                'membership_id',
@@ -503,10 +502,11 @@ AND   csd.id IS NULL LIMIT 100";
 
   /**
    * Format Smartdebit Status ID for display
+   *
    * @param $sdStatus
    * @return string
    */
-  static function formatSDStatus($sdStatus) {
+  public static function formatSDStatus($sdStatus) {
     switch ($sdStatus) {
       case CRM_Smartdebit_Api::SD_STATE_DRAFT:
         return CRM_Smartdebit_Api::SD_STATES[CRM_Smartdebit_Api::SD_STATE_DRAFT];

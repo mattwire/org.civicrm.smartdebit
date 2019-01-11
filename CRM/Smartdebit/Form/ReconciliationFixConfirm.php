@@ -84,8 +84,10 @@ class CRM_Smartdebit_Form_ReconciliationFixConfirm extends CRM_Core_Form {
     parent::buildQuickForm();
   }
 
-  public function postProcess()
-  {
+  /**
+   * @throws \CiviCRM_API3_Exception
+   */
+  public function postProcess() {
     $submitValues = $this->_submitValues;
     $params['contact_id'] = $submitValues['cid'];
     $params['payer_reference'] = $submitValues['reference_number'];
