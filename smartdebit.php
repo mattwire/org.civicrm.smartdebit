@@ -273,6 +273,8 @@ function smartdebit_civicrm_navigationMenu(&$menu) {
  *
  * @param $page
  *
+ * @throws \CRM_Core_Exception
+ * @throws \CiviCRM_API3_Exception
  */
 function smartdebit_civicrm_pageRun(&$page) {
   $pageName = $page->getVar('_name');
@@ -291,12 +293,18 @@ function smartdebit_civicrm_pageRun(&$page) {
         'contact_id' => $contactID,
       );
 
-      $recurDetails = civicrm_api3('ContributionRecur', 'getsingle', $recurParams);
-      $paymentProcessorDetails = civicrm_api3('PaymentProcessor', 'getsingle', [
-        'return' => ["payment_processor_type_id.name"],
-        'id' => $recurDetails['payment_processor_id'],
-      ]);
-      if ($paymentProcessorDetails['payment_processor_type_id.name'] !== 'Smart_Debit') {
+      try {
+        // Get the recur details and payment processor details
+        $recurDetails = civicrm_api3('ContributionRecur', 'getsingle', $recurParams);
+        $paymentProcessorDetails = civicrm_api3('PaymentProcessor', 'getsingle', [
+          'return' => ["payment_processor_type_id.name"],
+          'id' => $recurDetails['payment_processor_id'],
+        ]);
+        if ($paymentProcessorDetails['payment_processor_type_id.name'] !== 'Smart_Debit') {
+          return;
+        }
+      }
+      catch (Exception $e) {
         return;
       }
 
