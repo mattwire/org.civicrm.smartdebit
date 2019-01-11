@@ -126,7 +126,8 @@ INNER JOIN veda_smartdebit_mandates csd ON csd.reference_number = ctrc.trxn_id
 WHERE opgr.name = 'payment_instrument' 
 AND   opva.name = 'Direct Debit' ";
 
-      $dao = CRM_Core_DAO::executeQuery( $sql);
+      $sql .= ' ORDER BY csd.reference_number DESC';
+      $dao = CRM_Core_DAO::executeQuery($sql);
 
       while ($dao->fetch()) {
         // Smart Debit Record Found
@@ -258,26 +259,26 @@ AND   opva.name = 'Direct Debit' ";
       $sql  = "
 SELECT contact.id as contact_id,
   contact.display_name,
-  csd1.default_amount,
-  csd1.frequency_type,
-  csd1.frequency_factor,
-  csd1.current_state,
-  csd1.payerReference,
-  csd1.start_date,
-  csd1.reference_number,
-  csd1.id as smart_debit_id,
-  csd1.first_name,
-  csd1.last_name 
-FROM veda_smartdebit_mandates csd1 
-LEFT JOIN civicrm_contribution_recur ctrc ON ctrc.trxn_id = csd1.reference_number 
-LEFT JOIN civicrm_contact contact ON contact.id = csd1.payerReference 
+  csd.default_amount,
+  csd.frequency_type,
+  csd.frequency_factor,
+  csd.current_state,
+  csd.payerReference,
+  csd.start_date,
+  csd.reference_number,
+  csd.id as smart_debit_id,
+  csd.first_name,
+  csd.last_name 
+FROM veda_smartdebit_mandates csd 
+LEFT JOIN civicrm_contribution_recur ctrc ON ctrc.trxn_id = csd.reference_number 
+LEFT JOIN civicrm_contact contact ON contact.id = csd.payerReference 
 WHERE ctrc.id IS NULL";
       // Filter records that have an amount recorded against them or not
       if ($hasAmount) {
-        $sql .= " AND (COALESCE(csd1.default_amount, '') != '')";
+        $sql .= " AND (COALESCE(csd.default_amount, '') != '')";
       }
       else {
-        $sql .= " AND (COALESCE(csd1.default_amount, '') = '')";
+        $sql .= " AND (COALESCE(csd.default_amount, '') = '')";
       }
       // Filter records with no valid contact ID
       if ($hasContact) {
@@ -286,6 +287,7 @@ WHERE ctrc.id IS NULL";
       else {
         $sql .= " AND contact.id IS NULL";
       }
+      $sql .= ' ORDER BY csd.reference_number DESC';
       $dao = CRM_Core_DAO::executeQuery($sql);
       while ($dao->fetch()) {
         $differences = 'Transaction ID not Found in CiviCRM';
@@ -351,7 +353,7 @@ LEFT JOIN veda_smartdebit_mandates csd ON csd.reference_number = ctrc.trxn_id
 WHERE opgr.name = 'payment_instrument' 
 AND   opva.name = 'Direct Debit' 
 AND   csd.id IS NULL LIMIT 100";
-
+      $sql .= ' ORDER BY csd.reference_number DESC';
       $dao = CRM_Core_DAO::executeQuery($sql);
 
       while ($dao->fetch()) {
