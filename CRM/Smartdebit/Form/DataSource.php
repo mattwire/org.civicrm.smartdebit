@@ -44,6 +44,11 @@ class CRM_Smartdebit_Form_DataSource extends CRM_Core_Form {
     }
     catch (Exception $e) {}
 
+    $latestReport = CRM_Smartdebit_CollectionReports::getReports(['limit' => 1]);
+    if (count($latestReport) > 0) {
+      $this->assign('latestReportDate', CRM_Utils_Array::first($latestReport)['collection_date']);
+    }
+
     $this->add('checkbox', 'retrieve_collectionreport', ts('Retrieve latest daily collection report from SmartDebit?'));
     $this->addButtons(array(
         array(
