@@ -7,6 +7,10 @@
     Manual sync can be used to synchronise any collection reports that are downloaded, synchronised, or it can download the latest daily reports. 
     This is very useful if reinstalling or syncing with Smartdebit for the first time.
 
+!!! tip "Configure a scheduled job to automatically retrieve collection reports"
+    If you disable the automatic sync it is a good idea to setup a daily scheduled job to retrieve the collection
+    reports so they are available when you are ready to perform a manual sync.  Use the Smartdebit.retrievecollectionreports API to do this with parameter "daily=1".
+
 You can perform a manual sync by selecting _Manual Sync_ from the __Administer->CiviContribute->Smart Debit__ menu.
 
 ## Step 1: Start Manual Sync

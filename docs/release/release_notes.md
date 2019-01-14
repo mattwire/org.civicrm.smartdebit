@@ -1,3 +1,9 @@
+## Release 1.29
+* Add latest cached collection report date to manual sync initial page.
+* Don't send out email receipts (for first contribution) - we don't send receipts for repeat contributions, don't send them for the first contribution created by the sync task.
+* Sort reconciliation list (by smartdebit reference descending)
+* Don't crash when viewing recurring contributions if no payment processor is defined.
+
 ## Release 1.28
 * Add a setting to allow specifying a separate service user name to display on the direct debit guarantee (as required by Smartdebit when the SUN (Service User Number) is owned by them).
 * Handle case when event registration does not pass contact ID through correctly.
