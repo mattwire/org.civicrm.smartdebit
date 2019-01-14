@@ -460,6 +460,7 @@ WHERE  ddi_reference = %0";
       'payment_instrument_id' => $params['payment_instrument_id'],
       'invoice_id' => $params['invoice_id'],
       'source' => $params['source'],
+      'is_email_receipt' => isset($params['is_email_receipt']) ? $params['is_email_receipt'] : FALSE,
     );
     if (!empty($params['contribution_id'])) {
       $contributionParams['contribution_id'] = $params['contribution_id'];
