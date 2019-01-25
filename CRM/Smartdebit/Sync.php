@@ -629,6 +629,7 @@ class CRM_Smartdebit_Sync
     $contributionResult = civicrm_api3('Contribution', 'get', array(
       'options' => ['limit' => 0, 'sort' => "receive_date DESC"],
       'contribution_recur_id' => $newContribution['contribution_recur_id'],
+      'return' => ["id", "contribution_status_id", "trxn_id", "receive_date"],
     ));
 
     // We have only one contribution for the recurring record
@@ -639,6 +640,7 @@ class CRM_Smartdebit_Sync
         // Check if trxn_ids are identical, if so, update this trxn
         if (strcmp($contributionDetails['trxn_id'], $newContribution['trxn_id']) == 0) {
           $newContribution['id'] = $contributionDetails['id'];
+          $newContribution['contribution_status_id'] = $contributionDetails['contribution_status_id'];
           if (CRM_Smartdebit_Settings::getValue('debug')) {
             Civi::log()->debug('Smartdebit checkIfFirstPayment: Identical-Using existing contribution');
           }
@@ -658,6 +660,7 @@ class CRM_Smartdebit_Sync
             if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit checkIfFirstPayment: Not identical,ours. Creating new contribution'); }
             // Assign the id of the most recent contribution, we need this as a template to repeat the transaction
             $newContribution['id'] = $contributionDetails['id'];
+            $newContribution['contribution_status_id'] = $contributionDetails['contribution_status_id'];
             return array(FALSE, $newContribution);
           }
         }
@@ -675,6 +678,7 @@ class CRM_Smartdebit_Sync
           if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit checkIfFirstPayment: Within dates,Using existing contribution'); }
           // Assign the id of the most recent contribution, we need this as a template to repeat the transaction
           $newContribution['id'] = $contributionDetails['id'];
+          $newContribution['contribution_status_id'] = $contributionDetails['contribution_status_id'];
           return array(TRUE, $newContribution);
         }
       }
