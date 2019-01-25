@@ -469,9 +469,9 @@ class CRM_Smartdebit_Sync
    */
   private static function repeatTransaction($contributeParams) {
     $mandatoryParams = ['id', 'trxn_id'];
-    foreach ($mandatoryParams as $key => $value) {
-      if (empty($contributeParams[$key])) {
-        Civi::log()->error('Smartdebit repeatTransaction: Missing mandatory parameter: ' . $key);
+    foreach ($mandatoryParams as $value) {
+      if (empty($contributeParams[$value])) {
+        Civi::log()->error('Smartdebit repeatTransaction: Missing mandatory parameter: ' . $value);
         return FALSE;
       }
     }
