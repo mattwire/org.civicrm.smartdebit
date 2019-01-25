@@ -1,3 +1,7 @@
+## Release 1.30
+* Fix mandatory params check on repeatTransaction [#27](https://github.com/mattwire/org.civicrm.smartdebit/issues/27).
+* Set contribution status when calling createTransaction if we already have a contribution ID (prevent errors in logs as it tries to change contribution status back to pending then back to completed).
+
 ## Release 1.29
 * Add latest cached collection report date to manual sync initial page.
 * Don't send out email receipts (for first contribution) - we don't send receipts for repeat contributions, don't send them for the first contribution created by the sync task.
