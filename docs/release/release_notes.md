@@ -1,3 +1,6 @@
+## Release 1.31
+* Add a "Reconcile" link to the contributions that are not matched when doing a manual sync.
+
 ## Release 1.30
 * Fix mandatory params check on repeatTransaction [#27](https://github.com/mattwire/org.civicrm.smartdebit/issues/27).
 * Set contribution status when calling createTransaction if we already have a contribution ID (prevent errors in logs as it tries to change contribution status back to pending then back to completed).

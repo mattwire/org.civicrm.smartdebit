@@ -272,7 +272,11 @@
         {foreach from=$missingArray item=row}
           {assign var=id value=$row.id}
           <tr>
-            <td>{$row.transaction_id}</td>
+            <td>
+              {assign var=transactionId value=$row.transaction_id}
+              {capture assign=reconcileUrl}{crmURL p='civicrm/smartdebit/reconciliation/fix/select' q="reference_number=$transactionId"}{/capture}
+              {$row.transaction_id} <a class="action-item crm-hover-button" target="_blank" href="{$reconcileUrl}">Reconcile</a>
+            </td>
             <td>
               {$row.contact_name}
             </td>
