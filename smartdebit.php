@@ -93,22 +93,8 @@ function smartdebit_civicrm_postInstall() {
   }
 
   // Create an Direct Debit Payment Instrument
-  // See if we already have this type
-  $ddPayment = civicrm_api3('OptionValue', 'get', array(
-    'option_group_id' => "payment_instrument",
-    'name' => "Direct Debit",
-  ));
-  if (empty($ddPayment['count'])) {
-    // Otherwise create it
-    $paymentParams = [
-      'option_group_id' => "payment_instrument",
-      'name' => 'Direct Debit',
-      'description' => 'Direct Debit'
-    ];
-    $paymentType = civicrm_api3('OptionValue', 'create', $paymentParams);
-    $paymentTypeId = $paymentType['values'][$paymentType['id']]['value'];
-    CRM_Smartdebit_Settings::save(array('payment_instrument_id' => $paymentTypeId));
-  }
+  $paymentInstrumentId = CRM_Core_Payment_Smartdebit::createPaymentInstrument(['name' => 'Direct Debit']);
+  CRM_Smartdebit_Settings::save(array('payment_instrument_id' => $paymentInstrumentId));
 
   _smartdebit_civix_civicrm_postInstall();
 }

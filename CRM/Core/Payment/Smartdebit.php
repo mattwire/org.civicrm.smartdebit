@@ -30,14 +30,7 @@
  */
 class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
 
-  /**
-   * We only need one instance of this object. So we use the singleton
-   * pattern and cache the instance in this variable
-   *
-   * @var object
-   * @static
-   */
-  private static $_singleton = NULL;
+  use CRM_Core_Payment_SmartdebitTrait;
 
   /**
    * mode of operation: live or test
@@ -57,24 +50,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
     $this->_mode = $mode;
     $this->_paymentProcessor = $paymentProcessor;
     $this->_processorName = ts('Smart Debit Processor');
-  }
-
-  /**
-   * singleton function used to manage this object
-   *
-   * @param string $mode the mode of operation: live or test
-   * @param $paymentProcessor
-   *
-   * @return object
-   *
-   */
-  public static function &singleton($mode, &$paymentProcessor, &$paymentForm = NULL, $force = FALSE)
-  {
-    $processorName = $paymentProcessor['name'];
-    if (self::$_singleton[$processorName] === NULL) {
-      self::$_singleton[$processorName] = new self($mode, $paymentProcessor);
-    }
-    return self::$_singleton[$processorName];
   }
 
   /**
@@ -728,7 +703,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
       }
     }
 
-    $contactId = self::getContactId($params);
+    $contactId = $this->getContactId($params);
     $billingLocationID = CRM_Core_BAO_LocationType::getBilling();
 
     // Construct params list to send to Smart Debit ...
@@ -747,7 +722,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
       'variable_ddi[account_number]' => CRM_Utils_Array::value('bank_account_number', $params),
       'variable_ddi[first_amount]' => CRM_Utils_Array::value('amount', $params, 0),
       'variable_ddi[default_amount]' => CRM_Utils_Array::value('amount', $params, 0),
-      'variable_ddi[email_address]' => self::getBillingEmail($params, $contactId),
+      'variable_ddi[email_address]' => $this->getBillingEmail($params, $contactId),
     );
 
     $smartDebitFrequencyParams = self::getCollectionFrequencyPostParams($params);
@@ -786,7 +761,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
         $params['end_date'] = $smartDebitParams['variable_ddi[end_date]'];
       }
       $params['is_test'] = CRM_Utils_Array::value('is_test', $this->_paymentProcessor, FALSE);
-      $params = self::setRecurTransactionId($params);
+      $params = $this->setRecurTransactionId($params);
       CRM_Smartdebit_Base::completeDirectDebitSetup($params);
       return $params;
     }
@@ -805,7 +780,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    * @return mixed
    * @throws \CiviCRM_API3_Exception
    */
-  private static function setRecurTransactionId($params) {
+  private function setRecurTransactionId($params) {
     if (!empty($params['trxn_id'])) {
       // Common parameters
       $recurParams = [
@@ -850,7 +825,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
         if (empty($params['receive_date'])) {
           $params['receive_date'] = date('YmdHis');
         }
-        $recurParams['contact_id'] = self::getContactId($params);
+        $recurParams['contact_id'] = $this->getContactId($params);
         $recurParams['create_date'] = $params['receive_date'];
         $recurParams['modified_date'] = $params['receive_date'];
         $recurParams['start_date'] = $params['start_date'];
@@ -871,7 +846,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
         // We need to link the recurring contribution and contribution record, as Civi won't do it for us (4.7.21)
         $contributionParams = [
           'contribution_recur_id' => $params['contribution_recur_id'],
-          'contact_id' => self::getContactId($params),
+          'contact_id' => $this->getContactId($params),
           'contribution_status_id' => self::getInitialContributionStatus(FALSE),
           'is_test' => $params['is_test'],
         ];
@@ -1223,64 +1198,4 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     return $paymentProcessorName;
   }
 
-  /*******************************************************************
-   * THE FOLLOWING FUNCTIONS SHOULD BE REMOVED ONCE THEY ARE IN CORE
-   * getBillingEmail
-   * getContactId
-   ******************************************************************/
-
-  /**
-   * Get the billing email address
-   *
-   * @param array $params
-   * @param int $contactId
-   *
-   * @return string|NULL
-   */
-  protected static function getBillingEmail($params, $contactId) {
-    $billingLocationId = CRM_Core_BAO_LocationType::getBilling();
-
-    $emailAddress = CRM_Utils_Array::value("email-{$billingLocationId}", $params,
-      CRM_Utils_Array::value('email-Primary', $params,
-        CRM_Utils_Array::value('email', $params, NULL)));
-
-    if (empty($emailAddress) && !empty($contactId)) {
-      // Try and retrieve an email address from Contact ID
-      try {
-        $emailAddress = civicrm_api3('Email', 'getvalue', array(
-          'contact_id' => $contactId,
-          'return' => ['email'],
-        ));
-      }
-      catch (CiviCRM_API3_Exception $e) {
-        return NULL;
-      }
-    }
-    return $emailAddress;
-  }
-
-  /**
-   * Get the contact id
-   *
-   * @param array $params
-   *
-   * @return int ContactID
-   */
-  protected static function getContactId($params) {
-    $contactId = CRM_Utils_Array::value('contactID', $params,
-      CRM_Utils_Array::value('contact_id', $params,
-        CRM_Utils_Array::value('cms_contactID', $params,
-          CRM_Utils_Array::value('cid', $params, NULL
-          ))));
-    if (!empty($contactId)) {
-      return $contactId;
-    }
-    // FIXME: Ref: https://lab.civicrm.org/extensions/stripe/issues/16
-    // The problem is that when registering for a paid event, civicrm does not pass in the
-    // contact id to the payment processor (civicrm version 5.3). So, I had to patch your
-    // getContactId to check the session for a contact id. It's a hack and probably should be fixed in core.
-    // The code below is exactly what CiviEvent does, but does not pass it through to the next function.
-    $session = CRM_Core_Session::singleton();
-    return $session->get('transaction.userID', NULL);
-  }
 }

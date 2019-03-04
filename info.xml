@@ -19,7 +19,7 @@
   <version>1.30</version>
   <develStage>stable</develStage>
   <compatibility>
-    <ver>5.5</ver>
+    <ver>5.10.3</ver>
   </compatibility>
   <comments>Based on the vedaconsulting (https://vedaconsulting.co.uk) ukdirectdebit, smartdebit and smartdebit_reconciliation modules.
   Re-written for CiviCRM 4.7</comments>
