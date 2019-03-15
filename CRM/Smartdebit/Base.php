@@ -77,9 +77,10 @@ class CRM_Smartdebit_Base
   }
 
   /**
-   * @param $params
+   * @param array $params
    *
    * @return array
+   * @throws \CRM_Core_Exception
    */
   public static function getDDFormDetails($params) {
     $ddDetails = array();
@@ -137,7 +138,7 @@ WHERE ddi_reference = '{$params['ddi_reference']}'
    *
    * @throws \CiviCRM_API3_Exception
    */
-  public static function completeDirectDebitSetup( $params )  {
+  public static function completeDirectDebitSetup($params)  {
     // Create an activity to indicate Direct Debit Sign up
     CRM_Smartdebit_Base::createDDSignUpActivity($params);
 

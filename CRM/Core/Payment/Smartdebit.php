@@ -28,6 +28,8 @@
  *
  * Implementation of the Smartdebit payment processor class
  */
+use CRM_Smartdebit_ExtensionUtil as E;
+
 class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
 
   use CRM_Core_Payment_SmartdebitTrait;
@@ -49,7 +51,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
   {
     $this->_mode = $mode;
     $this->_paymentProcessor = $paymentProcessor;
-    $this->_processorName = ts('Smart Debit Processor');
+    $this->_processorName = E::ts('Smart Debit Processor');
   }
 
   /**
@@ -86,11 +88,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
     $error = array();
 
     if (empty($this->_paymentProcessor['user_name'])) {
-      $error[] = ts('The "username" is not set in the Smart Debit Payment Processor settings.');
+      $error[] = E::ts('The "username" is not set in the Smart Debit Payment Processor settings.');
     }
 
     if (empty($this->_paymentProcessor['password'])) {
-      $error[] = ts('The "password" is not set in the Smart Debit Payment Processor settings.');
+      $error[] = E::ts('The "password" is not set in the Smart Debit Payment Processor settings.');
     }
 
     if (!empty($error)) {
@@ -126,7 +128,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
       $paymentProcessorDetails = civicrm_api3('PaymentProcessor', 'getsingle', $params);
     }
     catch (Exception $e) {
-      CRM_Core_Session::setStatus(ts('Smart Debit API User Details Missing, Please check that the Smart Debit Payment Processor is configured.'), 'Smart Debit', 'error');
+      CRM_Core_Session::setStatus(E::ts('Smart Debit API User Details Missing, Please check that the Smart Debit Payment Processor is configured.'), 'Smart Debit', 'error');
       return FALSE;
     }
 
@@ -309,45 +311,45 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
       'account_holder' => array(
         'htmlType' => 'text',
         'name' => 'account_holder',
-        'title' => ts('Account Holder'),
+        'title' => E::ts('Account Holder'),
         'cc_field' => TRUE,
         'attributes' => array('size' => 20
         , 'maxlength' => 18
         , 'autocomplete' => 'on'
         ),
         'is_required' => TRUE,
-        'description' => 'Should be no more than 18 characters. Should not include punctuation (e.g. O\'Callaghan should be OCallaghan). First initial and surname is valid. (e.g. D Watson)'
+        'description' => E::ts('Should be no more than 18 characters. Should not include punctuation (e.g. O\'Callaghan should be OCallaghan). First initial and surname is valid. (e.g. D Watson).'),
       ),
       // UK BACS Account number is 8 digits
       'bank_account_number' => array(
         'htmlType' => 'text',
         'name' => 'bank_account_number',
-        'title' => ts('Bank Account Number'),
+        'title' => E::ts('Bank Account Number'),
         'cc_field' => TRUE,
         'attributes' => array('size' => 20
         , 'maxlength' => 8
         , 'autocomplete' => 'off'
         ),
         'is_required' => TRUE,
-        'description' => '8 digits (e.g. 12345678)'
+        'description' => E::ts('8 digits (e.g. 12345678).'),
       ),
       // UK BACS sortcode is 6 digits
       'bank_identification_number' => array(
         'htmlType' => 'text',
         'name' => 'bank_identification_number',
-        'title' => ts('Sort Code'),
+        'title' => E::ts('Sort Code'),
         'cc_field' => TRUE,
         'attributes' => array('size' => 20
         , 'maxlength' => 6
         , 'autocomplete' => 'off'
         ),
         'is_required' => TRUE,
-        'description' => '6 digits (e.g. 01 23 45)'
+        'description' => E::ts('6 digits (e.g. 01 23 45).'),
       ),
       'preferred_collection_day' => array(
         'htmlType' => (count($collectionDaysArray) > 1) ? 'select' : 'hidden',
         'name' => 'preferred_collection_day',
-        'title' => ts('Preferred Collection Day'),
+        'title' => E::ts('Preferred Collection Day'),
         'cc_field' => TRUE,
         'attributes' => $collectionDaysArray, // eg. array('1' => '1st', '8' => '8th', '21' => '21st'),
         'is_required' => TRUE
@@ -355,7 +357,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
       'confirmation_method' => array(
         'htmlType' => (count($confirmBy) > 1) ? 'select' : 'hidden',
         'name' => 'confirmation_method',
-        'title' => ts('Confirm By'),
+        'title' => E::ts('Confirm By'),
         'cc_field' => TRUE,
         'attributes' => $confirmBy,
         'is_required' => TRUE
@@ -363,10 +365,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
       'payer_confirmation' => array(
         'htmlType' => 'checkbox',
         'name' => 'payer_confirmation',
-        'title' => ts('Please confirm that you are the account holder and only person required to authorise Direct Debits from this account'),
+        'title' => E::ts('Confirm'),
         'cc_field' => TRUE,
         'attributes' => '',
-        'is_required' => TRUE
+        'is_required' => TRUE,
+        'description' => E::ts('Please confirm that you are the account holder and the only person required to authorise Direct Debits from this account.'),
       ),
       'ddi_reference' => array(
         'htmlType' => 'hidden',
@@ -1070,7 +1073,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
       return FALSE;
     }
     if (empty($contributionRecur['trxn_id'])) {
-      CRM_Core_Session::setStatus(ts('The recurring contribution cannot be cancelled (No reference (trxn_id) found).'), 'Smart Debit', 'error');
+      CRM_Core_Session::setStatus(E::ts('The recurring contribution cannot be cancelled (No reference (trxn_id) found).'), 'Smart Debit', 'error');
       return FALSE;
     }
     $reference = $contributionRecur['trxn_id'];
@@ -1088,7 +1091,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     if (!$response['success']) {
       $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
       $msg .= '<br />Cancel Subscription Failed.';
-      CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
+      CRM_Core_Session::setStatus($msg, 'Smart Debit', 'error');
       return FALSE;
     }
 
@@ -1132,7 +1135,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     $response = CRM_Smartdebit_Api::requestUpdate($this->_paymentProcessor, $reference, $smartDebitParams);
     if (!$response['success']) {
       $msg = CRM_Smartdebit_Api::formatResponseError($response['error']);
-      CRM_Core_Session::setStatus(ts($msg), 'Smart Debit', 'error');
+      CRM_Core_Session::setStatus($msg, 'Smart Debit', 'error');
       return FALSE;
     }
 

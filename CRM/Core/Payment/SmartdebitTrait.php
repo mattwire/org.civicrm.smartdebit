@@ -1,10 +1,13 @@
 <?php
 /**
  * Shared payment functions that should one day be migrated to CiviCRM core
- * Version 1.0
  */
 
 trait CRM_Core_Payment_SmartdebitTrait {
+  /**********************
+   * Version 20190313
+   *********************/
+
   /**
    * Get the billing email address
    *
@@ -43,6 +46,7 @@ trait CRM_Core_Payment_SmartdebitTrait {
    * @return int ContactID
    */
   protected function getContactId($params) {
+    // contactID is set by: membership payment workflow
     $contactId = CRM_Utils_Array::value('contactID', $params,
       CRM_Utils_Array::value('contact_id', $params,
         CRM_Utils_Array::value('cms_contactID', $params,
@@ -68,7 +72,12 @@ trait CRM_Core_Payment_SmartdebitTrait {
    * @return mixed
    */
   protected function getContributionId($params) {
-    return $params['contributionID'];
+    /*
+     * contributionID is set in the contribution workflow
+     * We do NOT have a contribution ID for event and membership payments as they are created after payment!
+     * See: https://github.com/civicrm/civicrm-core/pull/13763 (for events)
+     */
+    return CRM_Utils_Array::value('contributionID', $params);
   }
 
   /**
