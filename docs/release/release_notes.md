@@ -1,5 +1,11 @@
 ## Release 1.31
 * Add a "Reconcile" link to the contributions that are not matched when doing a manual sync.
+* Switch to doPayment method internally.  As part of this a few changes have been made:
+  * Recurring contributions are always set to "In Progress" if the direct debit was created successfully.
+  * We set the contribution record trxn_id immediately to the full ABC123456/20190102000000 instead of adding that later.
+  * We set the payment instrument on the contribution if it's not already set when passed to the payment processor.
+  * We set the receive date on the contribution to match the _start date_ for the recurring contribution.
+
 
 ## Release 1.30
 * Fix mandatory params check on repeatTransaction [#27](https://github.com/mattwire/org.civicrm.smartdebit/issues/27).
