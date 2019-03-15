@@ -332,7 +332,7 @@ class CRM_Smartdebit_Sync
       'contribution_recur_id' => $contributionRecur['id'],
       'total_amount' => $amount,
       'invoice_id' => md5(uniqid(rand(), TRUE)),
-      'trxn_id' => $trxnId . '/' . $receiveDate,
+      'trxn_id' => CRM_Smartdebit_DateUtils::getContributionTransactionId($trxnId, $receiveDate),
       'financial_type_id' => $contributionRecur['financial_type_id'],
       'payment_instrument_id' => $contributionRecur['payment_instrument_id'],
       'receive_date' => $receiveDate,

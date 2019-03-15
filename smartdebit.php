@@ -453,7 +453,8 @@ function smartdebit_civicrm_pre($op, $objectName, $id, &$params) {
       // If creating a new membership and we have "Mark Initial Payment as Completed" set we need to:
       // 1. Set membership status from Pending->New
       // 2. Set join_date, start_date, end_date as they are not calculated automatically in this case.
-      if (!CRM_Smartdebit_Utils::isSmartdebitPaymentProcessor($params['contribution_recur_id'])) {
+      if (empty($params['contribution_recur_id'])
+        || !CRM_Smartdebit_Utils::isSmartdebitPaymentProcessor($params['contribution_recur_id'])) {
         return;
       }
       if ((boolean) CRM_Smartdebit_Settings::getValue('initial_completed')) {

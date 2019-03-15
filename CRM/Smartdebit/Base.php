@@ -277,8 +277,8 @@ WHERE  ddi_reference = %0";
     // Optional parameters
     // Set default payment_processor_id
     $recurParams['payment_processor_id'] = CRM_Core_Payment_Smartdebit::getSmartdebitPaymentProcessorID($recurParams);
-    // Set status - Default to "Pending". This will change to "In Progress" on a successful sync once the first payment has been received
-    $recurParams['contribution_status_id'] = CRM_Utils_Array::value('contribution_status_id', $recurParams, CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending'));
+    // Set recurring contribution status
+    $recurParams['contribution_status_id'] = CRM_Core_Payment_Smartdebit::getInitialContributionStatus(TRUE);
     // Set unit/interval
     if (isset($recurParams['frequency_type'])) {
       if (empty($recurParams['frequency_factor'])) {

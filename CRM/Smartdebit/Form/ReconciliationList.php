@@ -423,7 +423,7 @@ AND   csd.id IS NULL LIMIT 100";
 
     // Set state of recurring contribution (10=live,1=New at SmartDebit)
     if ($smartDebitRecord['current_state'] == CRM_Smartdebit_Api::SD_STATE_LIVE || $smartDebitRecord['current_state'] == CRM_Smartdebit_Api::SD_STATE_NEW) {
-      $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
+      $recurParams['contribution_status_id'] = CRM_Core_Payment_Smartdebit::getInitialContributionStatus(TRUE);
     }
     else {
       $recurParams['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Cancelled');
@@ -450,7 +450,6 @@ AND   csd.id IS NULL LIMIT 100";
         $contribution['contribution_recur_id'] = $recurId;
       }
       $contribution['trxn_id'] = $params['payer_reference'].'/'.date('YmdHis', strtotime($recurParams['start_date']));
-      //$contribution['contribution_status_id'] = $recurParams['contribution_status_id'];
       $contribution['total_amount'] = $recurParams['amount'];
       $contribution['receive_date'] = $recurParams['start_date'];
       CRM_Smartdebit_Base::createContribution($contribution);

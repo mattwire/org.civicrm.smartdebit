@@ -734,15 +734,27 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
   }
 
   /**
+   * Process payment
+   *
    * Sets appropriate parameters and calls Smart Debit API to create a payment
    *
+   * Payment processors should set payment_status_id.
+   *
    * @param array $params
+   *   Assoc array of input parameters for this transaction.
+   *
+   * @param string $component
    *
    * @return array
+   *   Result array
+   *
+   * @throws \CiviCRM_API3_Exception
    * @throws \Civi\Payment\Exception\PaymentProcessorException
-   * @throws \Exception
    */
-  public function doDirectPayment(&$params) {
+  public function doPayment(&$params, $component = 'contribute') {
+    // Set default contribution status
+    $params['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
+
     $smartDebitParams = self::preparePostArray($params);
     CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'create');
     self::checkSmartDebitParams($smartDebitParams);
@@ -766,13 +778,30 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
       $params['is_test'] = CRM_Utils_Array::value('is_test', $this->_paymentProcessor, FALSE);
       $params = $this->setRecurTransactionId($params);
       CRM_Smartdebit_Base::completeDirectDebitSetup($params);
-      return $params;
     }
     else {
       $message = CRM_Utils_Array::value('message', $response) . ': ' . CRM_Smartdebit_Api::formatResponseError(CRM_Utils_Array::value('error', $response));
       Civi::log()->error('Smartdebit::doDirectPayment error: ' . $message . ' ' . print_r($smartDebitParams, TRUE));
       throw new \Civi\Payment\Exception\PaymentProcessorException($message, CRM_Utils_Array::value('code', $response), $smartDebitParams);
     }
+
+    $contributionParams['receive_date'] = $params['start_date'];
+    $contributionParams['trxn_id'] = CRM_Smartdebit_DateUtils::getContributionTransactionId($params['trxn_id'], $params['start_date']);
+    if (empty($params['payment_instrument_id'])) {
+      $contributionParams['payment_instrument_id'] = (int) CRM_Smartdebit_Settings::getValue('payment_instrument_id');
+    }
+    if ($this->getContributionId($params)) {
+      $contributionParams['id'] = $this->getContributionId($params);
+      civicrm_api3('Contribution', 'create', $contributionParams);
+      unset($contributionParams['id']);
+    }
+    $params = array_merge($params, $contributionParams);
+
+    // We need to set this to ensure that contributions are set to the correct status
+    if (!empty($params['contribution_status_id'])) {
+      $params['payment_status_id'] = $params['contribution_status_id'];
+    }
+    return $params;
   }
 
   /**
@@ -866,11 +895,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
           $params['is_recur'] = 1; // Required for CRM_Core_Payment to set contribution status = Pending
         }
       }
-
-      // We need to set this to ensure that contributions are set to the correct status
-      if (!empty($contributionParams['contribution_status_id'])) {
-        $params['payment_status_id'] = $contributionParams['contribution_status_id'];
-      }
     }
     return $params;
   }
@@ -883,13 +907,14 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    *
    * @return bool|int|null|string
    */
-  private static function getInitialContributionStatus($isRecur = FALSE) {
+  public static function getInitialContributionStatus($isRecur = FALSE) {
     $initialCompleted = (boolean) CRM_Smartdebit_Settings::getValue('initial_completed');
 
+    if ($isRecur) {
+      return CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
+    }
+
     if ($initialCompleted) {
-      if ($isRecur) {
-        return CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
-      }
       return CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed');
     }
     return CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
@@ -926,19 +951,6 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     $sql .= " WHERE  ddi_reference           = \"{$direct_debit_response['ddi_reference']}\"";
 
     CRM_Core_DAO::executeQuery($sql);
-  }
-
-  /**
-   * Sets appropriate parameters for checking out to UCM Payment Collection
-   *
-   * @param array $params
-   * @param string $component
-   *
-   * @throws \Civi\Payment\Exception\PaymentProcessorException
-   * @throws \Exception
-   */
-  public function doTransferCheckout(&$params, $component) {
-    self::doDirectPayment($params);
   }
 
   /**

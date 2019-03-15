@@ -267,4 +267,17 @@ class CRM_Smartdebit_DateUtils {
     return $days;
   }
 
+  /**
+   * Get a transaction ID in the format ABC123456/20190102000000 as required for smartdebit contributions in CiviCRM
+   *
+   * @param string $trxnId
+   * @param string $receiveDate
+   *
+   * @return string
+   */
+  public static function getContributionTransactionId($trxnId, $receiveDate) {
+    $receiveDate = CRM_Utils_Date::processDate(date('Y-m-d', strtotime($receiveDate)));
+    return $trxnId . '/' . $receiveDate;
+  }
+
 }
