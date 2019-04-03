@@ -21,6 +21,13 @@ This API function allows to call updaterecurring function directly, instead of v
 It is mostly for debugging but can be useful for testing hooks as well.
 
 #### Smartdebit.processcollections
+Process collection reports: get all available payments in the collection reports and import each transaction from Smart Debit (using the locally cached collection reports).
+
+Parameters:
+* trxn_id: (optional) CiviCRM transaction ID / Smartdebit Reference Number of Mandate: specify this to limit to the specified transaction ID.
+* successes: Process successful collections (0 or 1): optionally limit to successful or unsuccessful collections.
+
+*Note that we don't use the unsuccessful collections from the collection reports, as these are retrieved via ARUDD reports instead*
 
 #### Smartdebit.clearcache
 Delete mandates/collectionreports from local caches (CiviCRM database).
