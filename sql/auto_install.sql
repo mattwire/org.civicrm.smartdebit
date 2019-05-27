@@ -16,7 +16,6 @@ CREATE TABLE IF NOT EXISTS `veda_smartdebit` (
         `postcode`                  varchar(20),
         `first_collection_date`     varchar(100),
         `preferred_collection_day`  varchar(100),
-        `confirmation_method`       varchar(100),
         `ddi_reference`             varchar(100) NOT NULL,
         `response_status`           varchar(100),
         `response_raw`              longtext,

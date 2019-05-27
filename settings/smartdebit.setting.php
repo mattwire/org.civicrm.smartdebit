@@ -74,22 +74,6 @@ return array(
     'html_attributes' => array(),
   ),
 
-  // activity_type_letter
-  'smartdebit_activity_type_letter' => array(
-    'admin_group' => 'smartdebit_general',
-    'group_name' => 'Smart Debit Settings',
-    'group' => 'smartdebit',
-    'name' => 'smartdebit_activity_type_letter',
-    'type' => 'String',
-    'html_type' => 'Select',
-    'default' => 0,
-    'add' => '4.7',
-    'is_domain' => 1,
-    'is_contact' => 0,
-    'description' => 'Activity Type (Letter)',
-    'html_attributes' => array(),
-  ),
-
   // collection_interval
   'smartdebit_collection_interval' => array(
     'admin_group' => 'smartdebit_general',
@@ -211,40 +195,6 @@ return array(
     'is_contact' => 0,
     'default' => '',
     'description' => 'Mark initial contribution as completed (instead of pending)',
-    'html_type' => 'Checkbox',
-    'html_attributes' => array(
-    ),
-  ),
-
-  // Confirm by post
-  'smartdebit_confirmby_post' => array(
-    'admin_group' => 'smartdebit_general',
-    'group_name' => 'Smart Debit Settings',
-    'group' => 'smartdebit',
-    'name' => 'smartdebit_confirmby_post',
-    'type' => 'Boolean',
-    'add' => '4.7',
-    'is_domain' => 1,
-    'is_contact' => 0,
-    'default' => 1,
-    'description' => 'Allow payer to receive direct debit confirmation by post',
-    'html_type' => 'Checkbox',
-    'html_attributes' => array(
-    ),
-  ),
-
-  // Confirm by email
-  'smartdebit_confirmby_email' => array(
-    'admin_group' => 'smartdebit_general',
-    'group_name' => 'Smart Debit Settings',
-    'group' => 'smartdebit',
-    'name' => 'smartdebit_confirmby_email',
-    'type' => 'Boolean',
-    'add' => '4.7',
-    'is_domain' => 1,
-    'is_contact' => 0,
-    'default' => 1,
-    'description' => 'Allow payer to receive direct debit confirmation by email',
     'html_type' => 'Checkbox',
     'html_attributes' => array(
     ),

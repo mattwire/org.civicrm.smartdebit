@@ -156,12 +156,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
     if (count($collectionDaysArray) > 0) {
       $defaults['preferred_collection_day'] = CRM_Utils_Array::first(array_keys($collectionDaysArray));
     }
-
-    // Set default confirmby option
-    $confirmBy = CRM_Smartdebit_Base::getConfirmByOptions();
-    if (count($confirmBy) > 0) {
-      $defaults['confirmation_method'] = CRM_Utils_Array::first(array_keys($confirmBy));
-    }
     $form->setDefaults($defaults);
 
     // Add help and javascript
@@ -196,7 +190,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
       'entity_type' => 'contribution_recur',
       'first_collection_date' => $smartDebitParams['variable_ddi[start_date]'],
       'preferred_collection_day' => $params['preferred_collection_day'],
-      'confirmation_method' => $params['confirmation_method'],
       'ddi_reference' => $params['ddi_reference'],
       'response_status' => $response['message'],
     ];
@@ -286,7 +279,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
     return array(
       'payer_confirmation',
       'preferred_collection_day',
-      'confirmation_method',
       'account_holder',
       'bank_account_number',
       'bank_identification_number',
@@ -305,7 +297,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
   public function getPaymentFormFieldsMetadata() {
     // Get the collection days options
     $collectionDaysArray = CRM_Smartdebit_DateUtils::getCollectionDaysOptions();
-    $confirmBy = CRM_Smartdebit_Base::getConfirmByOptions();
 
     return array(
       'account_holder' => array(
@@ -352,14 +343,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
         'title' => E::ts('Preferred Collection Day'),
         'cc_field' => TRUE,
         'attributes' => $collectionDaysArray, // eg. array('1' => '1st', '8' => '8th', '21' => '21st'),
-        'is_required' => TRUE
-      ),
-      'confirmation_method' => array(
-        'htmlType' => (count($confirmBy) > 1) ? 'select' : 'hidden',
-        'name' => 'confirmation_method',
-        'title' => E::ts('Confirm By'),
-        'cc_field' => TRUE,
-        'attributes' => $confirmBy,
         'is_required' => TRUE
       ),
       'payer_confirmation' => array(
@@ -945,7 +928,6 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
     isset($direct_debit_response['postcode']) ? $sql .= "   , postcode                 = \"{$direct_debit_response['postcode']}\"" : NULL;
     isset($direct_debit_response['first_collection_date']) ? $sql .= "   , first_collection_date    = \"{$direct_debit_response['first_collection_date']}\"" : NULL;
     isset($direct_debit_response['preferred_collection_day']) ? $sql .= ", preferred_collection_day = \"{$direct_debit_response['preferred_collection_day']}\"" : NULL;
-    isset($direct_debit_response['confirmation_method']) ? $sql .= "     , confirmation_method      = \"{$direct_debit_response['confirmation_method']}\"" : NULL;
     isset($direct_debit_response['response_status']) ? $sql .= "         , response_status          = \"{$direct_debit_response['response_status']}\"" : NULL;
     isset($direct_debit_response['response_raw']) ? $sql .= "            , response_raw             = \"{$direct_debit_response['response_raw']}\"" : NULL;
     $sql .= " WHERE  ddi_reference           = \"{$direct_debit_response['ddi_reference']}\"";

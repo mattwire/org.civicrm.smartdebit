@@ -104,7 +104,6 @@ WHERE ddi_reference = '{$params['ddi_reference']}'
         $ddDetails['postcode'] = $dao->postcode;
         $ddDetails['first_collection_date'] = $dao->first_collection_date;
         $ddDetails['preferred_collection_day'] = $dao->preferred_collection_day;
-        $ddDetails['confirmation_method'] = $dao->confirmation_method;
         $ddDetails['ddi_reference'] = $dao->ddi_reference;
       }
     }
@@ -153,29 +152,6 @@ WHERE  ddi_reference = %0";
   }
 
   /**
-   * Function will return the possible confirm by options
-   *
-   * @return mixed
-   */
-  public static function getConfirmByOptions() {
-    $confirmBy['EMAIL'] = (boolean) CRM_Smartdebit_Settings::getValue('confirmby_email');
-    $confirmBy['POST'] = (boolean) CRM_Smartdebit_Settings::getValue('confirmby_post');
-    if (!empty($confirmBy['EMAIL'])) {
-      $confirmBy['EMAIL'] = 'Email';
-    }
-    else {
-      unset($confirmBy['EMAIL']);
-    }
-    if (!empty($confirmBy['POST'])) {
-      $confirmBy['POST'] = 'Post';
-    }
-    else {
-      unset($confirmBy['POST']);
-    }
-    return $confirmBy;
-  }
-
-  /**
    * Create a Direct Debit Sign Up Activity for contact
    *
    * @param $params
@@ -184,20 +160,6 @@ WHERE  ddi_reference = %0";
    * @throws \CiviCRM_API3_Exception
    */
   public static function createDDSignUpActivity($params) {
-    if ($params['confirmation_method'] == 'POST') {
-      $activityTypeLetterID = (int) CRM_Smartdebit_Settings::getValue('activity_type_letter');
-      $activityLetterParams = array(
-        'source_contact_id'  => $params['contactID'],
-        'target_contact_id'  => $params['contactID'],
-        'activity_type_id'   => $activityTypeLetterID,
-        'subject'            => sprintf("Direct Debit Confirmation Letter, Mandate ID : %s", $params['trxn_id']),
-        'activity_date_time' => date('YmdHis'),
-        'status_id'          => CRM_Core_PseudoConstant::getKey('CRM_Activity_DAO_Activity', 'activity_status_id', 'Scheduled'),
-      );
-
-      civicrm_api3( 'activity', 'create', $activityLetterParams);
-    }
-
     $activityTypeID = (int) CRM_Smartdebit_Settings::getValue('activity_type');
     $activityParams = array(
       'source_contact_id'  => $params['contactID'],
