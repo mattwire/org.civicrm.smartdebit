@@ -77,24 +77,6 @@ function smartdebit_civicrm_postInstall() {
     CRM_Smartdebit_Settings::save(['activity_type' => $activityTypeId]);
   }
 
-  // See if we already have this type
-  $ddActivity = civicrm_api3('OptionValue', 'get', [
-    'option_group_id' => "activity_type",
-    'name' => "DD Confirmation Letter",
-  ]);
-  if (empty($ddActivity['count'])) {
-    // Otherwise create it
-    $activityParams = [
-      'version' => '3'
-    , 'option_group_id' => "activity_type"
-    , 'name' => 'DD Confirmation Letter'
-    , 'description' => 'DD Confirmation Letter'
-    ];
-    $activityType = civicrm_api('OptionValue', 'Create', $activityParams);
-    $activityTypeId = $activityType['values'][$activityType['id']]['value'];
-    CRM_Smartdebit_Settings::save(['activity_type_letter' => $activityTypeId]);
-  }
-
   // Create an Direct Debit Payment Instrument
   $paymentInstrumentId = CRM_Core_Payment_Smartdebit::createPaymentInstrument(['name' => 'Direct Debit']);
   CRM_Smartdebit_Settings::save(['payment_instrument_id' => $paymentInstrumentId]);

@@ -53,7 +53,6 @@ class CRM_Smartdebit_Form_SettingsCustom extends CRM_Smartdebit_Form_Settings {
         );
         break;
       case 'activity_type':
-      case 'activity_type_letter':
         $form->addSelect($name,
           [
             'entity' => 'activity',
