@@ -82,18 +82,18 @@ class CRM_Smartdebit_Form_Confirm extends CRM_Core_Form {
 
     $redirectUrlBack = CRM_Utils_System::url('civicrm', 'reset=1');
 
-    $this->addButtons(array(
-        array(
+    $this->addButtons([
+        [
           'type' => 'cancel',
-          'js' => array('onclick' => "location.href='{$redirectUrlBack}'; return false;"),
+          'js' => ['onclick' => "location.href='{$redirectUrlBack}'; return false;"],
           'name' => ts('Cancel'),
-        ),
-        array(
+        ],
+        [
           'type' => 'submit',
           'name' => ts('Confirm'),
           'isDefault' => TRUE,
-        ),
-      )
+        ],
+      ]
     );
 
     CRM_Utils_System::setTitle(ts('Synchronise CiviCRM with Smart Debit'));

@@ -71,13 +71,15 @@ class CRM_Smartdebit_Form_ReconciliationFixConfirm extends CRM_Core_Form {
     $params = sprintf('cid=%d&mid=%d&cr_id=%d&reference_number=%s', $cid, $mid, $cr_id, $reference_number);
     $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/fix/select', $params, FALSE, NULL, FALSE);
 
-    $buttons[] = array(
+    $buttons[] = [
       'type' => 'back',
-      'js' => array('onclick' => "location.href='{$url}'; return false;"),
-      'name' => ts('Back'));
-    $buttons[] = array(
+      'js' => ['onclick' => "location.href='{$url}'; return false;"],
+      'name' => ts('Back')
+    ];
+    $buttons[] = [
       'type'      => 'submit',
-      'name'      => ts('Confirm'));
+      'name'      => ts('Confirm')
+    ];
     $this->addButtons($buttons);
 
     CRM_Utils_System::setTitle('Confirm changes to Contact');

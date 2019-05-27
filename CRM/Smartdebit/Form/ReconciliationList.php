@@ -62,11 +62,11 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
       $queryParams['sync'] = 1;
       $queryParams['reset'] = 1;
       $redirectUrlContinue  = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/list', $queryParams);
-      $buttons[] = array(
+      $buttons[] = [
         'type' => 'next',
-        'js' => array('onclick' => "location.href='{$redirectUrlContinue}'; return false;"),
+        'js' => ['onclick' => "location.href='{$redirectUrlContinue}'; return false;"],
         'name' => ts('Sync Now'),
-      );
+      ];
       $this->addButtons($buttons);
       return;
     }
@@ -82,7 +82,7 @@ class CRM_Smartdebit_Form_ReconciliationList extends CRM_Core_Form {
     $hasAmount = CRM_Utils_Array::value('hasAmount', $_GET);
     $hasContact = CRM_Utils_Array::value('hasContact', $_GET);
 
-    $listArray = array();
+    $listArray = [];
     $fixMeContact = FALSE;
     $totalRows = 0;
 
@@ -393,7 +393,7 @@ AND   csd.id IS NULL LIMIT 100";
    * @throws \CiviCRM_API3_Exception
    */
   public static function reconcileRecordWithCiviCRM($params) {
-    foreach (array('contact_id', 'payer_reference') as $required) {
+    foreach (['contact_id', 'payer_reference'] as $required) {
       if (empty($params[$required])) {
         throw new InvalidArgumentException("Missing params[$required]");
       }
@@ -479,26 +479,27 @@ AND   csd.id IS NULL LIMIT 100";
    * @throws \CiviCRM_API3_Exception
    */
   public static function linkMembershipToRecurContribution($params) {
-    foreach (array(
+    foreach ([
                'contact_id',
                'membership_id',
-               'contribution_recur_id') as $required) {
+               'contribution_recur_id'
+             ] as $required) {
 
       if (!isset($params[$required]) || empty($params[$required])) {
         throw new InvalidArgumentException("Missing params[$required]");
       }
     }
 
-    $membershipRecord = civicrm_api3('Membership', 'getsingle', array(
+    $membershipRecord = civicrm_api3('Membership', 'getsingle', [
       'id' => $params['membership_id'],
-    ));
+    ]);
 
-    return civicrm_api3('Membership', 'create', array(
+    return civicrm_api3('Membership', 'create', [
       'id' => $params['membership_id'],
       'contact_id' => $params['contact_id'],
       'contribution_recur_id' => $params['contribution_recur_id'],
       'membership_type_id' => $membershipRecord['membership_type_id'],
-    ));
+    ]);
   }
 
   /**
@@ -533,9 +534,9 @@ AND   csd.id IS NULL LIMIT 100";
    */
   private static function contributionExists($transactionId) {
     try {
-      $contribution = civicrm_api3('Contribution', 'getsingle', array(
+      $contribution = civicrm_api3('Contribution', 'getsingle', [
         'trxn_id' => $transactionId,
-      ));
+      ]);
       return $contribution;
     }
     catch (Exception $e) {

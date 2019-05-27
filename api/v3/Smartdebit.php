@@ -45,12 +45,12 @@ function civicrm_api3_smartdebit_sync($params) {
  * @return array
  */
 function civicrm_api3_smartdebit_updaterecurring($params) {
-  $params['trxn_id'] = CRM_Utils_Array::value('trxn_id', $params, array());
+  $params['trxn_id'] = CRM_Utils_Array::value('trxn_id', $params, []);
   if (isset($params['trxn_id']['IN'])) {
     $params['trxn_id'] = $params['trxn_id']['IN'];
   }
   elseif (!is_array($params['trxn_id'])) {
-    $params['trxn_id'] = array($params['trxn_id']);
+    $params['trxn_id'] = [$params['trxn_id']];
   }
   try {
     $stats = CRM_Smartdebit_Sync::updateRecurringContributions($params['trxn_id']);
@@ -77,7 +77,7 @@ function _civicrm_api3_smartdebit_updaterecurring_spec(&$spec) {
  */
 function civicrm_api3_smartdebit_retrievemandates($params) {
   $count = CRM_Smartdebit_Mandates::retrieveAll();
-  return array('count' => $count);
+  return ['count' => $count];
 }
 
 /**
@@ -102,7 +102,7 @@ function civicrm_api3_smartdebit_getmandates($params) {
     $mandates = empty($mandate) ? [] : [$mandate];
   }
 
-  return _civicrm_api3_basic_array_get('smartdebit', $params, $mandates, 'reference_number', array());
+  return _civicrm_api3_basic_array_get('smartdebit', $params, $mandates, 'reference_number', []);
 }
 
 function _civicrm_api3_smartdebit_getmandates_spec(&$spec) {
@@ -127,7 +127,7 @@ function _civicrm_api3_smartdebit_getmandates_spec(&$spec) {
  * @return array
  */
 function civicrm_api3_smartdebit_getmandatescount($params) {
-  return array('count' => CRM_Smartdebit_Mandates::count());
+  return ['count' => CRM_Smartdebit_Mandates::count()];
 }
 
 /**
@@ -155,7 +155,7 @@ function civicrm_api3_smartdebit_retrievecollectionreports($params) {
   else {
     $count = CRM_Smartdebit_CollectionReports::retrieveAll($params['collection_date'], $params['collection_period']);
   }
-  return array('count' => $count);
+  return ['count' => $count];
 }
 
 function _civicrm_api3_smartdebit_retrievecollectionreports_spec(&$spec) {
@@ -181,7 +181,7 @@ function _civicrm_api3_smartdebit_retrievecollectionreports_spec(&$spec) {
  * @return array
  */
 function civicrm_api3_smartdebit_getcollectionscount($params) {
-  return array('count' => CRM_Smartdebit_CollectionReports::count());
+  return ['count' => CRM_Smartdebit_CollectionReports::count()];
 }
 
 /**
@@ -196,7 +196,7 @@ function civicrm_api3_smartdebit_getcollections($params) {
     $params['limit'] = CRM_Utils_Array::value('limit', $params['options'], 0);
     $params['offset'] = CRM_Utils_Array::value('offset', $params['options'], 0);
   }
-  return array('reports' => CRM_Smartdebit_CollectionReports::get($params));
+  return ['reports' => CRM_Smartdebit_CollectionReports::get($params)];
 }
 
 function _civicrm_api3_smartdebit_getcollections_spec(&$spec) {
@@ -222,7 +222,7 @@ function civicrm_api3_smartdebit_processcollections($params) {
   foreach ($smartDebitPayments as $key => $sdPayment) {
     $contributionIds[] = CRM_Smartdebit_Sync::processCollection($sdPayment['transaction_id'], $sdPayment['receive_date'], $sdPayment['amount'], CRM_Smartdebit_CollectionReports::TYPE_COLLECTION);
   }
-  return array('Contribution IDs' => $contributionIds);
+  return ['Contribution IDs' => $contributionIds];
 }
 
 function _civicrm_api3_smartdebit_processcollections_spec(&$spec) {
@@ -239,7 +239,7 @@ function _civicrm_api3_smartdebit_processcollections_spec(&$spec) {
 }
 
 function civicrm_api3_smartdebit_clearcache($params) {
-  civicrm_api3_verify_mandatory($params, NULL, array(array('mandates', 'collections')));
+  civicrm_api3_verify_mandatory($params, NULL, [['mandates', 'collections']]);
 
   if (!empty($params['mandates'])) {
     CRM_Smartdebit_Mandates::delete();

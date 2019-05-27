@@ -19,7 +19,7 @@ class CRM_Smartdebit_CollectionReports {
    *
    * @return int Number of collection reports
    */
-  public static function count($params = array()) {
+  public static function count($params = []) {
     $sql = "SELECT count(*) FROM `" . self::TABLENAME . "`";
     $sql .= self::whereClause($params);
 
@@ -41,7 +41,7 @@ class CRM_Smartdebit_CollectionReports {
     $sql .= CRM_Smartdebit_Base::limitClause($params);
 
     $dao = CRM_Core_DAO::executeQuery($sql);
-    $collectionReports = array();
+    $collectionReports = [];
     while ($dao->fetch()) {
       $payment = $dao->toArray();
       $payment['receive_date'] = date('Y-m-d', strtotime($payment['receive_date']));
@@ -58,7 +58,7 @@ class CRM_Smartdebit_CollectionReports {
   public static function save($collections) {
     if (!empty($collections)) {
       foreach ($collections as $key => $value) {
-        $collectionValues = array(
+        $collectionValues = [
           'transaction_id' => '"' . CRM_Utils_Array::value('reference_number', $value) . '"',
           'contact' => '"' . CRM_Utils_Array::value('account_name', $value) . '"',
           'contact_id' => '"' . CRM_Utils_Array::value('customer_id', $value) . '"',
@@ -66,7 +66,7 @@ class CRM_Smartdebit_CollectionReports {
           'receive_date' => date('YmdHis', strtotime(str_replace('/', '-', CRM_Utils_Array::value('debit_date', $value)))),
           'error_message' => '"' . CRM_Utils_Array::value('error_message', $value) . '"',
           'success' => CRM_Utils_Array::value('success', $value),
-        );
+        ];
 
         $sql = "
 INSERT INTO " . self::TABLENAME . "
@@ -122,7 +122,7 @@ ON DUPLICATE KEY UPDATE
     $sql .= CRM_Smartdebit_Base::limitClause($params);
 
     $dao = CRM_Core_DAO::executeQuery($sql);
-    $collectionReports = array();
+    $collectionReports = [];
     while ($dao->fetch()) {
       $payment = $dao->toArray();
       $payment['collection_date'] = date('Y-m-d', strtotime($payment['collection_date']));
@@ -195,7 +195,7 @@ ON DUPLICATE KEY UPDATE
     $date->modify(CRM_Smartdebit_Settings::getValue('cr_cache'));
     $dateString = $date->format('Ymd') . '000000';
     $query = "DELETE FROM `" . self::TABLENAME . "` WHERE receive_date < %1";
-    $params = array(1 => array($dateString, 'String'));
+    $params = [1 => [$dateString, 'String']];
     CRM_Core_DAO::executeQuery($query, $params);
     return TRUE;
   }

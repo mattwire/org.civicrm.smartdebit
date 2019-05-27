@@ -13,7 +13,7 @@ class CRM_Smartdebit_SyncResults {
    *
    * @return int Number of collection reports
    */
-  public static function count($params = array()) {
+  public static function count($params = []) {
     $sql = "SELECT count(*) FROM `" . self::TABLENAME . "`";
     $sql .= self::whereClause($params);
 
@@ -35,7 +35,7 @@ class CRM_Smartdebit_SyncResults {
     $sql .= self::limitClause($params);
 
     $dao = CRM_Core_DAO::executeQuery($sql);
-    $syncResults = array();
+    $syncResults = [];
     while ($dao->fetch()) {
       $payment = $dao->toArray();
       $payment['receive_date'] = date('Y-m-d', strtotime($payment['receive_date']));

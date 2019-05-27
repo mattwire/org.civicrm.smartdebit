@@ -115,7 +115,7 @@ class CRM_Smartdebit_Auddis
 
     // Take action based upon the response status
     if ($responseArudd['success']) {
-      $aruddArray = array();
+      $aruddArray = [];
       // Cater for a single response
       if (isset($responseArudd['arudd'])) {
         $aruddArray = $responseArudd['arudd'];
@@ -136,8 +136,8 @@ class CRM_Smartdebit_Auddis
    */
   public function getAuddisDates()
   {
-    $auddisDates = array();
-    $processedAuddisDates = array();
+    $auddisDates = [];
+    $processedAuddisDates = [];
 
     if (($this->_auddisList) && isset($this->_auddisList['Status']) && ($this->_auddisList['Status'] == 'OK')) {
       // Get the auddis Dates from the Auddis Files
@@ -183,7 +183,7 @@ class CRM_Smartdebit_Auddis
         $unprocessed[] = $auddisDate;
       }
     }
-    return array($processed, $unprocessed);
+    return [$processed, $unprocessed];
   }
 
   /**
@@ -193,8 +193,8 @@ class CRM_Smartdebit_Auddis
    * @return bool True if successful, FALSE otherwise
    */
   public function getAruddDates() {
-    $aruddDates = array();
-    $processedAruddDates = array();
+    $aruddDates = [];
+    $processedAruddDates = [];
 
     // Get the arudd Dates from the Arudd Files
     if ($this->_aruddList) {
@@ -239,7 +239,7 @@ class CRM_Smartdebit_Auddis
         $unprocessed[] = $aruddDate;
       }
     }
-    return array($processed, $unprocessed);
+    return [$processed, $unprocessed];
   }
 
   /**
@@ -250,7 +250,7 @@ class CRM_Smartdebit_Auddis
    * @return array
    */
   public function getAuddisIdsForProcessing($auddisDates = NULL) {
-    $auddisIDs = array();
+    $auddisIDs = [];
 
     if (!isset($auddisDates)) {
       $auddisDates = $this->_auddisDatesList;
@@ -288,7 +288,7 @@ class CRM_Smartdebit_Auddis
    * @return array
    */
   public function getAruddIdsForProcessing($aruddDates = NULL) {
-    $aruddIDs = array();
+    $aruddIDs = [];
 
     if (!isset($aruddDates)) {
       $aruddDates = $this->_aruddDatesList;
@@ -399,12 +399,12 @@ class CRM_Smartdebit_Auddis
         $sql = "
 INSERT INTO `veda_smartdebit_auddis`(`id`,`date`,`type`,`processed`) 
 VALUES (%1,%2,%3,%4)";
-        $params = array(
-          1 => array((integer)$auddis['auddis_id'], 'Integer'),
-          2 => array(CRM_Utils_Date::processDate($auddis['report_generation_date'], NULL, FALSE, 'Ymd'), 'Date'),
-          3 => array(0, 'Integer'),
-          4 => array(0, 'Boolean'),
-        );
+        $params = [
+          1 => [(integer)$auddis['auddis_id'], 'Integer'],
+          2 => [CRM_Utils_Date::processDate($auddis['report_generation_date'], NULL, FALSE, 'Ymd'), 'Date'],
+          3 => [0, 'Integer'],
+          4 => [0, 'Boolean'],
+        ];
         CRM_Core_DAO::executeQuery($sql, $params);
         return TRUE;
       }
@@ -441,12 +441,12 @@ VALUES (%1,%2,%3,%4)";
         $sql = "
 INSERT INTO `veda_smartdebit_auddis`(`id`,`date`,`type`,`processed`) 
 VALUES (%1,%2,%3,%4)";
-        $params = array(
-          1 => array((integer)$arudd['arudd_id'], 'Integer'),
-          2 => array(CRM_Utils_Date::processDate($arudd['current_processing_date'], NULL, FALSE, 'Ymd'), 'Date'),
-          3 => array(1, 'Integer'),
-          4 => array(0, 'Boolean'),
-        );
+        $params = [
+          1 => [(integer)$arudd['arudd_id'], 'Integer'],
+          2 => [CRM_Utils_Date::processDate($arudd['current_processing_date'], NULL, FALSE, 'Ymd'), 'Date'],
+          3 => [1, 'Integer'],
+          4 => [0, 'Boolean'],
+        ];
         CRM_Core_DAO::executeQuery($sql, $params);
         return TRUE;
       }

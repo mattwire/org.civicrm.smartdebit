@@ -23,9 +23,9 @@
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +-------------------------------------------------------------------*/
 
-return array(
+return [
   // payment_instrument_id
-  'smartdebit_payment_instrument_id' => array(
+  'smartdebit_payment_instrument_id' => [
     'admin_group' => 'smartdebit_general',
     'admin_grouptitle' => 'General Settings',
     'admin_groupdescription' => 'Check the description for each setting and make sure it is configured correctly.',
@@ -39,11 +39,11 @@ return array(
     'is_domain' => 1,
     'is_contact' => 0,
     'description' => 'Payment Method',
-    'html_attributes' => array(),
-  ),
+    'html_attributes' => [],
+  ],
 
   // financial_type
-  'smartdebit_financial_type' => array(
+  'smartdebit_financial_type' => [
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -55,11 +55,11 @@ return array(
     'is_domain' => 1,
     'is_contact' => 0,
     'description' => 'Default Financial Type',
-    'html_attributes' => array(),
-  ),
+    'html_attributes' => [],
+  ],
 
   // activity_type
-  'smartdebit_activity_type' => array(
+  'smartdebit_activity_type' => [
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -71,11 +71,11 @@ return array(
     'is_domain' => 1,
     'is_contact' => 0,
     'description' => 'Activity Type (Sign Up)',
-    'html_attributes' => array(),
-  ),
+    'html_attributes' => [],
+  ],
 
   // collection_interval
-  'smartdebit_collection_interval' => array(
+  'smartdebit_collection_interval' => [
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -87,13 +87,13 @@ return array(
     'is_contact' => 0,
     'description' => 'Collection Interval',
     'html_type' => 'Text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => 50,
-    ),
-  ),
+    ],
+  ],
 
   // collection_days
-  'smartdebit_collection_days' => array(
+  'smartdebit_collection_days' => [
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -105,13 +105,13 @@ return array(
     'default' => '1,20',
     'description' => 'Collection Days',
     'html_type' => 'Text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => 50,
-    ),
-  ),
+    ],
+  ],
 
   // Advance notice period
-  'smartdebit_notice_period' => array(
+  'smartdebit_notice_period' => [
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -123,13 +123,13 @@ return array(
     'is_contact' => 0,
     'description' => 'Advance Notice Period of changes (days)',
     'html_type' => 'Text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => 50,
-    ),
-  ),
+    ],
+  ],
 
   // service_user_number
-  'smartdebit_service_user_number' => array(
+  'smartdebit_service_user_number' => [
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -141,14 +141,14 @@ return array(
     'is_contact' => 0,
     'description' => 'Service User Number (SUN)',
     'html_type' => 'Text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => 50,
-    ),
-  ),
+    ],
+  ],
 
 
   // service_user_number
-  'smartdebit_service_user_name' => array(
+  'smartdebit_service_user_name' => [
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -160,13 +160,13 @@ return array(
     'is_contact' => 0,
     'description' => 'Service User (Organisation) Name (Optional)',
     'html_type' => 'Text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => 50,
-    ),
-  ),
+    ],
+  ],
 
   // transaction_prefix
-  'smartdebit_transaction_prefix' => array(
+  'smartdebit_transaction_prefix' => [
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -178,13 +178,13 @@ return array(
     'default' => '',
     'description' => 'Transaction Prefix',
     'html_type' => 'Text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => 50,
-    ),
-  ),
+    ],
+  ],
 
   // initial_completed
-  'smartdebit_initial_completed' => array(
+  'smartdebit_initial_completed' => [
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -196,12 +196,12 @@ return array(
     'default' => '',
     'description' => 'Mark initial contribution as completed (instead of pending)',
     'html_type' => 'Checkbox',
-    'html_attributes' => array(
-    ),
-  ),
+    'html_attributes' => [
+    ],
+  ],
 
   // Debug mode
-  'smartdebit_debug' => array(
+  'smartdebit_debug' => [
     'admin_group' => 'smartdebit_debug',
     'admin_grouptitle' => 'Debug Settings',
     'admin_groupdescription' => 'Settings that can be used for debugging.',
@@ -215,12 +215,12 @@ return array(
     'default' => 0,
     'description' => 'Enable debugging to log',
     'html_type' => 'Checkbox',
-    'html_attributes' => array(
-    ),
-  ),
+    'html_attributes' => [
+    ],
+  ],
 
   // Collection report cache retention period
-  'smartdebit_cr_cache' => array(
+  'smartdebit_cr_cache' => [
     'admin_group' => 'smartdebit_general',
     'group_name' => 'Smart Debit Settings',
     'group' => 'smartdebit',
@@ -232,8 +232,8 @@ return array(
     'default' => '-1 year',
     'description' => 'Collection Report Cache Retention Period',
     'html_type' => 'Text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => 50,
-    ),
-  ),
-);
+    ],
+  ],
+];

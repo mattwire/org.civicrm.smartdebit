@@ -30,12 +30,13 @@ class CRM_Smartdebit_DateUtilsTest extends \PHPUnit_Framework_TestCase implement
     // Civi\Test has many helpers, like install(), uninstall(), sql(), and sqlFile().
     // See: https://github.com/civicrm/org.civicrm.testapalooza/blob/master/civi-test.md
     return \Civi\Test::headless()
-      ->install(array('org.civicrm.paymentlib','org.civicrm.smartdebit'))
+      ->install(['org.civicrm.smartdebit'])
       ->apply();
   }
 
   public function setUp() {
     parent::setUp();
+    $this->setUpHeadless();
     $this->smartdebitPaymentProcessorCreate();
   }
 

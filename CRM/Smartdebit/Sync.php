@@ -48,11 +48,11 @@ class CRM_Smartdebit_Sync
    */
   public static function getRunner($interactive=TRUE, $auddisIDs = NULL, $aruddIDs = NULL) {
     // Setup the Queue
-    $queue = CRM_Queue_Service::singleton()->create(array(
+    $queue = CRM_Queue_Service::singleton()->create([
       'name'  => self::QUEUE_NAME,
       'type'  => 'Sql',
       'reset' => TRUE,
-    ));
+    ]);
 
     // Clear out the results table
     CRM_Smartdebit_SyncResults::delete();
@@ -77,8 +77,8 @@ class CRM_Smartdebit_Sync
         $end = $count;
       }
       $task = new CRM_Queue_Task(
-        array('CRM_Smartdebit_Sync', 'syncSmartdebitCollectionReports'),
-        array($start, self::BATCH_COUNT),
+        ['CRM_Smartdebit_Sync', 'syncSmartdebitCollectionReports'],
+        [$start, self::BATCH_COUNT],
         "Processed Smartdebit collections: {$start} to {$end} of {$count}"
       );
 
@@ -102,8 +102,8 @@ class CRM_Smartdebit_Sync
     }
     if (!empty($auddisIDs)) {
       $task = new CRM_Queue_Task(
-        array('CRM_Smartdebit_Sync', 'syncSmartdebitAuddis'),
-        array($auddisIDs),
+        ['CRM_Smartdebit_Sync', 'syncSmartdebitAuddis'],
+        [$auddisIDs],
         "Retrieved AUDDIS reports from Smartdebit"
       );
       $queue->createItem($task);
@@ -121,26 +121,26 @@ class CRM_Smartdebit_Sync
     }
     if (!empty($aruddIDs)) {
       $task = new CRM_Queue_Task(
-        array('CRM_Smartdebit_Sync', 'syncSmartdebitArudd'),
-        array($aruddIDs),
+        ['CRM_Smartdebit_Sync', 'syncSmartdebitArudd'],
+        [$aruddIDs],
         "Retrieved ARUDD reports from Smartdebit"
       );
       $queue->createItem($task);
     }
 
     $task = new CRM_Queue_Task(
-      array('CRM_Smartdebit_CollectionReports', 'removeOld'),
-      array(),
+      ['CRM_Smartdebit_CollectionReports', 'removeOld'],
+      [],
       'Cleaned up'
     );
     $queue->createItem($task);
 
     // Setup the Runner
-    $runnerParams = array(
+    $runnerParams = [
       'title' => ts('Import From Smart Debit'),
       'queue' => $queue,
       'errorMode'=> CRM_Queue_Runner::ERROR_ABORT,
-    );
+    ];
     if ($interactive) {
       $runnerParams['onEndUrl'] = CRM_Utils_System::url(self::END_URL, self::END_PARAMS, TRUE, NULL, FALSE);
     }
@@ -303,9 +303,9 @@ class CRM_Smartdebit_Sync
 
     // Get existing recurring contribution
     try {
-      $contributionRecur = civicrm_api3('ContributionRecur', 'getsingle', array(
+      $contributionRecur = civicrm_api3('ContributionRecur', 'getsingle', [
         'trxn_id' => $trxnId,
-      ));
+      ]);
     } catch (Exception $e) {
       Civi::log()->debug('Smartdebit processCollection: Not Matched=' . $trxnId);
       return FALSE;
@@ -347,9 +347,9 @@ class CRM_Smartdebit_Sync
     $contributeParams['source'] = $collectionDescription;
     try {
       // Try to get description for contribution from membership
-      $membership = civicrm_api3('Membership', 'getsingle', array(
+      $membership = civicrm_api3('Membership', 'getsingle', [
         'contribution_recur_id' => $contributionRecur['id'],
-      ));
+      ]);
       if (!empty($membership['source'])) {
         $contributeParams['source'] = $collectionDescription . ' ' . $membership['source'];
       }
@@ -414,7 +414,7 @@ class CRM_Smartdebit_Sync
     if ($contributeResult) {
       // Get recurring contribution ID
       // get contact display name to display in result screen
-      $contactResult = civicrm_api3('Contact', 'getsingle', array('id' => $contributionRecur['contact_id']));
+      $contactResult = civicrm_api3('Contact', 'getsingle', ['id' => $contributionRecur['contact_id']]);
 
       // Update Recurring contribution to "In Progress"
       $contributionRecur['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'In Progress');
@@ -526,7 +526,7 @@ class CRM_Smartdebit_Sync
    */
   private static function processAuddisFile($auddisId, $auddisFile, $collectionType) {
     $errors = FALSE;
-    $rejectedIds = array();
+    $rejectedIds = [];
 
     switch ($collectionType) {
       case CRM_Smartdebit_CollectionReports::TYPE_AUDDIS:
@@ -569,25 +569,25 @@ class CRM_Smartdebit_Sync
       if ($contributionId) {
         // Look for an existing contribution
         try {
-          $existingContribution = civicrm_api3('Contribution', 'getsingle', array(
-            'return' => array("id"),
+          $existingContribution = civicrm_api3('Contribution', 'getsingle', [
+            'return' => ["id"],
             'id' => $contributionId,
-          ));
+          ]);
         } catch (Exception $e) {
           return FALSE;
         }
 
         // get contact display name to display in result screen
-        $contactParams = array('id' => $existingContribution['contact_id']);
+        $contactParams = ['id' => $existingContribution['contact_id']];
         $contactResult = civicrm_api3('Contact', 'getsingle', $contactParams);
 
-        $rejectedIds[$contributionId] = array(
+        $rejectedIds[$contributionId] = [
           'cid' => $existingContribution['contact_id'],
           'id' => $contributionId,
           'display_name' => $contactResult['display_name'],
           'total_amount' => CRM_Utils_Money::format($existingContribution['total_amount']),
           'trxn_id' => $value[$refKey],
-        );
+        ];
 
         // Allow AUDDIS rejected contribution to be handled by hook
         CRM_Smartdebit_Hook::handleAuddisRejectedContribution($contributionId);
@@ -617,7 +617,7 @@ class CRM_Smartdebit_Sync
   private static function checkIfFirstPayment($newContribution, $contributionRecur) {
     if (empty($newContribution['contribution_recur_id'])) {
       if (CRM_Smartdebit_Settings::getValue('debug')) { Civi::log()->debug('Smartdebit checkIfFirstPayment: No recur_id'); }
-      return array(FALSE, NULL);
+      return [FALSE, NULL];
     }
     if (empty($contributionRecur['frequency_unit'])) {
       $contributionRecur['frequency_unit'] = 'year';
@@ -626,11 +626,11 @@ class CRM_Smartdebit_Sync
       $contributionRecur['frequency_interval'] = 1;
     }
 
-    $contributionResult = civicrm_api3('Contribution', 'get', array(
+    $contributionResult = civicrm_api3('Contribution', 'get', [
       'options' => ['limit' => 0, 'sort' => "receive_date DESC"],
       'contribution_recur_id' => $newContribution['contribution_recur_id'],
       'return' => ["id", "contribution_status_id", "trxn_id", "receive_date"],
-    ));
+    ]);
 
     // We have only one contribution for the recurring record
     if ($contributionResult['count'] > 0) {
@@ -644,7 +644,7 @@ class CRM_Smartdebit_Sync
           if (CRM_Smartdebit_Settings::getValue('debug')) {
             Civi::log()->debug('Smartdebit checkIfFirstPayment: Identical-Using existing contribution');
           }
-          return array(TRUE, $newContribution);
+          return [TRUE, $newContribution];
         }
       }
 
@@ -661,7 +661,7 @@ class CRM_Smartdebit_Sync
             // Assign the id of the most recent contribution, we need this as a template to repeat the transaction
             $newContribution['id'] = $contributionDetails['id'];
             $newContribution['contribution_status_id'] = $contributionDetails['contribution_status_id'];
-            return array(FALSE, $newContribution);
+            return [FALSE, $newContribution];
           }
         }
       }
@@ -679,12 +679,12 @@ class CRM_Smartdebit_Sync
           // Assign the id of the most recent contribution, we need this as a template to repeat the transaction
           $newContribution['id'] = $contributionDetails['id'];
           $newContribution['contribution_status_id'] = $contributionDetails['contribution_status_id'];
-          return array(TRUE, $newContribution);
+          return [TRUE, $newContribution];
         }
       }
     }
     // If no contributions linked to recur, it must be the first contribution!
-    return array(TRUE, $newContribution);
+    return [TRUE, $newContribution];
   }
 
   /**
@@ -748,9 +748,9 @@ class CRM_Smartdebit_Sync
   public static function updateRecur($smartDebitMandate, $nextPaymentDate = NULL) {
     // Get the recurring contribution that is linked to the Smartdebit mandate
     try {
-      $recurContribution = civicrm_api3('ContributionRecur', 'getsingle', array(
+      $recurContribution = civicrm_api3('ContributionRecur', 'getsingle', [
         'trxn_id' => $smartDebitMandate['reference_number'],
-      ));
+      ]);
     }
     catch (CiviCRM_API3_Exception $e) {
       // Recurring contribution with transaction ID does not exist

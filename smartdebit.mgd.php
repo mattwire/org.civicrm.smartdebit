@@ -28,11 +28,11 @@
  * database as appropriate. For more details, see "hook_civicrm_managed" at:
  * http://wiki.civicrm.org/confluence/display/CRMDOC/Hook+Reference
  */
-return array(
-  0 => array(
+return [
+  0 => [
     'name' => 'SmartDebit',
     'entity' => 'payment_processor_type',
-    'params' => array(
+    'params' => [
       'version' => 3,
       'title' => 'Smart Debit',
       'name' => 'Smart_Debit',
@@ -50,13 +50,13 @@ return array(
       'billing_mode' => 1, // 1=form
       'payment_type' => 1, // 1=Credit Card
       'is_recur' => 1,
-    ),
-  ),
-  1 => array (
+    ],
+  ],
+  1 => [
     'name' => 'Cron:SmartDebit.syncFromSmartDebit',
     'entity' => 'Job',
     'update' => 'never',
-    'params' => array (
+    'params' => [
       'version' => 3,
       'name' => 'Sync from Smart Debit',
       'description' => 'Sync mandates, payments, AUDDIS reports, ARUDD reports from SmartDebit to CiviCRM.',
@@ -64,6 +64,6 @@ return array(
       'api_entity' => 'Job',
       'api_action' => 'process_smartdebit',
       'parameters' => '',
-    ),
-  ),
-);
+    ],
+  ],
+];

@@ -44,8 +44,8 @@ class CRM_Smartdebit_Form_Auddis extends CRM_Core_Form {
     $aruddIDs = array_filter(explode(',', urldecode(CRM_Utils_Request::retrieve('aruddID', 'String', $this, false))));
 
     // Display the rejected payments
-    $newAuddisRecords = array();
-    $rejectedIds = array();
+    $newAuddisRecords = [];
+    $rejectedIds = [];
     $counts['auddis'] = 0;
     $counts['auddis_matched'] = 0;
     $counts['auddis_amount'] = 0;
@@ -61,7 +61,7 @@ LEFT JOIN civicrm_contact contact ON (ctrc.contact_id = contact.id)
 WHERE ctrc.trxn_id = %1
           ";
 
-          $params = array(1 => array($value['reference'], 'String'));
+          $params = [1 => [$value['reference'], 'String']];
           $dao = CRM_Core_DAO::executeQuery($sql, $params);
           $rejectedIds[] = "'" . $value['reference'] . "' ";
 
@@ -95,7 +95,7 @@ WHERE ctrc.trxn_id = %1
       'total' => $counts['auddis_amount'],
     ];
 
-    $newAruddRecords = array();
+    $newAruddRecords = [];
     $counts['arudd'] = 0;
     $counts['arudd_matched'] = 0;
     $counts['arudd_amount'] = 0;
@@ -112,7 +112,7 @@ LEFT JOIN civicrm_contact contact ON (ctrc.contact_id = contact.id)
 WHERE ctrc.trxn_id = %1
           ";
 
-          $params = array(1 => array($value['ref'], 'String'));
+          $params = [1 => [$value['ref'], 'String']];
           $dao = CRM_Core_DAO::executeQuery($sql, $params);
           $rejectedIds[] = "'" . $value['ref'] . "' ";
           if ($dao->fetch()) {
@@ -138,10 +138,10 @@ WHERE ctrc.trxn_id = %1
       'total' => $counts['arudd_amount'],
     ];
 
-    $listArray = array();
+    $listArray = [];
     // Display the valid payments
     $contributionTrxnIdsList = "'dummyId'";
-    $sdTrxnIds = array();
+    $sdTrxnIds = [];
     $selectQuery = "SELECT `transaction_id` as trxn_id, receive_date as receive_date FROM `" . CRM_Smartdebit_CollectionReports::TABLENAME . "`";
     $dao = CRM_Core_DAO::executeQuery($selectQuery);
     while ($dao->fetch()) {
@@ -156,9 +156,9 @@ WHERE ctrc.trxn_id = %1
         WHERE cc.`trxn_id` IN ( $contributionTrxnIdsList )";
 
     $dao = CRM_Core_DAO::executeQuery($contributionQuery);
-    $recurTransactionIds = array();
-    $matchTrxnIds = array();
-    $missingArray = array();
+    $recurTransactionIds = [];
+    $matchTrxnIds = [];
+    $missingArray = [];
     while ($dao->fetch()) {
       $recurTransactionIds[] = "'" . trim($dao->ctrc_trxn_id) . "' "; //MV: trim the whitespaces and match the transaction_id.
     }
@@ -183,7 +183,7 @@ WHERE ctrc.trxn_id IN ($validIdsString)
 
       while ($dao->fetch()) {
         $matchTrxnIds[] = "'" . trim($dao->trxn_id) . "' ";
-        $params = array(
+        $params = [
           'contribution_recur_id' => $dao->contribution_recur_id,
           'contact_id' => $dao->contact_id,
           'contact_name' => $dao->display_name,
@@ -192,7 +192,7 @@ WHERE ctrc.trxn_id IN ($validIdsString)
           'amount' => $dao->sd_amount,
           'contribution_status_id' => $dao->contribution_status_id,
           'transaction_id' => $dao->trxn_id,
-        );
+        ];
 
         $listArray[$counts['contribution_matched']] = $params;
         $counts['contribution_matched']++;
@@ -209,7 +209,7 @@ INNER JOIN civicrm_contact contact ON (cc.contact_id = contact.id)
 WHERE cc.`trxn_id` IN ( $contributionTrxnIdsList )
     ";
     $dao = CRM_Core_DAO::executeQuery($contributionQuery);
-    $existArray = array();
+    $existArray = [];
     $counts['contribution_existing'] = 0;
     $counts['contribution_existing_amount'] = 0;
 
@@ -260,19 +260,19 @@ WHERE cc.`trxn_id` IN ( $contributionTrxnIdsList )
     $bQueryParams['reset'] = 1;
 
     $redirectUrlBack = CRM_Utils_System::url('civicrm/smartdebit/syncsd/select', $bQueryParams);
-    $buttons[] = array(
+    $buttons[] = [
       'type' => 'back',
-      'js' => array('onclick' => "location.href='{$redirectUrlBack}'; return false;"),
+      'js' => ['onclick' => "location.href='{$redirectUrlBack}'; return false;"],
       'name' => ts('Back'),
-    );
+    ];
 
     // Show next button to perform sync
     $redirectUrlContinue  = CRM_Utils_System::url('civicrm/smartdebit/syncsd/confirm', $queryParams);
-    $buttons[] = array(
+    $buttons[] = [
       'type' => 'next',
-      'js' => array('onclick' => "location.href='{$redirectUrlContinue}'; return false;"),
+      'js' => ['onclick' => "location.href='{$redirectUrlContinue}'; return false;"],
       'name' => ts('Continue'),
-    );
+    ];
 
     $this->addButtons($buttons);
     CRM_Utils_System::setTitle(ts('Synchronise CiviCRM with Smart Debit'));

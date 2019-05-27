@@ -37,7 +37,7 @@ class CRM_Smartdebit_Page_AJAX
     }
     $membershipList = CRM_Smartdebit_Utils::getContactMemberships($selectedContact);
     $cRecur = CRM_Smartdebit_Utils::getContactRecurringContributions($selectedContact);
-    $nullMembership = array( 0 => 'No Membership Found');
+    $nullMembership = [0 => 'No Membership Found'];
     $options['membership'] = $membershipList ? $membershipList : $nullMembership;
     $options['cRecur'] = $cRecur;
     echo json_encode($options);
@@ -51,13 +51,13 @@ class CRM_Smartdebit_Page_AJAX
     $selectedContact = CRM_Utils_Array::value('selectedContact', $_POST);
 
     // Get contact memberships
-    $mParams = array(
+    $mParams = [
       'version'     => 3,
       'sequential'  => 1,
       'contact_id' => $selectedContact
-    );
+    ];
     $aMembership = civicrm_api('Membership', 'get', $mParams);
-    $membershipWithRecur = array();
+    $membershipWithRecur = [];
     // Filter memberships that have linked recurring contributions
     foreach ($aMembership['values'] as $membership ) {
       if (!empty($membership['contribution_recur_id'])) {

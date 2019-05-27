@@ -36,31 +36,31 @@ class CRM_Smartdebit_Form_SettingsCustom extends CRM_Smartdebit_Form_Settings {
     switch ($name) {
       case 'payment_instrument_id':
         $form->addSelect($name,
-          array(
+          [
             'entity' => 'contribution',
             'label' => $setting['description'],
             'placeholder'  => NULL,
-          )
+          ]
         );
         break;
       case 'financial_type':
         $form->addSelect($name,
-          array(
+          [
             'entity' => 'contribution',
             'label' => $setting['description'],
             'placeholder'  => NULL,
-          )
+          ]
         );
         break;
       case 'activity_type':
       case 'activity_type_letter':
         $form->addSelect($name,
-          array(
+          [
             'entity' => 'activity',
             'label' => $setting['description'],
             'field' => 'activity_type_id',
             'placeholder'  => NULL,
-          )
+          ]
         );
         break;
     }

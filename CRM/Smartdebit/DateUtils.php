@@ -97,7 +97,7 @@ class CRM_Smartdebit_DateUtils {
    * @return string
    */
   public static function formatPreferredCollectionDay($collectionDay) {
-    $ends = array( 'th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th');
+    $ends = ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'];
     if ((($collectionDay%100) >= 11) && (($collectionDay%100) <= 13)) {
       $abbreviation = $collectionDay . 'th';
     }
@@ -126,8 +126,8 @@ class CRM_Smartdebit_DateUtils {
 
     // Split the array
     $tempCollectionDaysArray  = explode(',', $collectionDays);
-    $earlyCollectionDaysArray = array();
-    $lateCollectionDaysArray  = array();
+    $earlyCollectionDaysArray = [];
+    $lateCollectionDaysArray  = [];
 
     // Build 2 arrays around next collection date
     foreach($tempCollectionDaysArray as $key => $value){
@@ -142,7 +142,7 @@ class CRM_Smartdebit_DateUtils {
     $allCollectionDays = array_merge($earlyCollectionDaysArray, $lateCollectionDaysArray);
 
     // Loop through and format each label
-    $collectionDaysArray = array();
+    $collectionDaysArray = [];
     foreach ($allCollectionDays as $key => $value) {
       if ($formatted) {
         $collectionDaysArray[$value] = self::formatPreferredCollectionDay($value);
@@ -183,7 +183,7 @@ class CRM_Smartdebit_DateUtils {
         $unit = 'year';
         $interval = $sdFrequencyFactor;
     }
-    return array ($unit, $interval);
+    return [$unit, $interval];
   }
 
   /**

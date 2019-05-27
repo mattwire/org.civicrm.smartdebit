@@ -50,30 +50,32 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
     $this->addElement( 'select'
       , 'membership_record'
       , ts('Membership')
-      , array( '' => ts('Loading...'))
+      , ['' => ts('Loading...')]
     );
 
     $this->addElement( 'select'
       , 'contribution_recur_record'
       , ts('Recurring Contribution')
-      , array( '' => ts('Loading...'))
+      , ['' => ts('Loading...')]
     );
 
-    $this->addEntityRef('contact_name', ts('Contact'), array(
+    $this->addEntityRef('contact_name', ts('Contact'), [
       'create' => FALSE,
-      'api' => array('extra' => array('email')),
-    ));
+      'api' => ['extra' => ['email']],
+    ]);
 
     $this->addElement('hidden', 'cid', $cid);
-    $this->addElement('text', 'reference_number', 'Smart Debit Reference', array('size' => 50, 'maxlength' => 255));
+    $this->addElement('text', 'reference_number', 'Smart Debit Reference', ['size' => 50, 'maxlength' => 255]);
     $url = CRM_Utils_System::url(CRM_Smartdebit_Utils::$reconcileUrl . '/list', 'reset=1');
-    $buttons[] = array(
+    $buttons[] = [
       'type' => 'back',
-      'js' => array('onclick' => "location.href='{$url}'; return false;"),
-      'name' => ts('Back'));
-    $buttons[] = array(
+      'js' => ['onclick' => "location.href='{$url}'; return false;"],
+      'name' => ts('Back')
+    ];
+    $buttons[] = [
       'type' => 'next',
-      'name' => ts('Continue'));
+      'name' => ts('Continue')
+    ];
     $this->addButtons($buttons);
 
     // Get the smart Debit mandate details
@@ -84,20 +86,20 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
     }
 
     // Display the smart debit payments details
-    $el = $this->addElement('text', 'first_name', 'First Name', array('size' => 50, 'maxlength' => 255));
+    $el = $this->addElement('text', 'first_name', 'First Name', ['size' => 50, 'maxlength' => 255]);
     $el->freeze();
-    $el = $this->addElement('text', 'last_name', 'Last Name',array('size' => 50, 'maxlength' => 255));
+    $el = $this->addElement('text', 'last_name', 'Last Name', ['size' => 50, 'maxlength' => 255]);
     $el->freeze();
-    $el = $this->addElement('text', 'email_address', 'Email Address', array('size' => 50, 'maxlength' => 255));
+    $el = $this->addElement('text', 'email_address', 'Email Address', ['size' => 50, 'maxlength' => 255]);
     $el->freeze();
-    $el = $this->addElement('text', 'default_amount', 'Amount', array('size' => 50, 'maxlength' => 255));
+    $el = $this->addElement('text', 'default_amount', 'Amount', ['size' => 50, 'maxlength' => 255]);
     $el->freeze();
-    $el = $this->addElement('text', 'start_date', 'Start Date', array('size' => 50, 'maxlength' => 255));
+    $el = $this->addElement('text', 'start_date', 'Start Date', ['size' => 50, 'maxlength' => 255]);
     $el->freeze();
 
     $this->assign( 'memStatusCurrent', self::c_current_membership_status ); //MV, to set the current membership as default, when ajax loading
     $this->assign('cid', $cid);
-    $this->addFormRule(array('CRM_Smartdebit_Form_ReconciliationFixSelect', 'formRule'), $this);
+    $this->addFormRule(['CRM_Smartdebit_Form_ReconciliationFixSelect', 'formRule'], $this);
 
     CRM_Utils_System::setTitle('Select Contact Membership and Recurring Contribution');
 
@@ -105,7 +107,7 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
   }
 
   public function formRule($params) {
-    $errors = array();
+    $errors = [];
     // Check end date greater than start date
     if (empty($params['cid'])) {
       $errors['contact_name'] = 'Contact Not Matched In CiviCRM';
@@ -124,7 +126,7 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
    * @return array
    */
   public function setDefaultValues() {
-    $defaults = array();
+    $defaults = [];
     $defaults['reference_number'] = CRM_Utils_Array::value('reference_number', $_GET);
     $defaults['cid']              = CRM_Utils_Array::value('cid', $_GET);
     $defaults['mid']              = CRM_Utils_Array::value('mid', $_GET);

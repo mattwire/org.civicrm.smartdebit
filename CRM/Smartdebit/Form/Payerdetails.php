@@ -43,17 +43,18 @@ class CRM_Smartdebit_Form_Payerdetails extends CRM_Core_Form {
     $smartDebitDetails = self::formatDetails($smartDebitResponse);
 
     foreach ($smartDebitDetails as $key => $value) {
-      $smartDebitDisplay[] = array('label' => $key, 'text' => $value);
+      $smartDebitDisplay[] = ['label' => $key, 'text' => $value];
     }
 
     $this->assign('transactionId', $reference_number);
     $this->assign('smartDebitDetails', $smartDebitDisplay);
 
     $url = $_SERVER['HTTP_REFERER'];
-    $buttons[] = array(
+    $buttons[] = [
       'type' => 'back',
-      'js' => array('onclick' => "location.href='{$url}'; return false;"),
-      'name' => ts('Back'));
+      'js' => ['onclick' => "location.href='{$url}'; return false;"],
+      'name' => ts('Back')
+    ];
     $this->addButtons($buttons);
 
     parent::buildQuickForm();

@@ -85,7 +85,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    */
   public function checkConfig()
   {
-    $error = array();
+    $error = [];
 
     if (empty($this->_paymentProcessor['user_name'])) {
       $error[] = E::ts('The "username" is not set in the Smart Debit Payment Processor settings.');
@@ -121,7 +121,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
     if (empty($params['id'])) {
       $paymentProcessorTypeId = CRM_Core_PseudoConstant::getKey('CRM_Financial_BAO_PaymentProcessor', 'payment_processor_type_id', 'Smart_Debit');
       $params['payment_processor_type_id'] = $paymentProcessorTypeId;
-      $params['options'] = array('sort' => "id DESC", 'limit' => 1);
+      $params['options'] = ['sort' => "id DESC", 'limit' => 1];
     }
 
     try {
@@ -149,7 +149,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
     if ($form->isSubmitted()) return;
 
     // Set ddi_reference
-    $defaults = array();
+    $defaults = [];
     $defaults['ddi_reference'] = CRM_Smartdebit_Base::getDDIReference();
     // Set preferred collection day default to the first choice.
     $collectionDaysArray = CRM_Smartdebit_DateUtils::getCollectionDaysOptions();
@@ -160,7 +160,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
 
     // Add help and javascript
     CRM_Core_Region::instance('billing-block')->add(
-      array('template' => 'CRM/Core/Payment/Smartdebit/Smartdebit.tpl', 'weight' => -1));
+      ['template' => 'CRM/Core/Payment/Smartdebit/Smartdebit.tpl', 'weight' => -1]);
 
     return;
   }
@@ -220,7 +220,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    */
   public static function formatErrorsForContributionForm($responseErrors, &$errors, $params) {
     if (!is_array($responseErrors)) {
-      $responseErrors = array($responseErrors);
+      $responseErrors = [$responseErrors];
     }
     foreach ($responseErrors as $error) {
       $shortErr = substr($error, 0, 14);
@@ -276,14 +276,14 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    * @return array
    */
   public function getPaymentFormFields() {
-    return array(
+    return [
       'payer_confirmation',
       'preferred_collection_day',
       'account_holder',
       'bank_account_number',
       'bank_identification_number',
       'ddi_reference',
-    );
+    ];
   }
 
   /**
@@ -298,54 +298,57 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
     // Get the collection days options
     $collectionDaysArray = CRM_Smartdebit_DateUtils::getCollectionDaysOptions();
 
-    return array(
-      'account_holder' => array(
+    return [
+      'account_holder' => [
         'htmlType' => 'text',
         'name' => 'account_holder',
         'title' => E::ts('Account Holder'),
         'cc_field' => TRUE,
-        'attributes' => array('size' => 20
+        'attributes' => [
+          'size' => 20
         , 'maxlength' => 18
         , 'autocomplete' => 'on'
-        ),
+        ],
         'is_required' => TRUE,
         'description' => E::ts('Should be no more than 18 characters. Should not include punctuation (e.g. O\'Callaghan should be OCallaghan). First initial and surname is valid. (e.g. D Watson).'),
-      ),
+      ],
       // UK BACS Account number is 8 digits
-      'bank_account_number' => array(
+      'bank_account_number' => [
         'htmlType' => 'text',
         'name' => 'bank_account_number',
         'title' => E::ts('Bank Account Number'),
         'cc_field' => TRUE,
-        'attributes' => array('size' => 20
+        'attributes' => [
+          'size' => 20
         , 'maxlength' => 8
         , 'autocomplete' => 'off'
-        ),
+        ],
         'is_required' => TRUE,
         'description' => E::ts('8 digits (e.g. 12345678).'),
-      ),
+      ],
       // UK BACS sortcode is 6 digits
-      'bank_identification_number' => array(
+      'bank_identification_number' => [
         'htmlType' => 'text',
         'name' => 'bank_identification_number',
         'title' => E::ts('Sort Code'),
         'cc_field' => TRUE,
-        'attributes' => array('size' => 20
+        'attributes' => [
+          'size' => 20
         , 'maxlength' => 6
         , 'autocomplete' => 'off'
-        ),
+        ],
         'is_required' => TRUE,
         'description' => E::ts('6 digits (e.g. 01 23 45).'),
-      ),
-      'preferred_collection_day' => array(
+      ],
+      'preferred_collection_day' => [
         'htmlType' => (count($collectionDaysArray) > 1) ? 'select' : 'hidden',
         'name' => 'preferred_collection_day',
         'title' => E::ts('Preferred Collection Day'),
         'cc_field' => TRUE,
         'attributes' => $collectionDaysArray, // eg. array('1' => '1st', '8' => '8th', '21' => '21st'),
         'is_required' => TRUE
-      ),
-      'payer_confirmation' => array(
+      ],
+      'payer_confirmation' => [
         'htmlType' => 'checkbox',
         'name' => 'payer_confirmation',
         'title' => E::ts('Confirm'),
@@ -353,19 +356,20 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
         'attributes' => '',
         'is_required' => TRUE,
         'description' => E::ts('Please confirm that you are the account holder and the only person required to authorise Direct Debits from this account.'),
-      ),
-      'ddi_reference' => array(
+      ],
+      'ddi_reference' => [
         'htmlType' => 'hidden',
         'name' => 'ddi_reference',
         'title' => 'DDI Reference',
         'cc_field' => TRUE,
-        'attributes' => array('size' => 20
+        'attributes' => [
+          'size' => 20
         , 'maxlength' => 64
         , 'autocomplete' => 'off'
-        ),
+        ],
         'is_required' => TRUE,
-      )
-    );
+      ]
+    ];
   }
 
   /**
@@ -399,12 +403,12 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    * @return array
    */
   public function getEditableRecurringScheduleFields() {
-    return array(
+    return [
       'amount',
       'frequency_interval',
       'frequency_unit',
       'start_date',
-    );
+    ];
   }
 
   /**
@@ -426,11 +430,11 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
     }
     if (!empty($installments)) {
       // Need to set an end date after final installment
-      $plus = array(
+      $plus = [
         'years' => 0,
         'months' => 0,
         'weeks' => 0
-      );
+      ];
       switch ($params['collection_frequency']) {
         case 'Y':
           $plus['years'] = $installments * $params['collection_interval'];
@@ -539,7 +543,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
         $collectionFrequency = 'Y';
         $single = TRUE; // Used as a flag that it's a single payment
     }
-    return array($collectionFrequency, $frequencyInterval, $single);
+    return [$collectionFrequency, $frequencyInterval, $single];
   }
 
   /**
@@ -666,7 +670,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
 
         case 'variable_ddi[first_amount]':
         case 'variable_ddi[default_amount]':
-          $value = self::formatAmount(array('amount' => $value));
+          $value = self::formatAmount(['amount' => $value]);
           break;
       }
     }
@@ -693,7 +697,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
     $billingLocationID = CRM_Core_BAO_LocationType::getBilling();
 
     // Construct params list to send to Smart Debit ...
-    $smartDebitParams = array(
+    $smartDebitParams = [
       'variable_ddi[service_user][pslid]' => $this->getSignature(),
       'variable_ddi[reference_number]' => CRM_Utils_Array::value('ddi_reference', $params),
       'variable_ddi[payer_reference]' => $contactId,
@@ -709,7 +713,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
       'variable_ddi[first_amount]' => CRM_Utils_Array::value('amount', $params, 0),
       'variable_ddi[default_amount]' => CRM_Utils_Array::value('amount', $params, 0),
       'variable_ddi[email_address]' => $this->getBillingEmail($params, $contactId),
-    );
+    ];
 
     $smartDebitFrequencyParams = self::getCollectionFrequencyPostParams($params);
     $smartDebitParams = array_merge($smartDebitParams, $smartDebitFrequencyParams);
@@ -944,7 +948,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    * @return bool
    * @throws \Exception
    */
-  public function changeSubscriptionAmount(&$message = '', $params = array()) {
+  public function changeSubscriptionAmount(&$message = '', $params = []) {
     // Smartdebit start_date can change during the subscription (eg. if we update amount)
     //  so we need to be careful when setting it here.
     // Logic: If a start_date is passed in via UpdateSubscription form we use it, otherwise
@@ -969,10 +973,10 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    */
   public static function changeSubscription($paymentProcessor, $recurContributionParams, $startDate = NULL) {
     try {
-      $recurRecord = civicrm_api3('ContributionRecur', 'getsingle', array(
+      $recurRecord = civicrm_api3('ContributionRecur', 'getsingle', [
         'id' => $recurContributionParams['id'],
-        'options' => array('limit' => 1),
-      ));
+        'options' => ['limit' => 1],
+      ]);
     }
     catch (CiviCRM_API3_Exception $e) {
       CRM_Core_Error::statusBounce('No recurring record! ' . $e->getMessage());
@@ -986,11 +990,11 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
 
     $recurContributionParams['amount'] = isset($recurContributionParams['amount']) ? $recurContributionParams['amount'] : 0;
 
-    $smartDebitParams = array(
+    $smartDebitParams = [
       'variable_ddi[service_user][pslid]' => self::getSignatureStatic($paymentProcessor),
       'variable_ddi[first_amount]' => $recurContributionParams['amount'],
       'variable_ddi[default_amount]' => $recurContributionParams['amount'],
-    );
+    ];
 
     // End Date
     $recurContributionParams['end_date'] = CRM_Utils_Array::value('end_date', $recurContributionParams, CRM_Utils_Array::value('end_date', $recurRecord, NULL));
@@ -1056,12 +1060,12 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    * @return bool
    * @throws \Exception
    */
-  public function cancelSubscription($params = array()) {
+  public function cancelSubscription($params = []) {
     $contributionRecurId = CRM_Utils_Array::value('crid', $_GET);
     try {
-      $contributionRecur = civicrm_api3('ContributionRecur', 'getsingle', array(
+      $contributionRecur = civicrm_api3('ContributionRecur', 'getsingle', [
         'id' => $contributionRecurId,
-      ));
+      ]);
     }
     catch (Exception $e) {
       return FALSE;
@@ -1071,10 +1075,10 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
       return FALSE;
     }
     $reference = $contributionRecur['trxn_id'];
-    $smartDebitParams = array(
+    $smartDebitParams = [
       'variable_ddi[service_user][pslid]' => $this->getSignature(),
       'variable_ddi[reference_number]' => $reference,
-    );
+    ];
 
     $recurParams = CRM_Utils_Array::crmArrayMerge($params, $contributionRecur);
     CRM_Smartdebit_Hook::alterVariableDDIParams($recurParams, $smartDebitParams, 'cancel');
@@ -1108,10 +1112,10 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
    * @return bool
    * @throws \Exception
    */
-  public function updateSubscriptionBillingInfo(&$message = '', $params = array()) {
+  public function updateSubscriptionBillingInfo(&$message = '', $params = []) {
     $reference = $params['subscriptionId'];
 
-    $smartDebitParams = array(
+    $smartDebitParams = [
       'variable_ddi[service_user][pslid]' => $this->getSignature(),
       'variable_ddi[reference_number]' => $reference,
       'variable_ddi[first_name]' => $params['first_name'],
@@ -1121,7 +1125,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
       'variable_ddi[postcode]' => $params['postal_code'],
       'variable_ddi[county]' => $params['state_province'],
       'variable_ddi[country]' => $params['country'],
-    );
+    ];
 
     CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'updatebilling');
     self::checkSmartDebitParams($smartDebitParams);
@@ -1181,10 +1185,10 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . " SET
   public static function getSmartDebitPaymentProcessorName($ppId) {
     $paymentProcessorName = 'Unknown';
     try {
-      $paymentProcessor = civicrm_api3('PaymentProcessor', 'getsingle', array(
-        'return' => array("name"),
+      $paymentProcessor = civicrm_api3('PaymentProcessor', 'getsingle', [
+        'return' => ["name"],
         'id' => $ppId,
-      ));
+      ]);
       if (isset($paymentProcessor['name'])) {
         $paymentProcessorName = $paymentProcessor['name'];
       }

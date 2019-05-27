@@ -46,14 +46,14 @@ class CRM_Smartdebit_Base
         VALUES
         (%1, NOW())
         ";
-    $insertParams = array(1 => array((string)$tempDDIReference , 'String'));
+    $insertParams = [1 => [(string)$tempDDIReference , 'String']];
     CRM_Core_DAO::executeQuery($insertSql, $insertParams);
 
     // Now get the ID for the record we've just created and create a sequenced DDI Reference Number
     $selectSql  = " SELECT id ";
     $selectSql .= " FROM " . CRM_Smartdebit_Base::TABLENAME . " cdd ";
     $selectSql .= " WHERE cdd.ddi_reference = %1 ";
-    $selectParams  = array( 1 => array($tempDDIReference , 'String'));
+    $selectParams  = [1 => [$tempDDIReference , 'String']];
     $dao = CRM_Core_DAO::executeQuery($selectSql, $selectParams);
     $dao->fetch();
 
@@ -67,10 +67,10 @@ class CRM_Smartdebit_Base
     $updateSql .= " SET cdd.ddi_reference = %0 ";
     $updateSql .= " WHERE cdd.id = %1 ";
 
-    $updateParams = array(
-      array((string) $DDIReference, 'String'),
-      array((int) $directDebitId, 'Int'),
-    );
+    $updateParams = [
+      [(string) $DDIReference, 'String'],
+      [(int) $directDebitId, 'Int'],
+    ];
     CRM_Core_DAO::executeQuery($updateSql, $updateParams);
 
     return $DDIReference;
@@ -83,7 +83,7 @@ class CRM_Smartdebit_Base
    * @throws \CRM_Core_Exception
    */
   public static function getDDFormDetails($params) {
-    $ddDetails = array();
+    $ddDetails = [];
 
     if (!empty($params['ddi_reference'])) {
       $sql = "
@@ -147,7 +147,7 @@ UPDATE " . CRM_Smartdebit_Base::TABLENAME . "
 SET    complete_flag = 1
 WHERE  ddi_reference = %0";
 
-    CRM_Core_DAO::executeQuery($sql, array(array((string)$params['trxn_id'], 'String'))
+    CRM_Core_DAO::executeQuery($sql, [[(string)$params['trxn_id'], 'String']]
     );
   }
 
@@ -161,14 +161,14 @@ WHERE  ddi_reference = %0";
    */
   public static function createDDSignUpActivity($params) {
     $activityTypeID = (int) CRM_Smartdebit_Settings::getValue('activity_type');
-    $activityParams = array(
+    $activityParams = [
       'source_contact_id'  => $params['contactID'],
       'target_contact_id'  => $params['contactID'],
       'activity_type_id'   => $activityTypeID,
       'subject'            => sprintf("Direct Debit Sign Up, Mandate ID : %s", $params['trxn_id']),
       'activity_date_time' => date('YmdHis'),
       'status_id'          => CRM_Core_PseudoConstant::getKey('CRM_Activity_DAO_Activity', 'activity_status_id', 'Completed'),
-    );
+    ];
 
     $activityResult = civicrm_api3('activity', 'create', $activityParams);
     return $activityResult['id'];
@@ -182,7 +182,7 @@ WHERE  ddi_reference = %0";
    * @throws \CRM_Core_Exception
    */
   public static function getCompanyAddress() {
-    $companyAddress = array();
+    $companyAddress = [];
 
     $domain = CRM_Core_BAO_Domain::getDomain();
     $domainLoc = $domain->getLocationValues();
@@ -411,7 +411,7 @@ WHERE  ddi_reference = %0";
     }
 
     // Build contribution params
-    $contributionParams = array(
+    $contributionParams = [
       'contact_id' =>  $params['contact_id'],
       'receive_date' => $params['receive_date'],
       'total_amount' => $params['total_amount'],
@@ -424,7 +424,7 @@ WHERE  ddi_reference = %0";
       'invoice_id' => $params['invoice_id'],
       'source' => $params['source'],
       'is_email_receipt' => isset($params['is_email_receipt']) ? $params['is_email_receipt'] : FALSE,
-    );
+    ];
     if (!empty($params['contribution_id'])) {
       $contributionParams['contribution_id'] = $params['contribution_id'];
       $contributionParams['id'] = $params['contribution_id'];

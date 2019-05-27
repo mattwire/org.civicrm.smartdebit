@@ -26,10 +26,10 @@ trait CRM_Core_Payment_SmartdebitTrait {
     if (empty($emailAddress) && !empty($contactId)) {
       // Try and retrieve an email address from Contact ID
       try {
-        $emailAddress = civicrm_api3('Email', 'getvalue', array(
+        $emailAddress = civicrm_api3('Email', 'getvalue', [
           'contact_id' => $contactId,
           'return' => ['email'],
-        ));
+        ]);
       }
       catch (CiviCRM_API3_Exception $e) {
         return NULL;
@@ -134,10 +134,10 @@ trait CRM_Core_Payment_SmartdebitTrait {
 
     // Create a Payment Instrument
     // See if we already have this type
-    $paymentInstrument = civicrm_api3('OptionValue', 'get', array(
+    $paymentInstrument = civicrm_api3('OptionValue', 'get', [
       'option_group_id' => "payment_instrument",
       'name' => $params['name'],
-    ));
+    ]);
     if (empty($paymentInstrument['count'])) {
       // Otherwise create it
       try {
@@ -227,7 +227,7 @@ trait CRM_Core_Payment_SmartdebitTrait {
       $this->_params = array_merge($this->_params, $addressParams);
     }
 
-    $nameFields = array('first_name', 'middle_name', 'last_name');
+    $nameFields = ['first_name', 'middle_name', 'last_name'];
     foreach ($nameFields as $name) {
       $fields[$name] = 1;
       if (array_key_exists("billing_$name", $this->_params)) {

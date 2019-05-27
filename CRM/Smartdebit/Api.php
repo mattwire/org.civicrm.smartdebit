@@ -7,7 +7,7 @@ class CRM_Smartdebit_Api {
   CONST SD_STATE_LIVE = 10;
   CONST SD_STATE_CANCELLED = 11;
   CONST SD_STATE_REJECTED = 12;
-  CONST SD_STATES = array(0 => 'Draft', 1 => 'New', 10 => 'Live', 11 => 'Cancelled', 12 => 'Rejected');
+  CONST SD_STATES = [0 => 'Draft', 1 => 'New', 10 => 'Live', 11 => 'Cancelled', 12 => 'Rejected'];
 
   /**
    * Return API URL with base prepended
@@ -75,7 +75,7 @@ class CRM_Smartdebit_Api {
         break;
       }
     }
-    return array($header, $output, $error);
+    return [$header, $output, $error];
   }
 
   public static function requestUpdate($paymentProcessor, $reference, $smartDebitParams) {
@@ -184,7 +184,7 @@ class CRM_Smartdebit_Api {
       CURLOPT_HEADER => FALSE, // don't return headers
       CURLOPT_USERPWD => $username . ':' . $password,
       CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
-      CURLOPT_HTTPHEADER => array("Accept: application/xml"),
+      CURLOPT_HTTPHEADER => ["Accept: application/xml"],
       CURLOPT_USERAGENT => "CiviCRM Smartdebit Client", // Let Smartdebit see who we are
       CURLOPT_SSL_VERIFYHOST => Civi::settings()->get('verifySSL') ? 2 : 0,
       CURLOPT_SSL_VERIFYPEER => Civi::settings()->get('verifySSL'),
@@ -216,7 +216,7 @@ class CRM_Smartdebit_Api {
 
     curl_close($curlSession);
 
-    return array($header, $output, $error);
+    return [$header, $output, $error];
   }
 
   /**
@@ -312,7 +312,7 @@ class CRM_Smartdebit_Api {
       foreach ($response['user']['assigned_service_users']['service_user'] as $key => $value) {
         $pslIds .= $value['pslid'] . '; ';
       }
-      $response['user']['assigned_service_users']['service_user'] = array('pslid' => $pslIds);
+      $response['user']['assigned_service_users']['service_user'] = ['pslid' => $pslIds];
     }
     return $response;
   }
@@ -341,7 +341,7 @@ class CRM_Smartdebit_Api {
 
     // Take action based upon the response status
     if ($response['success']) {
-      $smartDebitArray = array();
+      $smartDebitArray = [];
       if (isset($response['Data']['AuditDetails']['@attributes'])) {
         // Cater for a single response
         $smartDebitArray[] = $response['Data']['AuditDetails']['@attributes'];
@@ -376,7 +376,7 @@ class CRM_Smartdebit_Api {
 
     $userDetails = CRM_Core_Payment_Smartdebit::getProcessorDetails();
 
-    $collections = array();
+    $collections = [];
     $url = CRM_Smartdebit_Api::buildUrl($userDetails, '/api/get_successful_collection_report', "query[service_user][pslid]=" . $userDetails['signature'] . "&query[collection_date]=$dateOfCollection");
     $response = CRM_Smartdebit_Api::requestPost($url, NULL, $userDetails['user_name'], $userDetails['password']);
 
@@ -455,7 +455,7 @@ class CRM_Smartdebit_Api {
     $scrambled = str_replace(" ", "+", $responseAuddis['file']);
     $outputafterencode = base64_decode($scrambled);
     $auddisArray = json_decode(json_encode((array)simplexml_load_string($outputafterencode)), 1);
-    $result = array();
+    $result = [];
 
     if ($auddisArray['Data']['MessagingAdvices']['MessagingAdvice']['@attributes']) {
       $result[0] = $auddisArray['Data']['MessagingAdvices']['MessagingAdvice']['@attributes'];
@@ -492,7 +492,7 @@ class CRM_Smartdebit_Api {
     $scrambled = str_replace(" ", "+", $responseArudd['file']);
     $outputafterencode = base64_decode($scrambled);
     $aruddArray = json_decode(json_encode((array)simplexml_load_string($outputafterencode)), 1);
-    $result = array();
+    $result = [];
 
     if (isset($aruddArray['Data']['ARUDD']['Advice']['OriginatingAccountRecords']['OriginatingAccountRecord']['ReturnedDebitItem']['@attributes'])) {
       // Got a single result

@@ -41,11 +41,11 @@ class CRM_Smartdebit_Utils {
       $memberParams['id'] = $membershipId;
     }
 
-    $memberships = civicrm_api3('Membership', 'get', array(
+    $memberships = civicrm_api3('Membership', 'get', [
       'contact_id' => $contactId,
-    ));
+    ]);
 
-    $membershipOptions = array();
+    $membershipOptions = [];
 
     // If we want a list of memberships, add the donation (no membership) option
     if (empty($membershipId)) {
@@ -105,12 +105,12 @@ class CRM_Smartdebit_Utils {
    * @return mixed
    */
   static function getContributionRecordForRecurringContribution($cRecurID) {
-    $contributionParams = array(
+    $contributionParams = [
       'version'               => 3,
       'sequential'            => 1,
       'contribution_recur_id' => $cRecurID,
-      'options' => array('sort' => "receive_date DESC"),
-    );
+      'options' => ['sort' => "receive_date DESC"],
+    ];
     $contributionRecords = civicrm_api('Contribution', 'get', $contributionParams);
     if (!empty($contributionRecords['is_error']) && $contributionRecords['count'] > 0) {
       // This will always return the most recent contribution
@@ -126,12 +126,12 @@ class CRM_Smartdebit_Utils {
    */
   static function getContactRecurringContributions($contactID) {
     // Get recurring contributions by contact Id
-    $contributionRecurRecords = civicrm_api3('ContributionRecur', 'get', array(
+    $contributionRecurRecords = civicrm_api3('ContributionRecur', 'get', [
       'sequential' => 1,
       'contact_id' => $contactID,
-      'options' => array('limit' => 0),
-      'return' => array("payment_processor_id", "contribution_status_id", "amount", "trxn_id"),
-    ));
+      'options' => ['limit' => 0],
+      'return' => ["payment_processor_id", "contribution_status_id", "amount", "trxn_id"],
+    ]);
     // Get contribution Status options
     $contributionStatusOptions = CRM_Contribute_BAO_Contribution::buildOptions('contribution_status_id', 'validate');
 
@@ -152,11 +152,11 @@ class CRM_Smartdebit_Utils {
    * @return array
    */
   static function getRecurringContributionRecord($cRecurID) {
-    $cRecurParams = array(
+    $cRecurParams = [
       'version'     => 3,
       'sequential'  => 1,
       'id'          => $cRecurID
-    );
+    ];
     $aContributionRecur = civicrm_api('ContributionRecur', 'get', $cRecurParams);
     if(!$aContributionRecur['is_error']){
       $cRecur = $aContributionRecur['values'][0];
@@ -169,14 +169,14 @@ class CRM_Smartdebit_Utils {
     //get payment processor name
     $paymentProcessorName = CRM_Core_Payment_Smartdebit::getSmartDebitPaymentProcessorName($cRecur['payment_processor_id']);
 
-    $contributionRecur = array();
+    $contributionRecur = [];
     if(!empty($cRecur)){
-      $contributionRecur = array(
+      $contributionRecur = [
         'id'                => $cRecur['id'],
         'status'            => $contributionStatus,
         'amount'            => $cRecur['amount'],
         'payment_processor' => $paymentProcessorName,
-      );
+      ];
     }
     return $contributionRecur;
   }
@@ -190,17 +190,17 @@ class CRM_Smartdebit_Utils {
    * @throws \CiviCRM_API3_Exception
    */
   public static function isSmartdebitPaymentProcessor($recurId) {
-    $paymentProcessors = civicrm_api3('PaymentProcessor', 'get', array(
-      'return' => array("id"),
+    $paymentProcessors = civicrm_api3('PaymentProcessor', 'get', [
+      'return' => ["id"],
       'payment_processor_type_id' => "Smart_Debit",
-    ));
+    ]);
 
     $paymentProcessorIds = array_keys($paymentProcessors['values']);
 
-    $recurParams = array(
-      'payment_processor_id' => array('IN' => $paymentProcessorIds),
+    $recurParams = [
+      'payment_processor_id' => ['IN' => $paymentProcessorIds],
       'id' => $recurId,
-    );
+    ];
     try {
       civicrm_api3('ContributionRecur', 'getsingle', $recurParams);
     }
@@ -217,11 +217,11 @@ class CRM_Smartdebit_Utils {
    * @return mixed
    */
   static function getContactDetails($cid) {
-    $Params = array(
+    $Params = [
       'version'     => 3,
       'sequential'  => 1,
       'id'          => $cid
-    );
+    ];
     $aContact = civicrm_api('Contact', 'get', $Params);
     if (empty($aContact['is_error'])) {
       if ($aContact['count'] > 0) {
@@ -242,11 +242,11 @@ class CRM_Smartdebit_Utils {
    * @param $cid
    */
   static function getContactAddress($cid) {
-    $Params = array(
+    $Params = [
       'version'     => 3,
       'sequential'  => 1,
       'contact_id'  => $cid
-    );
+    ];
     $aAddress = civicrm_api('Address', 'get', $Params);
     if (empty($aAddress['is_error'])) {
       if ($aAddress['count'] > 0){

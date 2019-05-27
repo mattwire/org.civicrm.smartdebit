@@ -41,7 +41,7 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
    */
   public function buildQuickForm() {
     // Get details of latest collection report
-    $this->assign('collectionreports', CRM_Smartdebit_CollectionReports::getReports(array('limit' => 1)));
+    $this->assign('collectionreports', CRM_Smartdebit_CollectionReports::getReports(['limit' => 1]));
 
     // Get date of collection (or set to today if not set)
     $dateOfCollectionEnd = CRM_Utils_Request::retrieve('collection_date', 'String', $this, FALSE);
@@ -67,14 +67,14 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
       $auddisDates = $this->_auddisProcessor->getAuddisDatesList();
     }
     else {
-      $auddisDates = array();
+      $auddisDates = [];
     }
 
     if ($this->_auddisProcessor->getAruddDates()) {
       $aruddDates = $this->_auddisProcessor->getAruddDatesList();
     }
     else {
-      $aruddDates = array();
+      $aruddDates = [];
     }
 
     if (count($auddisDates) <= 10) {
@@ -96,28 +96,28 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
     $this->addElement('advmultiselect', 'includeAuddisDate',
       ts('Include Auddis Date(s)') . ' ',
       $auddisDates,
-      array(
+      [
         'size' => $groupSize,
         'style' => 'width:auto; min-width:240px;',
         'class' => 'advmultiselect',
-      )
+      ]
     );
 
     $this->addElement('advmultiselect', 'includeAruddDate',
       ts('Include Arudd Date(s)') . ' ',
       $aruddDates,
-      array(
+      [
         'size' => $groupSizeArudd,
         'style' => 'width:auto; min-width:240px;',
         'class' => 'advmultiselect',
-      )
+      ]
     );
 
     $this->assign('groupCount', count($auddisDates));
     $this->assign('groupCountArudd', count($aruddDates));
 
-    $auddisDatesArray = array('' => ts('- select -'));
-    $aruddDatesArray = array('' => ts('- select -'));
+    $auddisDatesArray = ['' => ts('- select -')];
+    $aruddDatesArray = ['' => ts('- select -')];
     if (!empty($auddisDates)) {
       $auddisDatesArray = $auddisDatesArray + $auddisDates;
     }
@@ -131,18 +131,18 @@ class CRM_Smartdebit_Form_SyncSd extends CRM_Core_Form {
 
     $redirectUrlBack = CRM_Utils_System::url('civicrm/smartdebit/syncsd', 'reset=1');
 
-    $this->addButtons(array(
-        array(
+    $this->addButtons([
+        [
           'type' => 'back',
-          'js' => array('onclick' => "location.href='{$redirectUrlBack}'; return false;"),
+          'js' => ['onclick' => "location.href='{$redirectUrlBack}'; return false;"],
           'name' => ts('Back'),
-        ),
-        array(
+        ],
+        [
           'type' => 'submit',
           'name' => ts('Continue'),
           'isDefault' => TRUE,
-        ),
-      )
+        ],
+      ]
     );
     CRM_Utils_System::setTitle(ts('Synchronise CiviCRM with Smart Debit'));
     parent::buildQuickForm();

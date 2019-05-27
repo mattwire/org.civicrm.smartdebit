@@ -30,7 +30,7 @@ class api_v3_SmartdebitTest extends \PHPUnit_Framework_TestCase implements Headl
     // Civi\Test has many helpers, like install(), uninstall(), sql(), and sqlFile().
     // See: https://github.com/civicrm/org.civicrm.testapalooza/blob/master/civi-test.md
     return \Civi\Test::headless()
-      ->install(array('org.civicrm.paymentlib','org.civicrm.smartdebit'))
+      ->install(['org.civicrm.paymentlib','org.civicrm.smartdebit'])
       ->apply();
   }
 
@@ -47,11 +47,11 @@ class api_v3_SmartdebitTest extends \PHPUnit_Framework_TestCase implements Headl
    * Example: Test that a version is returned.
    */
   public function testGetMandate() {
-    $mandateParams = array(
+    $mandateParams = [
       'trxn_id' => 'ABC00000128',
       'refresh' => 1,
       'format' => 'XML',
-    );
+    ];
     $mandateResult = $this->callAPISuccess('Smartdebit', 'getmandates', $mandateParams);
     $this->assertEquals('55.83', $mandateResult['values'][$mandateParams['trxn_id']]['default_amount']);
   }

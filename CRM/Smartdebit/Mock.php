@@ -42,7 +42,7 @@ class CRM_Smartdebit_Mock {
    * @return array
    */
   private static function getHeader($url) {
-    return array(
+    return [
       'url' => $url,
       'content_type' => 'text/xml; charset=iso-8859-1',
       'http_code' => 200,
@@ -66,12 +66,12 @@ class CRM_Smartdebit_Mock {
       'redirect_url' => '',
       'primary_ip' => '12.13.14.15',
       'certinfo' =>
-        array (
-        ),
+        [
+        ],
       'primary_port' => 443,
       'local_ip' => '16.17.18.19',
       'local_port' => 45650,
-    );
+    ];
   }
 
   /**
@@ -83,10 +83,10 @@ class CRM_Smartdebit_Mock {
    * @return array
    */
   private static function getError($code = 0, $message = '') {
-    return array(
+    return [
       'code' => $code,
       'message' => $message,
-    );
+    ];
   }
 
   private static function mockCollectionReports($url) {
@@ -109,7 +109,7 @@ PAYER" error_message="" transaction_ref="" reference_number="ABC163640"/>
 
     $header = self::getHeader($url);
     $error = self::getError();
-    return array($header, $output, $error);
+    return [$header, $output, $error];
   }
 
   /**
@@ -135,7 +135,7 @@ PAYER" error_message="" transaction_ref="" reference_number="ABC163640"/>
 </DataDump>
 ';
 
-    return array($header, $output, $error);
+    return [$header, $output, $error];
   }
 
 }

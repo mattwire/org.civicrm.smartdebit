@@ -50,13 +50,13 @@ class CRM_Smartdebit_Form_DataSource extends CRM_Core_Form {
     }
 
     $this->add('checkbox', 'retrieve_collectionreport', ts('Retrieve latest daily collection report from SmartDebit?'));
-    $this->addButtons(array(
-        array(
+    $this->addButtons([
+        [
           'type' => 'submit',
           'name' => ts('Continue'),
           'isDefault' => TRUE,
-        ),
-      )
+        ],
+      ]
     );
     CRM_Utils_System::setTitle(ts('Synchronise CiviCRM with Smart Debit'));
   }

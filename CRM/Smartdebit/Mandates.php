@@ -57,7 +57,7 @@ class CRM_Smartdebit_Mandates {
 
     // Return the retrieved mandate from the database
     $sql = "SELECT * FROM `" . self::TABLENAME . "` WHERE reference_number=%1";
-    $sqlParams = array(1 => array($transactionId, 'String'));
+    $sqlParams = [1 => [$transactionId, 'String']];
     $dao = CRM_Core_DAO::executeQuery($sql, $sqlParams);
     if ($dao->fetch()) {
       $payerContactDetails['title'] = $dao->title;
@@ -120,7 +120,7 @@ class CRM_Smartdebit_Mandates {
     $sql .= CRM_Smartdebit_Base::limitClause($params);
 
     $dao = CRM_Core_DAO::executeQuery($sql);
-    $smartDebitPayerContacts = array();
+    $smartDebitPayerContacts = [];
     while ($dao->fetch()) {
       $smartDebitParams['title'] = $dao->title;
       $smartDebitParams['first_name'] = $dao->first_name;
@@ -209,7 +209,7 @@ class CRM_Smartdebit_Mandates {
 
       // Get the recurring contribution for this mandate
       try {
-        $recurContribution = civicrm_api3('ContributionRecur', 'getsingle', array('trxn_id' => $smartDebitRecord['reference_number']));
+        $recurContribution = civicrm_api3('ContributionRecur', 'getsingle', ['trxn_id' => $smartDebitRecord['reference_number']]);
         $recurId = $recurContribution['id'];
       }
       catch (CiviCRM_API3_Exception $e) {
@@ -262,26 +262,26 @@ class CRM_Smartdebit_Mandates {
             VALUES (%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18)
             ";
       }
-      $params = array(
-        1 => array(CRM_Utils_Array::value('title', $smartDebitRecord, 'NULL'), 'String'),
-        2 => array(CRM_Utils_Array::value('first_name', $smartDebitRecord, 'NULL'), 'String'),
-        3 => array(CRM_Utils_Array::value('last_name', $smartDebitRecord, 'NULL'), 'String'),
-        4 => array(CRM_Utils_Array::value('email_address', $smartDebitRecord, 'NULL'),  'String'),
-        5 => array(CRM_Utils_Array::value('address_1', $smartDebitRecord, 'NULL'), 'String'),
-        6 => array(CRM_Utils_Array::value('address_2', $smartDebitRecord, 'NULL'), 'String') ,
-        7 => array(CRM_Utils_Array::value('address_3', $smartDebitRecord, 'NULL'), 'String'),
-        8 => array(CRM_Utils_Array::value('town', $smartDebitRecord, 'NULL'), 'String'),
-        9 => array(CRM_Utils_Array::value('county', $smartDebitRecord, 'NULL'), 'String'),
-        10 => array(CRM_Utils_Array::value('postcode', $smartDebitRecord, 'NULL'), 'String'),
-        11 => array(CRM_Utils_Array::value('first_amount', $smartDebitRecord, 'NULL'), 'String'),
-        12 => array(CRM_Utils_Array::value('default_amount', $smartDebitRecord, 'NULL'), 'String'),
-        13 => array(CRM_Utils_Array::value('frequency_type', $smartDebitRecord, 'NULL'), 'String'),
-        14 => array(CRM_Utils_Array::value('frequency_factor', $smartDebitRecord, 'NULL'), 'Int'),
-        15 => array(CRM_Utils_Array::value('start_date', $smartDebitRecord, 'NULL'), 'String'),
-        16 => array(CRM_Utils_Array::value('current_state', $smartDebitRecord, 'NULL'), 'Int'),
-        17 => array(CRM_Utils_Array::value('reference_number', $smartDebitRecord, 'NULL'), 'String'),
-        18 => array(CRM_Utils_Array::value('payer_reference', $smartDebitRecord, 'NULL'), 'String'),
-      );
+      $params = [
+        1 => [CRM_Utils_Array::value('title', $smartDebitRecord, 'NULL'), 'String'],
+        2 => [CRM_Utils_Array::value('first_name', $smartDebitRecord, 'NULL'), 'String'],
+        3 => [CRM_Utils_Array::value('last_name', $smartDebitRecord, 'NULL'), 'String'],
+        4 => [CRM_Utils_Array::value('email_address', $smartDebitRecord, 'NULL'),  'String'],
+        5 => [CRM_Utils_Array::value('address_1', $smartDebitRecord, 'NULL'), 'String'],
+        6 => [CRM_Utils_Array::value('address_2', $smartDebitRecord, 'NULL'), 'String'],
+        7 => [CRM_Utils_Array::value('address_3', $smartDebitRecord, 'NULL'), 'String'],
+        8 => [CRM_Utils_Array::value('town', $smartDebitRecord, 'NULL'), 'String'],
+        9 => [CRM_Utils_Array::value('county', $smartDebitRecord, 'NULL'), 'String'],
+        10 => [CRM_Utils_Array::value('postcode', $smartDebitRecord, 'NULL'), 'String'],
+        11 => [CRM_Utils_Array::value('first_amount', $smartDebitRecord, 'NULL'), 'String'],
+        12 => [CRM_Utils_Array::value('default_amount', $smartDebitRecord, 'NULL'), 'String'],
+        13 => [CRM_Utils_Array::value('frequency_type', $smartDebitRecord, 'NULL'), 'String'],
+        14 => [CRM_Utils_Array::value('frequency_factor', $smartDebitRecord, 'NULL'), 'Int'],
+        15 => [CRM_Utils_Array::value('start_date', $smartDebitRecord, 'NULL'), 'String'],
+        16 => [CRM_Utils_Array::value('current_state', $smartDebitRecord, 'NULL'), 'Int'],
+        17 => [CRM_Utils_Array::value('reference_number', $smartDebitRecord, 'NULL'), 'String'],
+        18 => [CRM_Utils_Array::value('payer_reference', $smartDebitRecord, 'NULL'), 'String'],
+      ];
       CRM_Core_DAO::executeQuery($sql, $params);
     }
     return TRUE;
@@ -328,7 +328,7 @@ class CRM_Smartdebit_Mandates {
 
     // Take action based upon the response status
     if ($response['success']) {
-      $smartDebitArray = array();
+      $smartDebitArray = [];
 
       switch ($format) {
         case 'XML':

@@ -44,11 +44,11 @@ class CRM_Smartdebit_Form_Diagnostics extends CRM_Core_Form {
       // Get counts
       $counts['mandatewithrecur'] = CRM_Smartdebit_Mandates::count(TRUE);
       $counts['mandatenorecur'] = CRM_Smartdebit_Mandates::count(FALSE) - $counts['mandatewithrecur'];
-      $counts['collectionssuccess'] = CRM_Smartdebit_CollectionReports::count(array('successes' => TRUE, 'rejects' => FALSE));
-      $counts['collectionsrejected'] = CRM_Smartdebit_CollectionReports::count(array('successes' => FALSE, 'rejects' => TRUE));
+      $counts['collectionssuccess'] = CRM_Smartdebit_CollectionReports::count(['successes' => TRUE, 'rejects' => FALSE]);
+      $counts['collectionsrejected'] = CRM_Smartdebit_CollectionReports::count(['successes' => FALSE, 'rejects' => TRUE]);
       $counts['collectionreports'] = CRM_Smartdebit_CollectionReports::countReports();
       $this->assign('sdcounts', $counts);
-      $collectionReports = CRM_Smartdebit_CollectionReports::getReports(array('limit' => 10));
+      $collectionReports = CRM_Smartdebit_CollectionReports::getReports(['limit' => 10]);
       $this->assign('collectionreports', $collectionReports);
     } catch (Exception $e) {
       // Do nothing here. Api will throw exception if API URL is not configured, which it won't be if
@@ -56,12 +56,12 @@ class CRM_Smartdebit_Form_Diagnostics extends CRM_Core_Form {
       $this->assign('apiStatus', 'No Smartdebit payment processors are configured yet!');
     }
 
-    $this->addButtons(array(
-      array (
+    $this->addButtons([
+      [
         'type' => 'cancel',
         'name' => ts('Done'),
-      )
-    ));
+      ]
+    ]);
   }
 
 }
