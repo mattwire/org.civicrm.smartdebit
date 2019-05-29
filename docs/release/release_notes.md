@@ -1,3 +1,9 @@
+## Release 1.32
+
+* Remove option to confirm by post as it's not allowed by Smartdebit (and don't create activity_type_letter on new installs).
+* Fix issues with next collection date calculation failing when we are exactly (10) days before a possible date. We actually need to count from the next day (instead of today) so the new calculation is notice_period+1.
+* Code improvement: Convert to short array syntax.
+
 ## Release 1.31
 * Add a "Reconcile" link to the contributions that are not matched when doing a manual sync.
 * Switch to doPayment method internally.  As part of this a few changes have been made:

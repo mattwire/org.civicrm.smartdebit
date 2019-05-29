@@ -34,6 +34,3 @@ The following entities will have been created during sign-up and may need attent
 
 * Recurring contribution activity.
 * Direct Debit sign-up activity (showing Smart Debit payer Reference).
-* Direct Debit confirmation letter (If _Post_ was selected as confirmation method).  This will be in _Scheduled_ state and will need to be picked up by the admin team.
-![contact activities](/images/smartdebit_activities.png)
-
