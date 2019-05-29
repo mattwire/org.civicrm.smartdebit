@@ -47,23 +47,33 @@ class CRM_Smartdebit_DateUtilsTest extends \PHPUnit_Framework_TestCase implement
   /**
    * @dataProvider dataProviderGetNextAvailableCollectionDate
    */
-  public function testGetNextAvailableCollectionDate($timestamp, $collectionDay, $expectedCollectionDate) {
+  public function testGetNextAvailableCollectionDate($timestamp, $collectionDay, $expectedCollectionDate, $noticePeriod, $collectionDays) {
+    Civi::settings()->set('smartdebit_collection_interval', $noticePeriod);
+    Civi::settings()->set('smartdebit_notice_period', $noticePeriod);
+    Civi::settings()->set('smartdebit_collection_days', $collectionDays);
+
     timecop_travel(strtotime($timestamp));
     $firstCollectionDate = CRM_Smartdebit_DateUtils::getNextAvailableCollectionDate($collectionDay);
-    $this->assertEquals($expectedCollectionDate, $firstCollectionDate->format('Y-m-d'));
+    $this->assertEquals($expectedCollectionDate, $firstCollectionDate->format('Y-m-d'), "timestamp: {$timestamp} collectionDay: {$collectionDay} expectedDate: {$expectedCollectionDate} noticePeriod: {$noticePeriod} collectionDays: {$collectionDays}");
   }
 
   public function dataProviderGetNextAvailableCollectionDate() {
-    // start_timestamp, collection_day, expected_collection_date
-    return [
-      ['2018-01-01', 1, '2018-02-01'],
-      ['2018-01-01', 2, '2018-02-02'],
-      ['2018-01-25', 1, '2018-03-01'],
-      ['2018-01-19', 20, '2018-02-20'],
-      ['2018-01-27', 7, '2018-02-07'],
-      ['2018-01-26', 5, '2018-02-05'],
-      ['2018-01-27', 5, '2018-03-05'],
+    // start_timestamp, collection_day, expected_collection_date, notice_period, collectiondays
+    $data = [
+      ['2018-01-01', 1, '2018-02-01', 10, '1,20'],
+      ['2018-01-01', 2, '2018-02-02', 10, '2'],
+      ['2018-01-25', 1, '2018-03-01', 10, '1,20'],
+      ['2018-01-19', 20, '2018-02-20', 10, '1,20'],
+      ['2018-01-27', 7, '2018-02-07', 10, NULL],
+      ['2018-01-26', 5, '2018-03-05', 10, '5'],
+      ['2018-01-27', 5, '2018-03-05', 10, '5'],
+      ['2019-05-21', 1, '2019-06-01', 10, '1,20'],
+      ['2019-05-21', 1, '2019-06-01', 10, '1,15'],
+      ['2019-05-21', 15, '2019-06-15', 10, '1,15'],
+      ['2019-05-21', 1, '2019-07-01', 11, '1,15'],
+      ['2019-05-21', 15, '2019-06-15', 11, '1,15'],
     ];
+    return $data;
   }
 
   /**

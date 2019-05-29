@@ -62,7 +62,7 @@ class CRM_Smartdebit_DateUtils {
     }
 
     // Calculate earliest possible collection date
-    $earliestCollectionDate->add(new DateInterval( 'P'.$noticePeriod.'D' ));
+    $earliestCollectionDate->add(new DateInterval( 'P'.($noticePeriod + 1).'D' ));
 
     // Get the current year, month and next month to create the 2 potential collection dates
     $todaysMonth = (int) $today->format('m');
