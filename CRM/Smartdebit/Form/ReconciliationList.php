@@ -352,8 +352,9 @@ LEFT JOIN civicrm_option_group opgr ON (opgr.id = opva.option_group_id)
 LEFT JOIN veda_smartdebit_mandates csd ON csd.reference_number = ctrc.trxn_id 
 WHERE opgr.name = 'payment_instrument' 
 AND   opva.name = 'Direct Debit' 
-AND   csd.id IS NULL LIMIT 100";
+AND   csd.id IS NULL";
       $sql .= ' ORDER BY csd.reference_number DESC';
+      $sql .= ' LIMIT 100';
       $dao = CRM_Core_DAO::executeQuery($sql);
 
       while ($dao->fetch()) {
