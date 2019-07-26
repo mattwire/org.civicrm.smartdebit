@@ -5,8 +5,23 @@
 
 trait CRM_Core_Payment_SmartdebitTrait {
   /**********************
-   * Version 20190503
+   * MJW_Core_Payment_Trait: 20190707
    *********************/
+
+  /**
+   * @var array params passed for payment
+   */
+  protected $_params = [];
+
+  /**
+   * @var string The unique invoice/order reference from the payment processor
+   */
+  private $paymentProcessorInvoiceID;
+
+  /**
+   * @var string The unique subscription reference from the payment processor
+   */
+  private $paymentProcessorSubscriptionID;
 
   /**
    * Get the billing email address
@@ -36,6 +51,36 @@ trait CRM_Core_Payment_SmartdebitTrait {
       }
     }
     return $emailAddress;
+  }
+
+  /**
+   * Get the billing email address
+   *
+   * @param array $params
+   * @param int $contactId
+   *
+   * @return string|NULL
+   */
+  protected function getBillingPhone($params, $contactId) {
+    $billingLocationId = CRM_Core_BAO_LocationType::getBilling();
+
+    $phoneNumber = CRM_Utils_Array::value("phone-{$billingLocationId}", $params,
+      CRM_Utils_Array::value('phone-Primary', $params,
+        CRM_Utils_Array::value('phone', $params, NULL)));
+
+    if (empty($phoneNumber) && !empty($contactId)) {
+      // Try and retrieve a phone number from Contact ID
+      try {
+        $phoneNumber = civicrm_api3('Phone', 'getvalue', [
+          'contact_id' => $contactId,
+          'return' => ['phone'],
+        ]);
+      }
+      catch (CiviCRM_API3_Exception $e) {
+        return NULL;
+      }
+    }
+    return $phoneNumber;
   }
 
   /**
@@ -92,7 +137,8 @@ trait CRM_Core_Payment_SmartdebitTrait {
    */
   protected function getRecurringContributionId($params) {
     // Not yet passed, but could be added via core PR
-    $contributionRecurId = CRM_Utils_Array::value('contribution_recur_id', $params);
+    $contributionRecurId = CRM_Utils_Array::value('contribution_recur_id', $params,
+      CRM_Utils_Array::value('contributionRecurID', $params)); // backend live contribution
     if (!empty($contributionRecurId)) {
       return $contributionRecurId;
     }
@@ -211,18 +257,19 @@ trait CRM_Core_Payment_SmartdebitTrait {
    * @return array
    */
   private function formatParamsForPaymentProcessor($fields) {
+    $billingLocationId = CRM_Core_BAO_LocationType::getBilling();
     // also add location name to the array
-    $this->_params["address_name-{$this->_bltID}"] = CRM_Utils_Array::value('billing_first_name', $this->_params) . ' ' . CRM_Utils_Array::value('billing_middle_name', $this->_params) . ' ' . CRM_Utils_Array::value('billing_last_name', $this->_params);
-    $this->_params["address_name-{$this->_bltID}"] = trim($this->_params["address_name-{$this->_bltID}"]);
+    $this->_params["address_name-{$billingLocationId}"] = CRM_Utils_Array::value('billing_first_name', $this->_params) . ' ' . CRM_Utils_Array::value('billing_middle_name', $this->_params) . ' ' . CRM_Utils_Array::value('billing_last_name', $this->_params);
+    $this->_params["address_name-{$billingLocationId}"] = trim($this->_params["address_name-{$billingLocationId}"]);
     // Add additional parameters that the payment processors are used to receiving.
-    if (!empty($this->_params["billing_state_province_id-{$this->_bltID}"])) {
-      $this->_params['state_province'] = $this->_params["state_province-{$this->_bltID}"] = $this->_params["billing_state_province-{$this->_bltID}"] = CRM_Core_PseudoConstant::stateProvinceAbbreviation($this->_params["billing_state_province_id-{$this->_bltID}"]);
+    if (!empty($this->_params["billing_state_province_id-{$billingLocationId}"])) {
+      $this->_params['state_province'] = $this->_params["state_province-{$billingLocationId}"] = $this->_params["billing_state_province-{$billingLocationId}"] = CRM_Core_PseudoConstant::stateProvinceAbbreviation($this->_params["billing_state_province_id-{$billingLocationId}"]);
     }
-    if (!empty($this->_params["billing_country_id-{$this->_bltID}"])) {
-      $this->_params['country'] = $this->_params["country-{$this->_bltID}"] = $this->_params["billing_country-{$this->_bltID}"] = CRM_Core_PseudoConstant::countryIsoCode($this->_params["billing_country_id-{$this->_bltID}"]);
+    if (!empty($this->_params["billing_country_id-{$billingLocationId}"])) {
+      $this->_params['country'] = $this->_params["country-{$billingLocationId}"] = $this->_params["billing_country-{$billingLocationId}"] = CRM_Core_PseudoConstant::countryIsoCode($this->_params["billing_country_id-{$billingLocationId}"]);
     }
 
-    list($hasAddressField, $addressParams) = CRM_Contribute_BAO_Contribution::getPaymentProcessorReadyAddressParams($this->_params, $this->_bltID);
+    list($hasAddressField, $addressParams) = CRM_Contribute_BAO_Contribution::getPaymentProcessorReadyAddressParams($this->_params, $billingLocationId);
     if ($hasAddressField) {
       $this->_params = array_merge($this->_params, $addressParams);
     }
@@ -237,4 +284,156 @@ trait CRM_Core_Payment_SmartdebitTrait {
     }
     return $fields;
   }
+
+  /**
+   * Called at the beginning of each payment related function (doPayment, updateSubscription etc)
+   *
+   * @param array $params
+   *
+   * @return array
+   */
+  private function setParams($params) {
+    $params['error_url'] = self::getErrorUrl($params);
+    $params = $this->formatParamsForPaymentProcessor($params);
+    $newParams = $params;
+    CRM_Utils_Hook::alterPaymentProcessorParams($this, $params, $newParams);
+    foreach ($newParams as $field => $value) {
+      $this->setParam($field, $value);
+    }
+    return $newParams;
+  }
+
+  /**
+   * Get the value of a field if set.
+   *
+   * @param string $field
+   *   The field.
+   *
+   * @return mixed
+   *   value of the field, or empty string if the field is
+   *   not set
+   */
+  private function getParam($field) {
+    return CRM_Utils_Array::value($field, $this->_params, '');
+  }
+
+  /**
+   * Set a field to the specified value.  Value must be a scalar (int,
+   * float, string, or boolean)
+   *
+   * @param string $field
+   * @param mixed $value
+   *
+   * @return bool
+   *   false if value is not a scalar, true if successful
+   */
+  private function setParam($field, $value) {
+    if (!is_scalar($value)) {
+      return FALSE;
+    }
+    else {
+      $this->_params[$field] = $value;
+    }
+  }
+
+  /**
+   * Handle an error and notify the user
+   *
+   * @param string $errorCode
+   * @param string $errorMessage
+   * @param string $bounceURL
+   *
+   * @return string $errorMessage
+   *     (or statusbounce if URL is specified)
+   */
+  private function handleError($errorCode = NULL, $errorMessage = NULL, $bounceURL = NULL) {
+    $errorCode = empty($errorCode) ? '' : $errorCode . ': ';
+    $errorMessage = empty($errorMessage) ? 'Unknown System Error.' : $errorMessage;
+    $message = $errorCode . $errorMessage;
+
+    Civi::log()->debug($this->getPaymentTypeLabel() . ' Payment Error: ' . $message);
+
+    if ($bounceURL) {
+      CRM_Core_Error::statusBounce($message, $bounceURL, $this->getPaymentTypeLabel());
+    }
+    return $errorMessage;
+  }
+
+  /**
+   * Get the label for the payment processor
+   *
+   * @return string
+   */
+  protected function getPaymentProcessorLabel() {
+    return $this->_paymentProcessor['name'];
+  }
+
+  /**
+   * Set the payment processor Invoice ID
+   *
+   * @param string $invoiceID
+   */
+  protected function setPaymentProcessorInvoiceID($invoiceID) {
+    $this->paymentProcessorInvoiceID = $invoiceID;
+  }
+
+  /**
+   * Get the payment processor Invoice ID
+   *
+   * @return string
+   */
+  protected function getPaymentProcessorInvoiceID() {
+    return $this->paymentProcessorInvoiceID;
+  }
+
+  /**
+   * Set the payment processor Subscription ID
+   *
+   * @param string $subscriptionID
+   */
+  protected function setPaymentProcessorSubscriptionID($subscriptionID) {
+    $this->paymentProcessorSubscriptionID = $subscriptionID;
+  }
+
+  /**
+   * Get the payment processor Subscription ID
+   *
+   * @return string
+   */
+  protected function getPaymentProcessorSubscriptionID() {
+    return $this->paymentProcessorSubscriptionID;
+  }
+
+  protected function beginDoPayment($params) {
+    // Set default contribution status
+    $params['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
+    $params = $this->setParams($params);
+    return $params;
+  }
+
+  /**
+   * Call this at the end of a call to doPayment to ensure everything is updated/returned correctly.
+   *
+   * @param array $params
+   *
+   * @return array
+   * @throws \CiviCRM_API3_Exception
+   */
+  protected function endDoPayment($params) {
+    $contributionParams['trxn_id'] = $this->getPaymentProcessorInvoiceID();
+
+    if ($this->getContributionId($params)) {
+      $contributionParams['id'] = $this->getContributionId($params);
+      civicrm_api3('Contribution', 'create', $contributionParams);
+      unset($contributionParams['id']);
+    }
+    $params = array_merge($params, $contributionParams);
+
+    // We need to set this to ensure that contributions are set to the correct status
+    if (!empty($params['contribution_status_id'])) {
+      $params['payment_status_id'] = $params['contribution_status_id'];
+    }
+    return $params;
+  }
+
 }

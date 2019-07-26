@@ -719,8 +719,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
    * @throws \Civi\Payment\Exception\PaymentProcessorException
    */
   public function doPayment(&$params, $component = 'contribute') {
-    // Set default contribution status
-    $params['contribution_status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending');
+    $this->beginDoPayment($params);
 
     $smartDebitParams = self::preparePostArray($params);
     CRM_Smartdebit_Hook::alterVariableDDIParams($params, $smartDebitParams, 'create');
