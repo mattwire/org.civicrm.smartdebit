@@ -1,3 +1,7 @@
+## Release 1.33
+
+* Make sure we respect 'Mark initial contribution as completed' setting.
+
 ## Release 1.32
 
 * Remove option to confirm by post as it's not allowed by Smartdebit (and don't create activity_type_letter on new installs).
