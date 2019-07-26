@@ -544,6 +544,9 @@ class CRM_Smartdebit_Sync
         $amountKey = 'valueOf';
         $descriptionKey = 'returnDescription';
         break;
+
+      default:
+        return FALSE;
     }
 
     // Process each record in the AUDDIS/ARUDD file
