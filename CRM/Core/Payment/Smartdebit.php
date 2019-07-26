@@ -751,6 +751,10 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
       throw new \Civi\Payment\Exception\PaymentProcessorException($message, CRM_Utils_Array::value('code', $response), $smartDebitParams);
     }
 
+    // This allows us to set the contribution to completed if
+    //   "Mark initial contribution as completed" is enabled in smartdebit settings
+    $params['contribution_status_id'] = self::getInitialContributionStatus(FALSE);
+
     $contributionParams['receive_date'] = $params['start_date'];
     $contributionParams['trxn_id'] = CRM_Smartdebit_DateUtils::getContributionTransactionId($params['trxn_id'], $params['start_date']);
     if (empty($params['payment_instrument_id'])) {
