@@ -1,3 +1,8 @@
+## Release 1.34
+
+* Fix: Don't update contribution status when updating recurring contribution during payment (this was preventing completeTransaction from running).
+* Fix sql syntax error (#29) in reconciliation (https://github.com/mathavanveda).
+
 ## Release 1.33
 
 * Make sure we respect 'Mark initial contribution as completed' setting.
