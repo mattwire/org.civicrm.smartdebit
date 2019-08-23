@@ -747,7 +747,7 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
     }
     else {
       $message = CRM_Utils_Array::value('message', $response) . ': ' . CRM_Smartdebit_Api::formatResponseError(CRM_Utils_Array::value('error', $response));
-      Civi::log()->error('Smartdebit::doDirectPayment error: ' . $message . ' ' . print_r($smartDebitParams, TRUE));
+      Civi::log()->error('Smartdebit::doPayment error: ' . $message . ' ' . print_r($smartDebitParams, TRUE));
       throw new \Civi\Payment\Exception\PaymentProcessorException($message, CRM_Utils_Array::value('code', $response), $smartDebitParams);
     }
 
@@ -810,8 +810,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
           $contributionParams['id'] = $params['contributionID'];
           // Receive date will be the date that the direct debit is taken, not today.
           $contributionParams['receive_date'] = $recurParams['start_date'];
-          // Set to pending or completed?
-          $contributionParams['contribution_status_id'] = self::getInitialContributionStatus(FALSE);
           civicrm_api3('Contribution', 'create', $contributionParams);
         }
 
@@ -849,7 +847,6 @@ class CRM_Core_Payment_Smartdebit extends CRM_Core_Payment {
         $contributionParams = [
           'contribution_recur_id' => $params['contribution_recur_id'],
           'contact_id' => $this->getContactId($params),
-          'contribution_status_id' => self::getInitialContributionStatus(FALSE),
           'is_test' => $params['is_test'],
         ];
         if (empty($params['contributionID'])) {
