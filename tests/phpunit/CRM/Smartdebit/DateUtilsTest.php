@@ -1,4 +1,7 @@
 <?php
+/**
+ * https://civicrm.org/licensing
+ */
 
 use CRM_Smartdebit_ExtensionUtil as E;
 use Civi\Test\HeadlessInterface;

@@ -1,5 +1,11 @@
 <?php
+/**
+ * https://civicrm.org/licensing
+ */
 
+/**
+ * Class CRM_Smartdebit_Api
+ */
 class CRM_Smartdebit_Api {
 
   CONST SD_STATE_DRAFT = 0;

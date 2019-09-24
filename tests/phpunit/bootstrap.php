@@ -1,4 +1,7 @@
 <?php
+/**
+ * https://civicrm.org/licensing
+ */
 
 ini_set('memory_limit', '2G');
 ini_set('safe_mode', 0);

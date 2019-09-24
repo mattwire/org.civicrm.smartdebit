@@ -1,6 +1,11 @@
 <?php
 /**
+ * https://civicrm.org/licensing
+ */
+
+/**
  * Shared payment functions that should one day be migrated to CiviCRM core
+ * @todo update to use mjwshared extension
  */
 
 trait CRM_Core_Payment_SmartdebitTrait {

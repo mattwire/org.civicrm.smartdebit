@@ -1,27 +1,7 @@
 <?php
-/*--------------------------------------------------------------------+
- | CiviCRM version 4.7                                                |
-+--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2017                                |
-+--------------------------------------------------------------------+
- | This file is a part of CiviCRM.                                    |
- |                                                                    |
- | CiviCRM is free software; you can copy, modify, and distribute it  |
- | under the terms of the GNU Affero General Public License           |
- | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
- |                                                                    |
- | CiviCRM is distributed in the hope that it will be useful, but     |
- | WITHOUT ANY WARRANTY; without even the implied warranty of         |
- | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
- | See the GNU Affero General Public License for more details.        |
- |                                                                    |
- | You should have received a copy of the GNU Affero General Public   |
- | License and the CiviCRM Licensing Exception along                  |
- | with this program; if not, contact CiviCRM LLC                     |
- | at info[AT]civicrm[DOT]org. If you have questions about the        |
- | GNU Affero General Public License or the licensing of CiviCRM,     |
- | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
- +-------------------------------------------------------------------*/
+/**
+ * https://civicrm.org/licensing
+ */
 
 /**
  * Class CRM_Smartdebit_Form_ReconciliationFixSelect
@@ -29,7 +9,7 @@
  * Path: civicrm/smartdebit/reconciliation/fix/select
  */
 class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
-  CONST c_current_membership_status = "Current"; // MV, to set current membership as default 
+  CONST c_current_membership_status = "Current"; // MV, to set current membership as default
 
   public function preProcess() {
     parent::preProcess();
@@ -97,7 +77,7 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
     $el = $this->addElement('text', 'start_date', 'Start Date', ['size' => 50, 'maxlength' => 255]);
     $el->freeze();
 
-    $this->assign( 'memStatusCurrent', self::c_current_membership_status ); //MV, to set the current membership as default, when ajax loading
+    $this->assign('memStatusCurrent', self::c_current_membership_status); //MV, to set the current membership as default, when ajax loading
     $this->assign('cid', $cid);
     $this->addFormRule(['CRM_Smartdebit_Form_ReconciliationFixSelect', 'formRule'], $this);
 

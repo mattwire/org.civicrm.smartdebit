@@ -1,4 +1,7 @@
 <?php
+/**
+ * https://civicrm.org/licensing
+ */
 
 /**
  * Mock results from smartdebit API, used when CIVICRM_UF=UnitTests
