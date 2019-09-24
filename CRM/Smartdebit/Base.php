@@ -402,7 +402,7 @@ WHERE  ddi_reference = %0";
       'currency' => $params['currency'],
       'payment_instrument_id' => $params['payment_instrument_id'],
       'invoice_id' => $params['invoice_id'],
-      'source' => $params['source'],
+      'source' => CRM_Utils_Array::value('source', $params),
       'is_email_receipt' => isset($params['is_email_receipt']) ? $params['is_email_receipt'] : FALSE,
     ];
     if (!empty($params['contribution_id'])) {

@@ -86,7 +86,7 @@ class CRM_Smartdebit_Form_ReconciliationFixSelect extends CRM_Core_Form {
     parent::buildQuickForm();
   }
 
-  public function formRule($params) {
+  public static function formRule($params) {
     $errors = [];
     // Check end date greater than start date
     if (empty($params['cid'])) {
