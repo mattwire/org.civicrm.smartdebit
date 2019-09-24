@@ -4,9 +4,7 @@ Integrates the Smart Debit Direct Debit processor into CiviCRM so you can use Ci
 
 [![Smart Debit Logo](/images/smartdebit.png)](https://www.smartdebit.co.uk/)
 
-Latest releases can be found here: https://civicrm.org/extensions/stripe-payment-processor
-
-View this extension in the [Extension Directory](https://civicrm.org/extensions/stripe-payment-processor).
+View/Download this extension in the [Extension Directory](https://civicrm.org/extensions/smartdebit-direct-debit).
 
 ## Compatibility / Requirements
 * CiviCRM 5.13+
