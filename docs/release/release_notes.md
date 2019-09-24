@@ -1,3 +1,10 @@
+## Release 1.35
+*Code moved to https://lab.civicrm.org/extensions/smartdebit*
+
+* Diagnostics now shows all cached collection reports in a collapsible accordion.
+* Fix PHP notices.
+* Update licensing text on files.
+
 ## Release 1.34
 
 * Fix: Don't update contribution status when updating recurring contribution during payment (this was preventing completeTransaction from running).
