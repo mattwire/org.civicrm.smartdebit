@@ -1,3 +1,6 @@
+# MOVED TO https://lab.civicrm.org/extensions/smartdebit
+
+
 # Smartdebit Payment Processor for CiviCRM
 
 Integrates the Smart Debit Direct Debit processor into CiviCRM so you can use CiviCRM to sign-up and administer your direct debit payments.
